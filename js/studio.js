@@ -162,13 +162,8 @@ motionButton.onclick = async () => {
   }
   const button = $('generateMotionBtn');
   const previousAction = activeAction;
-  if (previousAction?.isRunning()) previousAction.paused = true;
-  const basePose = new Map();
-  selected.traverse(node => {
-    if (node.isBone) basePose.set(node.name, node.quaternion.clone());
-  });
   button.disabled = true; button.textContent = 'Đang tạo...';
-  setStudioStatus('Gemini đang tạo chuyển động...', 'Đã giữ nguyên tư thế hiện tại của nhân vật', 'loading');
+  setStudioStatus('Gemini đang tạo chuyển động...', 'Animation hiện tại vẫn tiếp tục phát', 'loading');
   try {
     const schema = {
       type: 'OBJECT',
@@ -202,11 +197,12 @@ motionButton.onclick = async () => {
     };
     const instructions = [
       'You are a professional 3D character animator creating keyframes for this exact Mixamo skeleton.',
-      'Return local Euler XYZ ROTATION OFFSETS in DEGREES relative to the character CURRENT POSE at the moment the request is made, not a T-pose or default rest pose.',
-      'The current pose may be seated. Preserve it exactly at time 0, then make a believable transition if the requested action requires standing up.',
+      'Return local Euler XYZ ROTATION OFFSETS in DEGREES relative to the character pose at the exact moment the new AI clip will begin.',
+      'The existing animation (for example Sitting Laughing) continues playing while you generate. The runtime will capture the live pose at the instant this clip starts. Therefore all animated bones MUST have zero rotation offset at time 0.',
+      'Create a continuous transition from that live pose into the action described by the user. If the character is sitting and the prompt asks it to walk, animate standing up first, then walking.',
+      'Do NOT force the character to return to its starting pose at the end. End in the natural final pose requested and hold that pose.',
       'Use only exact bone names from the provided list. Do not invent names.',
-      'Use smooth, natural, physically plausible motion. Every animated bone MUST have zero rotation offset at time 0 and at the final time so the character returns to the exact starting pose.',
-      'Use 3 to 8 keyframes per animated bone. Animate only relevant bones; leave unrelated bones unchanged.',
+      'Use smooth, natural, physically plausible motion. Use 3 to 8 keyframes per animated bone. Animate only relevant bones; leave unrelated bones unchanged.',
       'Keep hips/root rotation within 12 degrees, spine/chest within 28 degrees, head/neck within 32 degrees, and limbs within anatomically safe ranges. Never rotate the whole character upside down.',
       'This first version is in-place animation; do not use root translation or extreme rotations.',
       'Interpret the Vietnamese user prompt faithfully. Keep duration 2 to 12 seconds unless specified.',
@@ -231,37 +227,46 @@ motionButton.onclick = async () => {
     const responseText = payload.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('');
     if (!responseText) throw new Error('Gemini không trả về dữ liệu chuyển động.');
     const animation = JSON.parse(responseText);
+    const basePose = new Map();
+    selected.traverse(node => {
+      if (node.isBone) basePose.set(node.name, node.quaternion.clone());
+    });
     const clip = createMixamoAnimation(animation, selected, basePose);
-    selected.userData.clips = [clip];
     if (!selected.userData.mixer) {
       const { AnimationMixer } = await import('three');
       selected.userData.mixer = new AnimationMixer(selected);
       studio.mixers.push(selected.userData.mixer);
     }
-    if (activeAction) activeAction.stop();
-    if (generatedAction) generatedAction.stop();
     const mixer = selected.userData.mixer;
-    mixer.stopAllAction();
+    if (!selected.userData.clips) selected.userData.clips = [];
+    if (!selected.userData.clips.includes(clip)) selected.userData.clips.push(clip);
+    if (generatedAction && generatedAction !== previousAction) generatedAction.stop();
     const action = mixer.clipAction(clip);
-    action.reset(); action.setLoop(2201, Infinity); action.play();
+    action.reset();
+    action.setLoop(2200, 1);
+    action.clampWhenFinished = true;
+    action.play();
+    if (previousAction && previousAction !== action) {
+      previousAction.paused = false;
+      previousAction.play();
+      action.crossFadeFrom(previousAction, 0.9, false);
+    }
     activeAction = action; generatedAction = action;
     $('playBtn').textContent = 'Ⅱ';
-    $('clipStatus').textContent = 'AI: ' + clip.name;
+    $('clipStatus').textContent = selected.userData.clips.length + ' animation clips';
     $('trackEmpty').classList.add('hidden');
     $('clipTracks').innerHTML = '';
-    const row = document.createElement('div'); row.className = 'clip-row'; row.textContent = clip.name;
-    $('clipTracks').append(row);
+    selected.userData.clips.forEach((savedClip, index) => {
+      const row = document.createElement('div');
+      row.className = 'clip-row';
+      row.textContent = savedClip.name || (index === 0 ? 'Original animation' : 'AI Animation');
+      $('clipTracks').append(row);
+    });
     const trackCount = clip.tracks.length;
     setStudioStatus('Tạo animation thành công', (animation.summary || clip.name) + ' · ' + trackCount + ' tracks · ' + clip.duration.toFixed(1) + ' giây', 'ready');
     toast('Đã tạo chuyển động cho Mixamo!');
   } catch (error) {
     console.error(error);
-    if (previousAction) {
-      previousAction.paused = false;
-      previousAction.play();
-      activeAction = previousAction;
-      $('playBtn').textContent = 'Ⅱ';
-    }
     setStudioStatus('Tạo chuyển động thất bại', error.message, 'error');
     toast('Không tạo được: ' + error.message);
   } finally {
