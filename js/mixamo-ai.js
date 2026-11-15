@@ -35,7 +35,7 @@ export function createMixamoAnimation(data, root) {
         'XYZ'
       );
       const delta = new THREE.Quaternion().setFromEuler(offset);
-      const q = bone.quaternion.clone().multiply(delta).normalize();
+      const bindQuaternion = bone.userData.bindQuaternion || bone.quaternion;\n      const q = bindQuaternion.clone().multiply(delta).normalize();
       times.push(time); values.push(q.x, q.y, q.z, q.w);
     }
     if (times.length >= 2) tracks.push(new THREE.QuaternionKeyframeTrack(item.bone + '.quaternion', times, values));
