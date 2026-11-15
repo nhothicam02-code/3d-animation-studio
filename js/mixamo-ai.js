@@ -13,7 +13,7 @@ export function describeMixamoRig(root) {
 
 function normalizeBoneName(name) {
   // Accept Mixamo names, names without namespace, and common DCC/AI variants.
-  let value = String(name || '').trim().split(/[|/\\\\]/).pop();
+  let value = String(name || '').trim().split(/[|\/\\]/).pop();
   value = value.replace(/^mixamorig[:_\-.]?/i, '').replace(/^armature[:_\-.]?/i, '');
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
