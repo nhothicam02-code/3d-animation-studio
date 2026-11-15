@@ -10,6 +10,37 @@ export function describeMixamoRig(root) {
   return { bones, isMixamo };
 }
 
+
+function normalizeBoneName(name) {
+  // Accept Mixamo names, names without namespace, and common DCC/AI variants.
+  let value = String(name || '').trim().split(/[|/\\\\]/).pop();
+  value = value.replace(/^mixamorig[:_\-.]?/i, '').replace(/^armature[:_\-.]?/i, '');
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function resolveBone(name, boneMap, normalizedMap) {
+  const exact = boneMap.get(name);
+  if (exact) return exact;
+  const normalized = normalizeBoneName(name);
+  const direct = normalizedMap.get(normalized);
+  if (direct) return direct;
+
+  // Common generic humanoid labels used by motion generators.
+  const aliases = {
+    leftupperarm: 'leftarm', rightupperarm: 'rightarm',
+    leftlowerarm: 'leftforearm', rightlowerarm: 'rightforearm',
+    leftwrist: 'lefthand', rightwrist: 'righthand',
+    leftupperleg: 'leftupleg', rightupperleg: 'rightupleg',
+    leftthigh: 'leftupleg', rightthigh: 'rightupleg',
+    leftlowerleg: 'leftleg', rightlowerleg: 'rightleg',
+    leftcalf: 'leftleg', rightcalf: 'rightleg',
+    pelvis: 'hips', root: 'hips',
+    chest: 'spine2', upperchest: 'spine2'
+  };
+  const alias = aliases[normalized];
+  return alias ? normalizedMap.get(alias) || null : null;
+}
+
 function maxAngleForBone(name) {
   const n = name.toLowerCase();
   if (/hips|root/.test(n)) return 12;
@@ -18,9 +49,9 @@ function maxAngleForBone(name) {
   if (/upleg|thigh/.test(n)) return 65;
   if (/leg|calf/.test(n)) return 85;
   if (/foot|toe/.test(n)) return 35;
+  if (/finger|thumb|index|middle|ring|pinky/.test(n)) return 40;
   if (/forearm|hand/.test(n)) return 85;
   if (/arm/.test(n)) return 75;
-  if (/finger|thumb/.test(n)) return 40;
   return 35;
 }
 
@@ -30,9 +61,17 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
   }
 
   const boneMap = new Map();
+  const normalizedMap = new Map();
+  const duplicateNormalized = new Set();
   root.traverse(node => {
-    if (node.isBone) boneMap.set(node.name, node);
+    if (!node.isBone) return;
+    boneMap.set(node.name, node);
+    const key = normalizeBoneName(node.name);
+    if (normalizedMap.has(key)) duplicateNormalized.add(key);
+    else normalizedMap.set(key, node);
   });
+  // Never guess when two bones collapse to the same normalized name.
+  duplicateNormalized.forEach(key => normalizedMap.delete(key));
 
   const duration = THREE.MathUtils.clamp(Number(data.duration) || 4, 1, 30);
   const tracks = [];
@@ -43,7 +82,7 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
   // chuyển động của các xương khác trong rig.
   for (const item of data.tracks) {
     if (!item || typeof item.bone !== 'string' || !Array.isArray(item.keyframes)) continue;
-    const bone = boneMap.get(item.bone);
+    const bone = resolveBone(item.bone, boneMap, normalizedMap);
     if (!bone) {
       unmatched.push(item.bone);
       continue;
@@ -91,7 +130,10 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
   }
 
   if (!tracks.length) {
-    const detail = unmatched.length ? ' Tên xương không khớp: ' + unmatched.join(', ') : '';
+    const requested = data.tracks.map(item => item?.bone).filter(Boolean);
+    const detail = unmatched.length ? ' Tên chưa khớp: ' + [...new Set(unmatched)].join(', ') :
+      requested.length ? ' Có ' + requested.length + ' track nhưng không tạo được track hợp lệ (kiểm tra mỗi track có ít nhất 2 keyframe).' :
+      ' Gemini không trả về trường bone hợp lệ trong tracks.';
     throw new Error('Không có keyframe nào khớp với xương của model.' + detail);
   }
 
