@@ -16,12 +16,14 @@
       <a class="brand" href="#"><span class="brand-mark">✳</span><span>3D <b>ANIMATION</b> STUDIO</span></a>
       <div class="project-name"><span class="live-dot"></span> Untitled Scene <span class="save-state">Local session</span></div>
       <div class="top-actions">
+        <a class="tool-button settings-link" href="gemini.html">✦ <span>Gemini API</span></a>
         <button class="tool-button" id="resetViewBtn" title="Đặt lại góc nhìn">⌖ <span>Reset view</span></button>
         <button class="tool-button" id="screenshotBtn" title="Chụp ảnh khung hình">▣ <span>Screenshot</span></button>
         <button class="primary-button" id="exportBtn">Export image ↗</button>
       </div>
     </header>
 
+    <div class="studio-statusbar"><span class="status-indicator" id="systemStatusDot"></span><span id="systemStatusText">Studio sẵn sàng</span><span class="statusbar-right" id="systemStatusDetail">Chưa tải nhân vật</span></div>
     <main class="workspace">
       <aside class="panel left-panel">
         <div class="panel-heading"><div><span class="eyebrow">WORKSPACE</span><h2>Assets</h2></div><span class="panel-icon">▧</span></div>
@@ -100,12 +102,7 @@
         <textarea id="motionPrompt" rows="2" placeholder="Ví dụ: Nhân vật bước đi tự nhiên 3 giây, dừng lại rồi vẫy tay phải..."></textarea>
         <button id="generateMotionBtn" class="primary-button">✦ Tạo chuyển động</button>
       </div>
-      <div class="ai-motion-settings">
-        <label for="motionApiKey">Gemini API key</label>
-        <input id="motionApiKey" type="password" autocomplete="off" placeholder="Dán Gemini API key vào đây">
-        <button id="saveGeminiKeyBtn" class="small-button">Lưu key</button>
-        <span id="motionStatus">Import nhân vật Mixamo để bắt đầu.</span>
-      </div>
+
     </section>
 
     <section class="timeline-panel">
