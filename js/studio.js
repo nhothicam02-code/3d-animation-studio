@@ -52,11 +52,20 @@ function updateSceneList() {
 }
 async function importModel(file) {
   const result = await studio.loadFile(file);
+  const bindPose = new Map();
   result.object.traverse(node => {
-    if (node.isBone && !node.userData.bindQuaternion) {
-      node.userData.bindQuaternion = node.quaternion.clone();
+    if (node.isBone) {
+      const pose = {
+        position: node.position.clone(),
+        quaternion: node.quaternion.clone(),
+        scale: node.scale.clone()
+      };
+      bindPose.set(node.name, pose);
+      node.userData.bindQuaternion = pose.quaternion.clone();
     }
   });
+  result.object.userData.bindPose = bindPose;
+  result.object.userData.originalClips = result.animations.slice();
   $('viewportEmpty').classList.add('hidden');
   selectObject(result.object); updateSceneList();
   const rig = describeMixamoRig(result.object);
@@ -229,7 +238,10 @@ motionButton.onclick = async () => {
     const animation = JSON.parse(responseText);
     const basePose = new Map();
     selected.traverse(node => {
-      if (node.isBone) basePose.set(node.name, node.quaternion.clone());
+      if (node.isBone) {
+        const bind = selected.userData.bindPose?.get(node.name);
+        basePose.set(node.name, bind ? bind.quaternion.clone() : node.userData.bindQuaternion.clone());
+      }
     });
     const clip = createMixamoAnimation(animation, selected, basePose);
     if (!selected.userData.mixer) {
@@ -238,28 +250,35 @@ motionButton.onclick = async () => {
       studio.mixers.push(selected.userData.mixer);
     }
     const mixer = selected.userData.mixer;
-    if (!selected.userData.clips) selected.userData.clips = [];
-    if (!selected.userData.clips.includes(clip)) selected.userData.clips.push(clip);
-    if (generatedAction && generatedAction !== previousAction) generatedAction.stop();
+    // Stop every source/generated action, then restore the exact imported bind pose.
+    mixer.stopAllAction();
+    mixer.time = 0;
+    selected.traverse(node => {
+      if (!node.isBone) return;
+      const bind = selected.userData.bindPose?.get(node.name);
+      if (!bind) return;
+      node.position.copy(bind.position);
+      node.quaternion.copy(bind.quaternion);
+      node.scale.copy(bind.scale);
+    });
+    activeAction = null;
+    generatedAction = null;
+    selected.userData.clips = [clip];
     const action = mixer.clipAction(clip);
     action.reset();
     action.setLoop(2200, 1);
     action.clampWhenFinished = true;
     action.play();
-    if (previousAction && previousAction !== action) {
-      previousAction.paused = false;
-      previousAction.play();
-      action.crossFadeFrom(previousAction, 0.9, false);
-    }
-    activeAction = action; generatedAction = action;
+    activeAction = action;
+    generatedAction = action;
     $('playBtn').textContent = 'Ⅱ';
-    $('clipStatus').textContent = selected.userData.clips.length + ' animation clips';
+    $('clipStatus').textContent = '1 AI animation · Original clips محفوظ';
     $('trackEmpty').classList.add('hidden');
     $('clipTracks').innerHTML = '';
     selected.userData.clips.forEach((savedClip, index) => {
       const row = document.createElement('div');
       row.className = 'clip-row';
-      row.textContent = savedClip.name || (index === 0 ? 'Original animation' : 'AI Animation');
+      row.textContent = savedClip.name || 'AI Animation';
       $('clipTracks').append(row);
     });
     const trackCount = clip.tracks.length;
