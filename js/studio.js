@@ -1,336 +1,93 @@
 import { StudioScene } from './scene.js';
 import { bindImporters } from './importer.js';
-import { createMixamoAnimation, describeMixamoRig } from './mixamo-ai.js';
+import { describeMixamoRig } from './mixamo-ai.js';
+import { planActions } from './action-planner.js';
+import { AnimationSequencer } from './sequencer.js';
 
-const $ = id => document.getElementById(id);
-const viewport = $('viewport');
-const studio = new StudioScene(viewport);
-let selected = null, activeAction = null, flyMode = false, wireframe = false, uniform = true;
-const keys = new Set();
-let toastTimer;
-let generatedAction = null;
-function setStudioStatus(message, detail = '', state = 'ready') {
-  const statusText = $('systemStatusText');
-  const statusDetail = $('systemStatusDetail');
-  const statusDot = $('systemStatusDot');
-  if (statusText) statusText.textContent = message;
-  if (statusDetail) statusDetail.textContent = detail;
-  if (statusDot) statusDot.className = 'status-indicator ' + state;
-  const motionStatus = $('motionStatus');
-  if (motionStatus) motionStatus.textContent = detail ? message + ' · ' + detail : message;
-}
-
-function toast(message) {
-  const el = $('toast'); el.textContent = message; el.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
-}
-function selectObject(object) {
-  selected = object;
-  $('inspector').classList.toggle('hidden', !object);
-  $('inspectorEmpty').classList.toggle('hidden', !!object);
-  $('selectionLabel').textContent = object ? object.name : 'Nothing selected';
-  if (!object) return;
-  $('selectedName').textContent = object.name;
-  const values = {posX:object.position.x,posY:object.position.y,posZ:object.position.z,rotX:THREE_DEG(object.rotation.x),rotY:THREE_DEG(object.rotation.y),rotZ:THREE_DEG(object.rotation.z),scaleX:object.scale.x,scaleY:object.scale.y,scaleZ:object.scale.z};
-  Object.entries(values).forEach(([id,value]) => $(id).value = Number(value.toFixed(3)));
-  $('visibleToggle').checked = object.visible;
-  $('uniformScale').checked = uniform;
-}
-function THREE_DEG(rad) { return rad * 180 / Math.PI; }
-function updateSceneList() {
-  const list = $('sceneList'); list.innerHTML = '';
-  if (!studio.models.length) list.innerHTML = '<div class="empty-assets">No objects in scene yet.<br>Import a model to get started.</div>';
-  studio.models.forEach((obj,index) => {
-    const row = document.createElement('div'); row.className = 'scene-item' + (obj === selected ? ' selected' : '');
-    const symbol = document.createElement('span'); symbol.className='scene-symbol'; symbol.textContent='◈';
-    const name = document.createElement('span'); name.textContent=obj.name || 'Object '+(index+1);
-    const remove = document.createElement('span'); remove.className='scene-remove'; remove.textContent='⋯';
-    row.append(symbol,name,remove); row.addEventListener('click',()=>{selectObject(obj);updateSceneList();});
-    list.append(row);
+const $=id=>document.getElementById(id);
+const viewport=$('viewport');
+const studio=new StudioScene(viewport);
+let selected=null, sequencer=null, activeAction=null;
+const status=(title,detail='',state='ready')=>{
+  $('statusTitle').textContent=title; $('statusDetail').textContent=detail;
+  $('statusDot').className='dot '+state;
+};
+const toast=message=>{const el=$('toast');el.textContent=message;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);};
+function listScene(){
+  const list=$('sceneList');list.replaceChildren();
+  if(!studio.models.length){list.textContent='Chưa có model';return;}
+  studio.models.forEach(obj=>{
+    const b=document.createElement('button');b.className='scene-item'+(obj===selected?' active':'');b.textContent=obj.name;
+    b.onclick=()=>selectModel(obj);list.append(b);
   });
-  $('objectCount').textContent = studio.models.length+' OBJECT'+(studio.models.length===1?'':'S');
 }
-async function importModel(file) {
-  const result = await studio.loadFile(file);
-  const bindPose = new Map();
-  result.object.traverse(node => {
-    if (node.isBone) {
-      const pose = {
-        position: node.position.clone(),
-        quaternion: node.quaternion.clone(),
-        scale: node.scale.clone()
-      };
-      bindPose.set(node.name, pose);
-      node.userData.bindQuaternion = pose.quaternion.clone();
-    }
+function restoreBindPose(object){
+  object.traverse(n=>{
+    if(!n.isBone)return;
+    const pose=object.userData.bindPose?.get(n.name);
+    if(pose){n.position.copy(pose.position);n.quaternion.copy(pose.quaternion);n.scale.copy(pose.scale);}
   });
-  result.object.userData.bindPose = bindPose;
-  result.object.userData.originalClips = result.animations.slice();
-  $('viewportEmpty').classList.add('hidden');
-  selectObject(result.object); updateSceneList();
-  const rig = describeMixamoRig(result.object);
-  const rigMessage = rig.isMixamo ? `Mixamo · ${rig.bones.length} xương` : `Model · ${rig.bones.length} xương`;
-  setStudioStatus(rig.isMixamo ? 'Đã tải nhân vật Mixamo' : 'Đã tải model', rigMessage, rig.isMixamo ? 'ready' : 'warning');
-  if (result.animations.length) {
-    $('clipStatus').textContent = result.animations.length+' animation clip'+(result.animations.length>1?'s':'');
-    $('trackEmpty').classList.add('hidden'); $('clipTracks').innerHTML='';
-    result.animations.forEach((clip,index)=>{
-      const row=document.createElement('div'); row.className='clip-row'; row.textContent=clip.name || 'Animation '+(index+1);
-      $('clipTracks').append(row);
-    });
-    playClip(result.object, result.animations[0]);
-  }
-  toast('Imported '+file.name);
+  object.updateMatrixWorld(true);
 }
-function playClip(object,clip) {
-  if (activeAction) activeAction.stop();
-  const mixer=object.userData.mixer;
-  if (!mixer) return;
-  activeAction=mixer.clipAction(clip); activeAction.reset().play();
-  $('playBtn').textContent='Ⅱ';
+function selectModel(obj){
+  selected=obj;
+  $('selectedModel').textContent=obj.name;
+  $('viewportEmpty').hidden=true;
+  $('sceneList').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.textContent===obj.name));
+  $('rigInfo').textContent=describeMixamoRig(obj).bones.length+' bones';
+  status('Đã chọn nhân vật',obj.name);
 }
-bindImporters({modelInput:$('modelInput'),environmentInput:$('environmentInput'),viewport,onModel:importModel,onEnvironment:async file=>{await studio.setEnvironment(file);toast('360° environment loaded');},onError:error=>{console.error(error);toast('Import failed: '+error.message);}});
-$('addPrimitiveBtn').onclick=()=>{const cube=studio.addPrimitive();$('viewportEmpty').classList.add('hidden');selectObject(cube);updateSceneList();toast('Cube added');};
-$('deleteObjectBtn').onclick=()=>{if(!selected)return;studio.remove(selected);selectObject(null);updateSceneList();if(!studio.models.length)$('viewportEmpty').classList.remove('hidden');};
-$('visibleToggle').onchange=e=>{if(selected)selected.visible=e.target.checked;};
-$('uniformScale').onchange=e=>uniform=e.target.checked;
-[['posX','x','position'],['posY','y','position'],['posZ','z','position'],['rotX','x','rotation'],['rotY','y','rotation'],['rotZ','z','rotation'],['scaleX','x','scale'],['scaleY','y','scale'],['scaleZ','z','scale']].forEach(([id,axis,kind])=>{
-  $(id).addEventListener('change',e=>{
-    if(!selected)return; const value=Number(e.target.value)||0;
-    if(kind==='rotation')selected.rotation[axis]=value*Math.PI/180;
-    else selected[kind][axis]=value;
-    if(kind==='scale'&&uniform){const scale=Math.max(.001,value);selected.scale.setScalar(scale);['scaleX','scaleY','scaleZ'].forEach(k=>$(k).value=scale.toFixed(3));}
-  });
-});
-$('lightIntensity').oninput=e=>{$('lightValue').textContent=Number(e.target.value).toFixed(1);studio.ambient.intensity=Number(e.target.value);};
+async function importModel(file){
+  const result=await studio.loadFile(file);
+  const bindPose=new Map();
+  result.object.traverse(n=>{if(n.isBone){bindPose.set(n.name,{position:n.position.clone(),quaternion:n.quaternion.clone(),scale:n.scale.clone()});n.userData.bindQuaternion=n.quaternion.clone();}});
+  result.object.userData.bindPose=bindPose;
+  result.object.userData.originalClips=(result.animations||[]).slice();
+  if(result.object.userData.mixer)result.object.userData.mixer.stopAllAction();
+  selectModel(result.object);listScene();
+  const rig=describeMixamoRig(result.object);
+  $('rigInfo').textContent=(rig.isMixamo?'Mixamo':'Humanoid')+' · '+rig.bones.length+' bones';
+  status(rig.isMixamo?'Rig Mixamo đã sẵn sàng':'Đã import model',rig.isMixamo?'Có thể tạo chuyển động':'Model chưa chắc tương thích đầy đủ','ready');
+  if(result.animations?.length){$('planSummary').textContent='Model có '+result.animations.length+' animation gốc.';}
+  toast('Đã import '+file.name);
+}
+bindImporters({modelInput:$('modelInput'),environmentInput:$('environmentInput'),viewport,onModel:importModel,onEnvironment:f=>studio.setEnvironment(f),onError:e=>{status('Lỗi import',e.message,'error');toast(e.message);}});
+$('importBtn').onclick=()=>$('modelInput').click();
+$('environmentBtn').onclick=()=>$('environmentInput').click();
+$('resetViewBtn').onclick=()=>selected?studio.frameObject(selected):null;
+$('frontBtn').onclick=()=>studio.setView('front');
+$('sideBtn').onclick=()=>studio.setView('side');
+$('topBtn').onclick=()=>studio.setView('top');
 $('gridBtn').onclick=()=>{studio.grid.visible=!studio.grid.visible;$('gridBtn').classList.toggle('active',studio.grid.visible);};
-$('wireBtn').onclick=()=>{wireframe=!wireframe;studio.models.forEach(o=>o.traverse(n=>{if(n.isMesh)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.wireframe=wireframe);}));$('wireBtn').classList.toggle('active',wireframe);};
-$('resetViewBtn').onclick=()=>{if(selected)studio.frameObject(selected);else{studio.camera.position.set(5,3.5,7);studio.controls.target.set(0,1,0);studio.camera.up.set(0,1,0);studio.controls.update();}};
-$('frontViewBtn').onclick=()=>studio.setView('front');
-$('sideViewBtn').onclick=()=>studio.setView('side');
-$('topViewBtn').onclick=()=>studio.setView('top');
-function setFlyMode(enabled){
-  flyMode=enabled;studio.controls.enabled=!enabled;
-  $('flyModeBtn').classList.toggle('active',enabled);$('orbitModeBtn').classList.toggle('active',!enabled);
-  $('flyHint').classList.toggle('show',enabled);
-  if(enabled){viewport.requestPointerLock?.();toast('Fly mode: click viewport, WASD + mouse');}
-  else if(document.pointerLockElement)document.exitPointerLock();
-}
-$('flyModeBtn').onclick=()=>setFlyMode(true);
-$('orbitModeBtn').onclick=()=>setFlyMode(false);
-document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&flyMode){flyMode=false;studio.controls.enabled=true;$('flyHint').classList.remove('show');$('flyModeBtn').classList.remove('active');$('orbitModeBtn').classList.add('active');}});
-document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;keys.add(e.code);});
-document.addEventListener('keyup',e=>keys.delete(e.code));
-document.addEventListener('mousemove',e=>{
-  if(!flyMode||document.pointerLockElement!==viewport)return;
-  const sensitivity=.002;const direction=new (studio.camera.position.constructor)();
-  studio.camera.getWorldDirection(direction);
-  const euler=new (awaitlessEuler())(0,0,0,'YXZ');
-  euler.setFromQuaternion(studio.camera.quaternion);euler.y-=e.movementX*sensitivity;euler.x-=e.movementY*sensitivity;
-  euler.x=Math.max(-Math.PI/2+.02,Math.min(Math.PI/2-.02,euler.x));
-  studio.camera.quaternion.setFromEuler(euler);
-});
-function awaitlessEuler(){return studio.camera.rotation.constructor;}
-const originalRender=studio.render.bind(studio);
-studio.render=function(){
-  if(flyMode&&document.pointerLockElement===viewport){
-    const speed=.12;const forward=new (studio.camera.position.constructor)();studio.camera.getWorldDirection(forward);forward.y=0;forward.normalize();
-    const right=new (studio.camera.position.constructor)().crossVectors(forward,new (studio.camera.position.constructor)(0,1,0)).negate().normalize();
-    if(keys.has('KeyW'))studio.camera.position.addScaledVector(forward,speed);
-    if(keys.has('KeyS'))studio.camera.position.addScaledVector(forward,-speed);
-    if(keys.has('KeyA'))studio.camera.position.addScaledVector(right,-speed);
-    if(keys.has('KeyD'))studio.camera.position.addScaledVector(right,speed);
-    if(keys.has('KeyQ'))studio.camera.position.y-=speed;
-    if(keys.has('KeyE'))studio.camera.position.y+=speed;
-  }
-  originalRender();
+$('playOriginalBtn').onclick=()=>{
+  if(!selected?.userData.originalClips?.length){toast('Model không có animation gốc.');return;}
+  sequencer?.stop();restoreBindPose(selected);
+  const mixer=selected.userData.mixer;activeAction=mixer.clipAction(selected.userData.originalClips[0]);activeAction.reset().play();status('Đang phát animation gốc');
 };
-$('playBtn').onclick=()=>{
-  if(!selected?.userData.mixer||!selected.userData.clips?.length){toast('No animation clip found in selected model');return;}
-  if(activeAction?.isRunning()){activeAction.paused=true;$('playBtn').textContent='▶';}
-  else if(activeAction){activeAction.paused=false;activeAction.play();$('playBtn').textContent='Ⅱ';}
-  else playClip(selected,selected.userData.clips[0]);
+$('stopBtn').onclick=()=>{sequencer?.stop();if(selected?.userData.mixer)selected.userData.mixer.stopAllAction();if(selected)restoreBindPose(selected);status('Đã dừng animation');};
+$('generateBtn').onclick=async()=>{
+  const prompt=$('motionPrompt').value.trim(),apiKey=localStorage.getItem('mixamoGeminiApiKey')||'';
+  if(!selected){toast('Hãy import model trước.');return;}
+  if(!prompt){toast('Hãy nhập mô tả chuyển động.');return;}
+  if(!apiKey){status('Chưa có Gemini API key','Mở trang Gemini API để thiết lập','warning');toast('Chưa có API key.');return;}
+  const rig=describeMixamoRig(selected);
+  if(!rig.isMixamo){toast('Model này chưa được nhận diện là Mixamo.');return;}
+  const btn=$('generateBtn');btn.disabled=true;btn.textContent='Gemini đang lập kế hoạch…';
+  status('Đang phân tích prompt','Gemini chỉ chọn hành động và thời lượng','loading');
+  try{
+    const plan=await planActions(prompt,apiKey,rig);
+    if(!selected.userData.mixer){const {AnimationMixer}=await import('three');selected.userData.mixer=new AnimationMixer(selected);studio.mixers.push(selected.userData.mixer);}
+    sequencer?.stop();selected.userData.mixer.stopAllAction();restoreBindPose(selected);
+    sequencer=new AnimationSequencer(selected,selected.userData.mixer,(message,state)=>status(message,'Motion Library · '+(plan.summary||''),state||'ready'));
+    $('planSummary').textContent=plan.summary||'Chuỗi hành động đã tạo';
+    $('planList').replaceChildren();
+    plan.actions.forEach((a,i)=>{const li=document.createElement('li');li.textContent=(i+1)+'. '+a.action+' — '+a.duration.toFixed(1)+'s';$('planList').append(li);});
+    sequencer.play(plan);
+  }catch(error){console.error(error);status('Không tạo được animation',error.message,'error');toast(error.message);}
+  finally{btn.disabled=false;btn.textContent='✦ Tạo chuyển động';}
 };
-$('stopBtn').onclick=()=>{if(activeAction){activeAction.stop();activeAction=null;}$('playBtn').textContent='▶';};
-$('addKeyBtn').onclick=()=>toast('Keyframe editor is coming in the animation phase.');
-
-const motionButton = $('generateMotionBtn');
-if (motionButton) {
-motionButton.onclick = async () => {
-  const prompt = $('motionPrompt').value.trim();
-  const apiKey = localStorage.getItem('mixamoGeminiApiKey') || '';
-  if (!selected) { toast('Hãy import và chọn nhân vật FBX trước.'); return; }
-  if (!prompt) { toast('Hãy nhập mô tả chuyển động.'); return; }
-  if (!apiKey) { toast('Hãy thiết lập Gemini API ở trang Gemini API trước nhé.'); setStudioStatus('Thiếu Gemini API key', 'Mở trang Gemini API để thiết lập', 'warning'); return; }
-  const rig = describeMixamoRig(selected);
-  if (!rig.bones.length) { toast('Không tìm thấy xương trong model này.'); return; }
-  if (!rig.isMixamo) {
-    toast('Model có xương nhưng chưa nhận diện được bộ xương Mixamo.');
-    setStudioStatus('Chưa nhận diện Mixamo', 'Hãy dùng model rig Mixamo chuẩn', 'warning');
-    return;
-  }
-  const button = $('generateMotionBtn');
-  const previousAction = activeAction;
-  let diagnosticResponse = '';
-  let diagnosticAnimation = null;
-  button.disabled = true; button.textContent = 'Đang tạo...';
-  setStudioStatus('Gemini đang tạo chuyển động...', 'Animation hiện tại vẫn tiếp tục phát', 'loading');
-  try {
-    const schema = {
-      type: 'OBJECT',
-      properties: {
-        name: { type: 'STRING' },
-        summary: { type: 'STRING' },
-        duration: { type: 'NUMBER' },
-        tracks: {
-          type: 'ARRAY',
-          items: {
-            type: 'OBJECT',
-            properties: {
-              bone: { type: 'STRING' },
-              keyframes: {
-                type: 'ARRAY',
-                items: {
-                  type: 'OBJECT',
-                  properties: {
-                    time: { type: 'NUMBER' }, x: { type: 'NUMBER' },
-                    y: { type: 'NUMBER' }, z: { type: 'NUMBER' }
-                  },
-                  required: ['time', 'x', 'y', 'z']
-                }
-              }
-            },
-            required: ['bone', 'keyframes']
-          }
-        }
-      },
-      required: ['name', 'summary', 'duration', 'tracks']
-    };
-    const instructions = [
-      'You are a professional 3D character animator creating keyframes for this exact Mixamo skeleton.',
-      'Return rotation offsets in DEGREES relative to the imported FBX T-pose. IMPORTANT: express every rotation in the CHARACTER-SPACE axes, not in each bone local axes. Runtime converts these axes through the exact bind-pose hierarchy into each bone local quaternion.',
-      'CHARACTER AXES: +Y is up, +Z is the character forward direction, +X is the character anatomical LEFT. Left/Right always mean the character own anatomical sides, NEVER the viewer screen sides. A LeftArm track must move the character left arm; a RightArm track must move the character right arm. Never swap left and right.',
-      'For each bone provide [x,y,z] Euler offsets around the character-space X,Y,Z axes, in that order, composed as Rz then Rx then Ry. Keep values anatomically natural. Do not compensate for bone roll by adding 90-degree offsets: the runtime handles bone-axis conversion.',
-      'The runtime stops the old clip and restores the exact imported T-pose before playing this AI clip. The old animation may continue while Gemini generates, but all animated bones MUST have zero offset at time 0.',
-      'Create a continuous motion starting from the imported T-pose and following the user request. For walking, use alternating legs: when left leg swings forward, right leg moves back, then reverse; opposite arm swings naturally. Keep knees bending around their local hinge direction and feet pointing forward; do not twist either thigh/leg 90 degrees sideways.',
-      'Do NOT force the character to return to its starting pose at the end. End in the natural final pose requested and hold that pose.',
-      'Use only exact bone names from the provided list, including the colon prefix format such as mixamorig:Hips. Do not invent names.',
-      'Use smooth, natural, physically plausible motion. Use 3 to 8 keyframes per animated bone. Animate only relevant bones; leave unrelated bones unchanged.',
-      'Keep hips/root rotation within 12 degrees, spine/chest within 28 degrees, head/neck within 32 degrees. For walking, use thigh swing mainly around character X (about +/-25 degrees), knee flex mainly around character X (0 to 45 degrees), and keep thigh side-roll around Z within +/-8 degrees and twist around Y within +/-8 degrees. Keep feet mostly forward; avoid 90-degree leg rotations. Arms must be mirrored anatomically but must not swap sides.',
-      'This first version is in-place animation; do not use root translation or extreme rotations.',
-      'Interpret the Vietnamese user prompt faithfully. Keep duration 2 to 12 seconds unless specified.',
-      'User prompt: ' + prompt,
-      'Character: ' + selected.name,
-      'Exact bone names: ' + rig.bones.join(', ')
-    ].join('\n');
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: instructions }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseJsonSchema: schema,
-          maxOutputTokens: 8192
-        }
-      })
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error?.message || 'Gemini API request failed');
-    const responseText = payload.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('');
-    if (!responseText) throw new Error('Gemini không trả về dữ liệu chuyển động.');
-    diagnosticResponse = responseText;
-    const animation = JSON.parse(responseText);
-    diagnosticAnimation = animation;
-    const basePose = new Map();
-    selected.traverse(node => {
-      if (node.isBone) {
-        const bind = selected.userData.bindPose?.get(node.name);
-        basePose.set(node.name, bind ? bind.quaternion.clone() : node.userData.bindQuaternion.clone());
-      }
-    });
-    const clip = createMixamoAnimation(animation, selected, basePose);
-    if (!selected.userData.mixer) {
-      const { AnimationMixer } = await import('three');
-      selected.userData.mixer = new AnimationMixer(selected);
-      studio.mixers.push(selected.userData.mixer);
-    }
-    const mixer = selected.userData.mixer;
-    // Stop every source/generated action, then restore the exact imported bind pose.
-    mixer.stopAllAction();
-    mixer.time = 0;
-    selected.traverse(node => {
-      if (!node.isBone) return;
-      const bind = selected.userData.bindPose?.get(node.name);
-      if (!bind) return;
-      node.position.copy(bind.position);
-      node.quaternion.copy(bind.quaternion);
-      node.scale.copy(bind.scale);
-    });
-    activeAction = null;
-    generatedAction = null;
-    selected.userData.clips = [clip];
-    const action = mixer.clipAction(clip);
-    action.reset();
-    action.setLoop(2200, 1);
-    action.clampWhenFinished = true;
-    action.play();
-    activeAction = action;
-    generatedAction = action;
-    $('playBtn').textContent = 'Ⅱ';
-    $('clipStatus').textContent = '1 AI animation · Original clips محفوظ';
-    $('trackEmpty').classList.add('hidden');
-    $('clipTracks').innerHTML = '';
-    selected.userData.clips.forEach((savedClip, index) => {
-      const row = document.createElement('div');
-      row.className = 'clip-row';
-      row.textContent = savedClip.name || 'AI Animation';
-      $('clipTracks').append(row);
-    });
-    const trackCount = clip.tracks.length;
-    setStudioStatus('Tạo animation thành công', (animation.summary || clip.name) + ' · ' + trackCount + ' tracks · ' + clip.duration.toFixed(1) + ' giây', 'ready');
-    toast('Đã tạo chuyển động cho Mixamo!');
-  } catch (error) {
-    console.error(error);
-    const debugPanel = $('motionDebugPanel');
-    const debugText = $('motionDebugText');
-    if (debugPanel && debugText) {
-      const modelBones = [];
-      selected?.traverse(node => { if (node.isBone) modelBones.push(node.name); });
-      const requestedTracks = diagnosticAnimation?.tracks || [];
-      const report = [
-        '=== LỖI TẠO ANIMATION ===',
-        'Thời gian: ' + new Date().toLocaleString(),
-        'Thông báo: ' + (error?.message || String(error)),
-        'Stack: ' + (error?.stack || '(không có)'),
-        '',
-        '=== MODEL ===',
-        'Tên: ' + (selected?.name || '(không rõ)'),
-        'Số xương: ' + modelBones.length,
-        'Danh sách xương model: ' + modelBones.join(', '),
-        '',
-        '=== GEMINI ===',
-        'Số track trả về: ' + requestedTracks.length,
-        'Tên xương trong từng track: ' + requestedTracks.map(t => t?.bone || '(thiếu bone)').join(', '),
-        'Dữ liệu phản hồi: ' + (diagnosticResponse || '(chưa nhận được response text)')
-      ].join('\\n');
-      debugText.textContent = report.slice(0, 18000);
-      debugPanel.open = true;
-      debugPanel.classList.add('has-error');
-    }
-    setStudioStatus('Tạo chuyển động thất bại', error.message, 'error');
-    toast('Không tạo được: ' + error.message);
-  } finally {
-    button.disabled = false; button.textContent = '✦ Tạo chuyển động';
-  }
-};
-}
-
-function screenshot(){
-  studio.renderer.render(studio.scene,studio.camera);
-  const link=document.createElement('a');link.download='3d-studio-frame.png';link.href=studio.renderer.domElement.toDataURL('image/png');link.click();
-}
-$('screenshotBtn').onclick=screenshot;$('exportBtn').onclick=screenshot;
-let elapsed=0;
-setInterval(()=>{if(activeAction?.isRunning()){elapsed+=.05;$('timecode').textContent='00:'+String(Math.floor(elapsed/60)).padStart(2,'0')+'.'+String(Math.floor(elapsed%60)).padStart(2,'0');$('playhead').style.left=Math.min(100,elapsed/10*100)+'%';}},50);
-updateSceneList();
+$('clearPlanBtn').onclick=()=>{$('planList').replaceChildren();$('planSummary').textContent='Chưa có kế hoạch';};
+$('screenshotBtn').onclick=()=>{const a=document.createElement('a');a.download='animation-frame.png';a.href=studio.renderer.domElement.toDataURL('image/png');a.click();};
+window.addEventListener('beforeunload',()=>studio.dispose());
+listScene();
+status('Sẵn sàng','Import FBX / GLB / GLTF để bắt đầu');
