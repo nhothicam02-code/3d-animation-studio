@@ -189,7 +189,7 @@ $('generateMotionBtn').onclick = async () => {
       'Character: ' + selected.name,
       'Exact bone names: ' + rig.bones.join(', ')
     ].join('\n');
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
@@ -197,7 +197,6 @@ $('generateMotionBtn').onclick = async () => {
         generationConfig: {
           responseMimeType: 'application/json',
           responseJsonSchema: schema,
-          temperature: 0.35,
           maxOutputTokens: 8192
         }
       })
