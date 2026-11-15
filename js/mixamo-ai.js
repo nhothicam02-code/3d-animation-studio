@@ -87,7 +87,7 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
       values.push(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
     }
 
-    tracks.push(new THREE.QuaternionKeyframeTrack(bone.name + '.quaternion', times, values));
+    // Mixamo bone names contain ':' (e.g. mixamorig:Hips), which is reserved in Three.js track paths.\n    // Target the bone by UUID so PropertyBinding resolves the exact Bone without parsing its name.\n    tracks.push(new THREE.QuaternionKeyframeTrack(bone.uuid + '.quaternion', times, values));
   }
 
   if (!tracks.length) {
