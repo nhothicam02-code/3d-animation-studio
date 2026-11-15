@@ -76,6 +76,7 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
   const duration = THREE.MathUtils.clamp(Number(data.duration) || 4, 1, 30);
   const tracks = [];
   const unmatched = [];
+  const skippedNoFrames = [];
 
   // Chỉ animate các xương Gemini thực sự yêu cầu.
   // Không tạo track tĩnh cho toàn bộ skeleton vì chúng có thể khóa/chồng
@@ -87,10 +88,10 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
       unmatched.push(item.bone);
       continue;
     }
-    if (item.keyframes.length < 2) continue;
+    if (item.keyframes.length < 1) { skippedNoFrames.push(item.bone); continue; }
 
-    const base = (basePose.get(item.bone) || bone.userData.bindQuaternion || bone.quaternion).clone();
-    const limit = maxAngleForBone(item.bone);
+    const base = (basePose.get(bone.name) || basePose.get(item.bone) || bone.userData.bindQuaternion || bone.quaternion).clone();
+    const limit = maxAngleForBone(bone.name);
     const frames = item.keyframes
       .map(frame => ({
         time: THREE.MathUtils.clamp(Number(frame.time) || 0, 0, duration),
@@ -132,7 +133,8 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
   if (!tracks.length) {
     const requested = data.tracks.map(item => item?.bone).filter(Boolean);
     const detail = unmatched.length ? ' Tên chưa khớp: ' + [...new Set(unmatched)].join(', ') :
-      requested.length ? ' Có ' + requested.length + ' track nhưng không tạo được track hợp lệ (kiểm tra mỗi track có ít nhất 2 keyframe).' :
+      skippedNoFrames.length ? ' Các xương không có keyframe: ' + [...new Set(skippedNoFrames)].join(', ') :
+      requested.length ? ' Có ' + requested.length + ' track nhưng dữ liệu keyframe không hợp lệ.' :
       ' Gemini không trả về trường bone hợp lệ trong tracks.';
     throw new Error('Không có keyframe nào khớp với xương của model.' + detail);
   }
