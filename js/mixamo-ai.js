@@ -54,10 +54,13 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
         .sort((a, b) => a.time - b.time);
       const safeFrames = [{ time: 0, x: 0, y: 0, z: 0 }];
       for (const frame of frames) {
-        if (frame.time <= 0.001 || frame.time >= duration - 0.001) continue;
+        if (frame.time <= 0.001) continue;
         safeFrames.push(frame);
       }
-      safeFrames.push({ time: duration, x: 0, y: 0, z: 0 });
+      const lastFrame = safeFrames[safeFrames.length - 1];
+      if (lastFrame.time < duration - 0.001) {
+        safeFrames.push({ time: duration, x: lastFrame.x, y: lastFrame.y, z: lastFrame.z });
+      }
       for (const frame of safeFrames) {
         const euler = new THREE.Euler(
           THREE.MathUtils.degToRad(THREE.MathUtils.clamp(Number(frame.x) || 0, -limit, limit)),
