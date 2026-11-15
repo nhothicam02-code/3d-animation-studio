@@ -9,14 +9,12 @@ let selected = null, activeAction = null, flyMode = false, wireframe = false, un
 const keys = new Set();
 let toastTimer;
 let generatedAction = null;
-const motionApiKey = $('motionApiKey');
-motionApiKey.value = localStorage.getItem('mixamoGeminiApiKey') || '';
-$('saveGeminiKeyBtn').addEventListener('click', () => {
-  const key = motionApiKey.value.trim();
-  if (!key) { localStorage.removeItem('mixamoGeminiApiKey'); toast('Đã xóa API key khỏi trình duyệt.'); return; }
-  localStorage.setItem('mixamoGeminiApiKey', key);
-  toast('Đã lưu API key trên trình duyệt này.');
-});
+function setStudioStatus(message, detail = '', state = 'ready') {
+  $('systemStatusText').textContent = message;
+  $('systemStatusDetail').textContent = detail;
+  $('systemStatusDot').className = 'status-indicator ' + state;
+}
+
 function toast(message) {
   const el = $('toast'); el.textContent = message; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
@@ -52,9 +50,8 @@ async function importModel(file) {
   $('viewportEmpty').classList.add('hidden');
   selectObject(result.object); updateSceneList();
   const rig = describeMixamoRig(result.object);
-  $('motionStatus').textContent = rig.isMixamo
-    ? `Mixamo rig: ${rig.bones.length} bones detected.`
-    : `Đã import model có ${rig.bones.length} xương. Nên dùng FBX Mixamo.`;
+  const rigMessage = rig.isMixamo ? `Mixamo · ${rig.bones.length} xương` : `Model · ${rig.bones.length} xương`;
+  setStudioStatus(rig.isMixamo ? 'Đã tải nhân vật Mixamo' : 'Đã tải model', rigMessage, rig.isMixamo ? 'ready' : 'warning');
   if (result.animations.length) {
     $('clipStatus').textContent = result.animations.length+' animation clip'+(result.animations.length>1?'s':'');
     $('trackEmpty').classList.add('hidden'); $('clipTracks').innerHTML='';
@@ -140,15 +137,15 @@ $('addKeyBtn').onclick=()=>toast('Keyframe editor is coming in the animation pha
 
 $('generateMotionBtn').onclick = async () => {
   const prompt = $('motionPrompt').value.trim();
-  const apiKey = motionApiKey.value.trim();
+  const apiKey = localStorage.getItem('mixamoGeminiApiKey') || '';
   if (!selected) { toast('Hãy import và chọn nhân vật FBX trước.'); return; }
   if (!prompt) { toast('Hãy nhập mô tả chuyển động.'); return; }
-  if (!apiKey) { toast('Hãy dán Gemini API key trước nhé.'); motionApiKey.focus(); return; }
+  if (!apiKey) { toast('Hãy thiết lập Gemini API ở trang Gemini API trước nhé.'); setStudioStatus('Thiếu Gemini API key', 'Mở trang Gemini API để thiết lập', 'warning'); return; }
   const rig = describeMixamoRig(selected);
   if (!rig.bones.length) { toast('Không tìm thấy xương trong model này.'); return; }
   const button = $('generateMotionBtn');
   button.disabled = true; button.textContent = 'Đang tạo...';
-  $('motionStatus').textContent = 'Gemini đang phân tích chuyển động...';
+  setStudioStatus('Gemini đang tạo chuyển động...', 'Đang gửi yêu cầu đến Gemini', 'loading');
   try {
     const schema = {
       type: 'OBJECT',
@@ -191,7 +188,7 @@ $('generateMotionBtn').onclick = async () => {
       'User prompt: ' + prompt,
       'Character: ' + selected.name,
       'Exact bone names: ' + rig.bones.join(', ')
-    ].join('\\n');
+    ].join('\n');
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
@@ -229,11 +226,11 @@ $('generateMotionBtn').onclick = async () => {
     $('clipTracks').innerHTML = '';
     const row = document.createElement('div'); row.className = 'clip-row'; row.textContent = clip.name;
     $('clipTracks').append(row);
-    $('motionStatus').textContent = animation.summary || 'Chuyển động đã được tạo.';
+    setStudioStatus('Tạo chuyển động thành công', animation.summary || clip.name, 'ready');
     toast('Đã tạo chuyển động cho Mixamo!');
   } catch (error) {
     console.error(error);
-    $('motionStatus').textContent = error.message;
+    setStudioStatus('Tạo chuyển động thất bại', error.message, 'error');
     toast('Không tạo được: ' + error.message);
   } finally {
     button.disabled = false; button.textContent = '✦ Tạo chuyển động';
