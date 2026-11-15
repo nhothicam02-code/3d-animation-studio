@@ -10,9 +10,12 @@ const keys = new Set();
 let toastTimer;
 let generatedAction = null;
 function setStudioStatus(message, detail = '', state = 'ready') {
-  $('systemStatusText').textContent = message;
-  $('systemStatusDetail').textContent = detail;
-  $('systemStatusDot').className = 'status-indicator ' + state;
+  const statusText = $('systemStatusText');
+  const statusDetail = $('systemStatusDetail');
+  const statusDot = $('systemStatusDot');
+  if (statusText) statusText.textContent = message;
+  if (statusDetail) statusDetail.textContent = detail;
+  if (statusDot) statusDot.className = 'status-indicator ' + state;
 }
 
 function toast(message) {
@@ -135,7 +138,9 @@ $('playBtn').onclick=()=>{
 $('stopBtn').onclick=()=>{if(activeAction){activeAction.stop();activeAction=null;}$('playBtn').textContent='▶';};
 $('addKeyBtn').onclick=()=>toast('Keyframe editor is coming in the animation phase.');
 
-$('generateMotionBtn').onclick = async () => {
+const motionButton = $('generateMotionBtn');
+if (motionButton) {
+motionButton.onclick = async () => {
   const prompt = $('motionPrompt').value.trim();
   const apiKey = localStorage.getItem('mixamoGeminiApiKey') || '';
   if (!selected) { toast('Hãy import và chọn nhân vật FBX trước.'); return; }
@@ -235,6 +240,8 @@ $('generateMotionBtn').onclick = async () => {
     button.disabled = false; button.textContent = '✦ Tạo chuyển động';
   }
 };
+}
+
 function screenshot(){
   studio.renderer.render(studio.scene,studio.camera);
   const link=document.createElement('a');link.download='3d-studio-frame.png';link.href=studio.renderer.domElement.toDataURL('image/png');link.click();
