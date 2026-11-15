@@ -108,24 +108,39 @@ export function createMotionClip(root, actionName, duration, intensity=1) {
     if (!grouped.has(target.bone)) grouped.set(target.bone, []);
     grouped.get(target.bone).push(target);
   }
-  for (const [bone, components] of grouped) {
-    const restLocal = bone.quaternion.clone();
-    const parentWorld = getParentWorldRest(bone);
-    const parentInv = parentWorld.clone().invert();
-    const values = [];
-    for (const time of times) {
-      const t = time/duration;
-      const delta = new THREE.Quaternion();
-      for (const component of components) {
-        const charAxisWorld = component.axis.clone().applyQuaternion(rootWorldQ).normalize();
-        const localAxis = charAxisWorld.clone().applyQuaternion(parentInv).normalize();
-        const angle = component.valueFn(t, intensity, component.side);
-        delta.multiply(new THREE.Quaternion().setFromAxisAngle(localAxis, angle));
+  const orderedBones = [...grouped.keys()].sort((a,b) => {
+    const depth = bone => { let n=bone,d=0; while(n && n!==root){d++;n=n.parent;} return d; };
+    return depth(a)-depth(b);
+  });
+  const restWorld = new Map();
+  const parentRestWorld = new Map();
+  for (const bone of orderedBones) {
+    restWorld.set(bone,bone.getWorldQuaternion(new THREE.Quaternion()));
+    parentRestWorld.set(bone,bone.parent.getWorldQuaternion(new THREE.Quaternion()));
+  }
+  const valuesByBone = new Map(orderedBones.map(bone=>[bone,[]]));
+  for (const time of times) {
+    const t = time/duration;
+    const desiredWorldByBone = new Map();
+    for (const bone of orderedBones) {
+      const deltaWorld = new THREE.Quaternion();
+      for (const component of grouped.get(bone)) {
+        const axisWorld = component.axis.clone().applyQuaternion(rootWorldQ).normalize();
+        const angle = component.valueFn(t,intensity,component.side);
+        deltaWorld.multiply(new THREE.Quaternion().setFromAxisAngle(axisWorld,angle));
       }
-      const q = delta.multiply(restLocal).normalize();
-      values.push(q.x,q.y,q.z,q.w);
+      const desiredWorld = deltaWorld.multiply(restWorld.get(bone).clone()).normalize();
+      const parent = bone.parent;
+      const parentWorld = parent?.isBone && desiredWorldByBone.has(parent)
+        ? desiredWorldByBone.get(parent)
+        : parentRestWorld.get(bone);
+      const localQ = parentWorld.clone().invert().multiply(desiredWorld).normalize();
+      desiredWorldByBone.set(bone,desiredWorld);
+      valuesByBone.get(bone).push(localQ.x,localQ.y,localQ.z,localQ.w);
     }
-    tracks.push(new THREE.QuaternionKeyframeTrack(bone.uuid+'.quaternion',times,values));
+  }
+  for (const bone of orderedBones) {
+    tracks.push(new THREE.QuaternionKeyframeTrack(bone.uuid+'.quaternion',times,valuesByBone.get(bone)));
   }
   return new THREE.AnimationClip(actionName,duration,tracks);
 }
