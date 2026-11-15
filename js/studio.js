@@ -206,11 +206,11 @@ motionButton.onclick = async () => {
     };
     const instructions = [
       'You are a professional 3D character animator creating keyframes for this exact Mixamo skeleton.',
-      'Return local Euler XYZ ROTATION OFFSETS in DEGREES relative to the character pose at the exact moment the new AI clip will begin.',
-      'The existing animation (for example Sitting Laughing) continues playing while you generate. The runtime will capture the live pose at the instant this clip starts. Therefore all animated bones MUST have zero rotation offset at time 0.',
-      'Create a continuous transition from that live pose into the action described by the user. If the character is sitting and the prompt asks it to walk, animate standing up first, then walking.',
+      'Return local Euler XYZ ROTATION OFFSETS in DEGREES relative to the imported FBX bind/rest pose. The runtime stops the old clip and restores that exact saved pose before playing this AI clip.',
+      'The old animation (for example Sitting Laughing) may play while Gemini is generating, but it will be stopped before this AI clip starts. Therefore all animated bones MUST have zero rotation offset at time 0 relative to the imported bind/rest pose.',
+      'Create a continuous motion starting from the imported bind/rest pose and following the user request. If the requested action begins seated, include a believable sitting pose transition; if the prompt asks the character to walk, animate standing up first, then walking.',
       'Do NOT force the character to return to its starting pose at the end. End in the natural final pose requested and hold that pose.',
-      'Use only exact bone names from the provided list. Do not invent names.',
+      'Use only exact bone names from the provided list, including the colon prefix format such as mixamorig:Hips. Do not invent names.',
       'Use smooth, natural, physically plausible motion. Use 3 to 8 keyframes per animated bone. Animate only relevant bones; leave unrelated bones unchanged.',
       'Keep hips/root rotation within 12 degrees, spine/chest within 28 degrees, head/neck within 32 degrees, and limbs within anatomically safe ranges. Never rotate the whole character upside down.',
       'This first version is in-place animation; do not use root translation or extreme rotations.',
