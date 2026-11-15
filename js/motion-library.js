@@ -103,18 +103,25 @@ export function createMotionClip(root, actionName, duration, intensity=1) {
   if (!targets.length) throw new Error('Không tìm thấy các xương cần thiết cho động tác '+actionName+'. Kiểm tra rig Mixamo và tên xương.');
   const times = Array.from({length: actionName==='walk'||actionName==='run'||actionName==='idle'||actionName==='wave'?17:9},(_,i)=>duration*i/(actionName==='walk'||actionName==='run'||actionName==='idle'||actionName==='wave'?16:8));
   const tracks = [];
+  const grouped = new Map();
   for (const target of targets) {
-    const bone = target.bone;
+    if (!grouped.has(target.bone)) grouped.set(target.bone, []);
+    grouped.get(target.bone).push(target);
+  }
+  for (const [bone, components] of grouped) {
     const restLocal = bone.quaternion.clone();
     const parentWorld = getParentWorldRest(bone);
     const parentInv = parentWorld.clone().invert();
-    const charAxisWorld = target.axis.clone().applyQuaternion(rootWorldQ).normalize();
-    const localAxis = charAxisWorld.clone().applyQuaternion(parentInv).normalize();
     const values = [];
     for (const time of times) {
       const t = time/duration;
-      const angle = target.valueFn(t, intensity, target.side);
-      const delta = new THREE.Quaternion().setFromAxisAngle(localAxis, angle);
+      const delta = new THREE.Quaternion();
+      for (const component of components) {
+        const charAxisWorld = component.axis.clone().applyQuaternion(rootWorldQ).normalize();
+        const localAxis = charAxisWorld.clone().applyQuaternion(parentInv).normalize();
+        const angle = component.valueFn(t, intensity, component.side);
+        delta.multiply(new THREE.Quaternion().setFromAxisAngle(localAxis, angle));
+      }
       const q = delta.multiply(restLocal).normalize();
       values.push(q.x,q.y,q.z,q.w);
     }
