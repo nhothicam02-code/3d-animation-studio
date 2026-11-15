@@ -171,6 +171,8 @@ motionButton.onclick = async () => {
   }
   const button = $('generateMotionBtn');
   const previousAction = activeAction;
+  let diagnosticResponse = '';
+  let diagnosticAnimation = null;
   button.disabled = true; button.textContent = 'Đang tạo...';
   setStudioStatus('Gemini đang tạo chuyển động...', 'Animation hiện tại vẫn tiếp tục phát', 'loading');
   try {
@@ -235,7 +237,9 @@ motionButton.onclick = async () => {
     if (!response.ok) throw new Error(payload.error?.message || 'Gemini API request failed');
     const responseText = payload.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('');
     if (!responseText) throw new Error('Gemini không trả về dữ liệu chuyển động.');
+    diagnosticResponse = responseText;
     const animation = JSON.parse(responseText);
+    diagnosticAnimation = animation;
     const basePose = new Map();
     selected.traverse(node => {
       if (node.isBone) {
@@ -286,6 +290,32 @@ motionButton.onclick = async () => {
     toast('Đã tạo chuyển động cho Mixamo!');
   } catch (error) {
     console.error(error);
+    const debugPanel = $('motionDebugPanel');
+    const debugText = $('motionDebugText');
+    if (debugPanel && debugText) {
+      const modelBones = [];
+      selected?.traverse(node => { if (node.isBone) modelBones.push(node.name); });
+      const requestedTracks = diagnosticAnimation?.tracks || [];
+      const report = [
+        '=== LỖI TẠO ANIMATION ===',
+        'Thời gian: ' + new Date().toLocaleString(),
+        'Thông báo: ' + (error?.message || String(error)),
+        'Stack: ' + (error?.stack || '(không có)'),
+        '',
+        '=== MODEL ===',
+        'Tên: ' + (selected?.name || '(không rõ)'),
+        'Số xương: ' + modelBones.length,
+        'Danh sách xương model: ' + modelBones.join(', '),
+        '',
+        '=== GEMINI ===',
+        'Số track trả về: ' + requestedTracks.length,
+        'Tên xương trong từng track: ' + requestedTracks.map(t => t?.bone || '(thiếu bone)').join(', '),
+        'Dữ liệu phản hồi: ' + (diagnosticResponse || '(chưa nhận được response text)')
+      ].join('\\n');
+      debugText.textContent = report.slice(0, 18000);
+      debugPanel.open = true;
+      debugPanel.classList.add('has-error');
+    }
     setStudioStatus('Tạo chuyển động thất bại', error.message, 'error');
     toast('Không tạo được: ' + error.message);
   } finally {
