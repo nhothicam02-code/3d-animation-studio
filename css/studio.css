@@ -17,3 +17,8 @@
 #motionApiUrl{width:min(310px,42%);min-width:100px;background:#11141a;border:1px solid #303642;border-radius:4px;color:#cbd0da;padding:5px 7px;font:9px 'DM Mono';outline:none}
 #motionStatus{margin-left:auto;text-align:right}
 @media(max-width:600px){.ai-motion-panel{padding:9px}.ai-motion-heading{margin-bottom:6px}.ai-motion-inputs{gap:6px}#motionPrompt{font-size:10px;min-height:44px}#generateMotionBtn{min-width:104px;padding:7px 8px;font-size:9px}.ai-motion-settings{flex-wrap:wrap;gap:5px}#motionApiUrl{width:100%;flex:1}#motionStatus{width:100%;text-align:left;margin:0}.timeline-panel{height:125px}.app-shell{min-height:560px}}
+
+#motionApiKey{width:min(320px,40%);min-width:130px;background:#11141a;border:1px solid #303642;border-radius:4px;color:#cbd0da;padding:6px 8px;font:10px 'DM Mono';outline:none}
+#motionApiKey:focus{border-color:var(--accent)}
+#saveGeminiKeyBtn{white-space:nowrap}
+@media(max-width:600px){#motionApiKey{width:100%;flex:1;min-width:0}.ai-motion-settings{gap:6px}}
