@@ -60,18 +60,42 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
     throw new Error('Gemini không trả về dữ liệu keyframe hợp lệ.');
   }
 
-  const boneMap = new Map();
-  const normalizedMap = new Map();
-  const duplicateNormalized = new Set();
+  // FBX có thể chứa nhiều Bone object trùng tên. Ưu tiên Bone thực sự
+  // được SkinnedMesh sử dụng, thay vì loại bỏ toàn bộ tên bị trùng.
+  const skinnedBones = new Set();
+  root.traverse(node => {
+    if (node.isSkinnedMesh && node.skeleton?.bones) {
+      node.skeleton.bones.forEach(bone => skinnedBones.add(bone));
+    }
+  });
+
+  const candidates = new Map();
   root.traverse(node => {
     if (!node.isBone) return;
-    boneMap.set(node.name, node);
     const key = normalizeBoneName(node.name);
-    if (normalizedMap.has(key)) duplicateNormalized.add(key);
-    else normalizedMap.set(key, node);
+    if (!candidates.has(key)) candidates.set(key, []);
+    candidates.get(key).push(node);
   });
-  // Never guess when two bones collapse to the same normalized name.
-  duplicateNormalized.forEach(key => normalizedMap.delete(key));
+
+  const chooseBone = list => {
+    if (!list?.length) return null;
+    return list.reduce((best, bone) => {
+      if (!best) return bone;
+      const score = Number(skinnedBones.has(bone));
+      const bestScore = Number(skinnedBones.has(best));
+      return score > bestScore ? bone : best;
+    }, null);
+  };
+
+  const boneMap = new Map();
+  const normalizedMap = new Map();
+  for (const [key, list] of candidates) {
+    const chosen = chooseBone(list);
+    if (chosen) {
+      normalizedMap.set(key, chosen);
+      boneMap.set(chosen.name, chosen);
+    }
+  }
 
   const duration = THREE.MathUtils.clamp(Number(data.duration) || 4, 1, 30);
   const tracks = [];
