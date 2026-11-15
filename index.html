@@ -91,6 +91,21 @@
       </aside>
     </main>
 
+    <section class="ai-motion-panel">
+      <div class="ai-motion-heading">
+        <div><span class="eyebrow">MIXAMO AI ANIMATION</span><strong>Mô tả chuyển động bằng prompt</strong></div>
+        <a class="settings-link" href="gemini.html">⚙ Gemini API</a>
+      </div>
+      <div class="ai-motion-inputs">
+        <textarea id="motionPrompt" rows="2" placeholder="Ví dụ: Nhân vật bước tới 3 bước, dừng lại, nhìn sang trái rồi vẫy tay phải tự nhiên..."></textarea>
+        <button id="generateMotionBtn" class="primary-button">✦ Tạo animation</button>
+      </div>
+      <div class="ai-motion-settings">
+        <span class="mixamo-chip">YÊU CẦU: MIXAMO RIG</span>
+        <span id="motionStatus" role="status">Import nhân vật Mixamo rồi nhập mô tả chuyển động.</span>
+      </div>
+    </section>
+
     <section class="timeline-panel">
       <div class="timeline-head"><div><span class="eyebrow">ANIMATION</span><h2>Timeline</h2></div><div class="timeline-controls"><button id="playBtn" class="play-button">▶</button><span id="timecode">00:00.00</span><span class="timeline-divider"></span><button id="stopBtn" class="icon-button">■</button><button id="addKeyBtn" class="small-button">＋ Add keyframe</button></div><div class="timeline-end"><span id="clipStatus">No animation clips</span></div></div>
       <div class="timeline-track-area"><div class="track-label">SCENE</div><div class="track-ruler" id="trackRuler"><span>00:00</span><span>00:02</span><span>00:04</span><span>00:06</span><span>00:08</span><span>00:10</span></div><div class="track-content"><div class="playhead" id="playhead"></div><div class="track-empty" id="trackEmpty">Import a model with animation clips to play them here.</div><div id="clipTracks"></div></div></div>
