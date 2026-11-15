@@ -16,6 +16,8 @@ function setStudioStatus(message, detail = '', state = 'ready') {
   if (statusText) statusText.textContent = message;
   if (statusDetail) statusDetail.textContent = detail;
   if (statusDot) statusDot.className = 'status-indicator ' + state;
+  const motionStatus = $('motionStatus');
+  if (motionStatus) motionStatus.textContent = detail ? message + ' · ' + detail : message;
 }
 
 function toast(message) {
@@ -50,6 +52,11 @@ function updateSceneList() {
 }
 async function importModel(file) {
   const result = await studio.loadFile(file);
+  result.object.traverse(node => {
+    if (node.isBone && !node.userData.bindQuaternion) {
+      node.userData.bindQuaternion = node.quaternion.clone();
+    }
+  });
   $('viewportEmpty').classList.add('hidden');
   selectObject(result.object); updateSceneList();
   const rig = describeMixamoRig(result.object);
@@ -148,9 +155,14 @@ motionButton.onclick = async () => {
   if (!apiKey) { toast('Hãy thiết lập Gemini API ở trang Gemini API trước nhé.'); setStudioStatus('Thiếu Gemini API key', 'Mở trang Gemini API để thiết lập', 'warning'); return; }
   const rig = describeMixamoRig(selected);
   if (!rig.bones.length) { toast('Không tìm thấy xương trong model này.'); return; }
+  if (!rig.isMixamo) {
+    toast('Model có xương nhưng chưa nhận diện được bộ xương Mixamo.');
+    setStudioStatus('Chưa nhận diện Mixamo', 'Hãy dùng model rig Mixamo chuẩn', 'warning');
+    return;
+  }
   const button = $('generateMotionBtn');
   button.disabled = true; button.textContent = 'Đang tạo...';
-  setStudioStatus('Gemini đang tạo chuyển động...', 'Đang gửi yêu cầu đến Gemini', 'loading');
+  setStudioStatus('Gemini đang tạo chuyển động...', 'Đang phân tích prompt và rig Mixamo', 'loading');
   try {
     const schema = {
       type: 'OBJECT',
@@ -221,6 +233,7 @@ motionButton.onclick = async () => {
     if (activeAction) activeAction.stop();
     if (generatedAction) generatedAction.stop();
     const mixer = selected.userData.mixer;
+    mixer.stopAllAction();
     const action = mixer.clipAction(clip);
     action.reset(); action.setLoop(2201, Infinity); action.play();
     activeAction = action; generatedAction = action;
@@ -230,7 +243,8 @@ motionButton.onclick = async () => {
     $('clipTracks').innerHTML = '';
     const row = document.createElement('div'); row.className = 'clip-row'; row.textContent = clip.name;
     $('clipTracks').append(row);
-    setStudioStatus('Tạo chuyển động thành công', animation.summary || clip.name, 'ready');
+    const trackCount = clip.tracks.length;
+    setStudioStatus('Tạo animation thành công', (animation.summary || clip.name) + ' · ' + trackCount + ' tracks · ' + clip.duration.toFixed(1) + ' giây', 'ready');
     toast('Đã tạo chuyển động cho Mixamo!');
   } catch (error) {
     console.error(error);
