@@ -22,12 +22,6 @@ export class AnimationSequencer {
     if (this.stopped) return;
     if (this.index>=this.plan.length) { this.onStatus('Hoàn tất chuỗi hành động'); this.stopped=true; return; }
     const item=this.plan[this.index++];
-    // Every library primitive is authored against the imported bind/T-pose.
-    this.root.traverse(node=>{
-      if(!node.isBone)return;
-      const pose=this.root.userData.bindPose?.get(node.name);
-      if(pose){node.position.copy(pose.position);node.quaternion.copy(pose.quaternion);node.scale.copy(pose.scale);}
-    });
     this.root.updateMatrixWorld(true);
     let clip;
     try { clip=createMotionClip(this.root,item.action,item.duration,item.intensity||1); }
