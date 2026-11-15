@@ -161,8 +161,14 @@ motionButton.onclick = async () => {
     return;
   }
   const button = $('generateMotionBtn');
+  const previousAction = activeAction;
+  if (previousAction?.isRunning()) previousAction.paused = true;
+  const basePose = new Map();
+  selected.traverse(node => {
+    if (node.isBone) basePose.set(node.name, node.quaternion.clone());
+  });
   button.disabled = true; button.textContent = 'Đang tạo...';
-  setStudioStatus('Gemini đang tạo chuyển động...', 'Đang phân tích prompt và rig Mixamo', 'loading');
+  setStudioStatus('Gemini đang tạo chuyển động...', 'Đã giữ nguyên tư thế hiện tại của nhân vật', 'loading');
   try {
     const schema = {
       type: 'OBJECT',
@@ -196,11 +202,13 @@ motionButton.onclick = async () => {
     };
     const instructions = [
       'You are a professional 3D character animator creating keyframes for this exact Mixamo skeleton.',
-      'Return local Euler XYZ ROTATION OFFSETS in DEGREES relative to each bone bind/rest pose.',
+      'Return local Euler XYZ ROTATION OFFSETS in DEGREES relative to the character CURRENT POSE at the moment the request is made, not a T-pose or default rest pose.',
+      'The current pose may be seated. Preserve it exactly at time 0, then make a believable transition if the requested action requires standing up.',
       'Use only exact bone names from the provided list. Do not invent names.',
-      'Use smooth, natural, physically plausible motion. Include zero-offset start and end poses.',
-      'Use 2 to 8 keyframes per animated bone. Animate only relevant bones.',
-      'This first version is in-place animation; avoid large root translations.',
+      'Use smooth, natural, physically plausible motion. Every animated bone MUST have zero rotation offset at time 0 and at the final time so the character returns to the exact starting pose.',
+      'Use 3 to 8 keyframes per animated bone. Animate only relevant bones; leave unrelated bones unchanged.',
+      'Keep hips/root rotation within 12 degrees, spine/chest within 28 degrees, head/neck within 32 degrees, and limbs within anatomically safe ranges. Never rotate the whole character upside down.',
+      'This first version is in-place animation; do not use root translation or extreme rotations.',
       'Interpret the Vietnamese user prompt faithfully. Keep duration 2 to 12 seconds unless specified.',
       'User prompt: ' + prompt,
       'Character: ' + selected.name,
@@ -223,7 +231,7 @@ motionButton.onclick = async () => {
     const responseText = payload.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('');
     if (!responseText) throw new Error('Gemini không trả về dữ liệu chuyển động.');
     const animation = JSON.parse(responseText);
-    const clip = createMixamoAnimation(animation, selected);
+    const clip = createMixamoAnimation(animation, selected, basePose);
     selected.userData.clips = [clip];
     if (!selected.userData.mixer) {
       const { AnimationMixer } = await import('three');
@@ -248,6 +256,12 @@ motionButton.onclick = async () => {
     toast('Đã tạo chuyển động cho Mixamo!');
   } catch (error) {
     console.error(error);
+    if (previousAction) {
+      previousAction.paused = false;
+      previousAction.play();
+      activeAction = previousAction;
+      $('playBtn').textContent = 'Ⅱ';
+    }
     setStudioStatus('Tạo chuyển động thất bại', error.message, 'error');
     toast('Không tạo được: ' + error.message);
   } finally {
