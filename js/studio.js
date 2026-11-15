@@ -9,10 +9,14 @@ let selected = null, activeAction = null, flyMode = false, wireframe = false, un
 const keys = new Set();
 let toastTimer;
 let generatedAction = null;
-const motionApiUrl = $('motionApiUrl');
-const savedMotionUrl = localStorage.getItem('mixamoGeminiWorkerUrl') || '';
-motionApiUrl.value = savedMotionUrl;
-motionApiUrl.addEventListener('change', () => localStorage.setItem('mixamoGeminiWorkerUrl', motionApiUrl.value.trim()));
+const motionApiKey = $('motionApiKey');
+motionApiKey.value = localStorage.getItem('mixamoGeminiApiKey') || '';
+$('saveGeminiKeyBtn').addEventListener('click', () => {
+  const key = motionApiKey.value.trim();
+  if (!key) { localStorage.removeItem('mixamoGeminiApiKey'); toast('Đã xóa API key khỏi trình duyệt.'); return; }
+  localStorage.setItem('mixamoGeminiApiKey', key);
+  toast('Đã lưu API key trên trình duyệt này.');
+});
 function toast(message) {
   const el = $('toast'); el.textContent = message; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
@@ -136,24 +140,77 @@ $('addKeyBtn').onclick=()=>toast('Keyframe editor is coming in the animation pha
 
 $('generateMotionBtn').onclick = async () => {
   const prompt = $('motionPrompt').value.trim();
-  const endpoint = motionApiUrl.value.trim().replace(/\/$/, '');
+  const apiKey = motionApiKey.value.trim();
   if (!selected) { toast('Hãy import và chọn nhân vật FBX trước.'); return; }
   if (!prompt) { toast('Hãy nhập mô tả chuyển động.'); return; }
-  if (!endpoint) { toast('Nhập Gemini Worker URL trước nhé.'); motionApiUrl.focus(); return; }
+  if (!apiKey) { toast('Hãy dán Gemini API key trước nhé.'); motionApiKey.focus(); return; }
   const rig = describeMixamoRig(selected);
   if (!rig.bones.length) { toast('Không tìm thấy xương trong model này.'); return; }
   const button = $('generateMotionBtn');
   button.disabled = true; button.textContent = 'Đang tạo...';
   $('motionStatus').textContent = 'Gemini đang phân tích chuyển động...';
   try {
-    const response = await fetch(endpoint + '/animate', {
+    const schema = {
+      type: 'OBJECT',
+      properties: {
+        name: { type: 'STRING' },
+        summary: { type: 'STRING' },
+        duration: { type: 'NUMBER' },
+        tracks: {
+          type: 'ARRAY',
+          items: {
+            type: 'OBJECT',
+            properties: {
+              bone: { type: 'STRING' },
+              keyframes: {
+                type: 'ARRAY',
+                items: {
+                  type: 'OBJECT',
+                  properties: {
+                    time: { type: 'NUMBER' }, x: { type: 'NUMBER' },
+                    y: { type: 'NUMBER' }, z: { type: 'NUMBER' }
+                  },
+                  required: ['time', 'x', 'y', 'z']
+                }
+              }
+            },
+            required: ['bone', 'keyframes']
+          }
+        }
+      },
+      required: ['name', 'summary', 'duration', 'tracks']
+    };
+    const instructions = [
+      'You are a professional 3D character animator creating keyframes for this exact Mixamo skeleton.',
+      'Return local Euler XYZ ROTATION OFFSETS in DEGREES relative to each bone bind/rest pose.',
+      'Use only exact bone names from the provided list. Do not invent names.',
+      'Use smooth, natural, physically plausible motion. Include zero-offset start and end poses.',
+      'Use 2 to 8 keyframes per animated bone. Animate only relevant bones.',
+      'This first version is in-place animation; avoid large root translations.',
+      'Interpret the Vietnamese user prompt faithfully. Keep duration 2 to 12 seconds unless specified.',
+      'User prompt: ' + prompt,
+      'Character: ' + selected.name,
+      'Exact bone names: ' + rig.bones.join(', ')
+    ].join('\\n');
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, bones: rig.bones, rigName: selected.name })
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: instructions }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseJsonSchema: schema,
+          temperature: 0.35,
+          maxOutputTokens: 8192
+        }
+      })
     });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || 'Gemini Worker request failed');
-    const clip = createMixamoAnimation(payload.animation, selected);
+    if (!response.ok) throw new Error(payload.error?.message || 'Gemini API request failed');
+    const responseText = payload.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('');
+    if (!responseText) throw new Error('Gemini không trả về dữ liệu chuyển động.');
+    const animation = JSON.parse(responseText);
+    const clip = createMixamoAnimation(animation, selected);
     selected.userData.clips = [clip];
     if (!selected.userData.mixer) {
       const { AnimationMixer } = await import('three');
@@ -172,7 +229,7 @@ $('generateMotionBtn').onclick = async () => {
     $('clipTracks').innerHTML = '';
     const row = document.createElement('div'); row.className = 'clip-row'; row.textContent = clip.name;
     $('clipTracks').append(row);
-    $('motionStatus').textContent = payload.animation.summary || 'Chuyển động đã được tạo.';
+    $('motionStatus').textContent = animation.summary || 'Chuyển động đã được tạo.';
     toast('Đã tạo chuyển động cho Mixamo!');
   } catch (error) {
     console.error(error);
