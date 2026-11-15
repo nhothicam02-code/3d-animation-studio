@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111318">
+  <title>3D Animation Studio</title>
+  <link rel="stylesheet" href="css/studio.css">
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#"><span class="brand-mark">✳</span><span>3D <b>ANIMATION</b> STUDIO</span></a>
+      <div class="project-name"><span class="live-dot"></span> Untitled Scene <span class="save-state">Local session</span></div>
+      <div class="top-actions">
+        <button class="tool-button" id="resetViewBtn" title="Đặt lại góc nhìn">⌖ <span>Reset view</span></button>
+        <button class="tool-button" id="screenshotBtn" title="Chụp ảnh khung hình">▣ <span>Screenshot</span></button>
+        <button class="primary-button" id="exportBtn">Export image ↗</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="panel left-panel">
+        <div class="panel-heading"><div><span class="eyebrow">WORKSPACE</span><h2>Assets</h2></div><span class="panel-icon">▧</span></div>
+        <section class="asset-section">
+          <div class="section-title">IMPORT</div>
+          <label class="import-card" for="modelInput">
+            <span class="import-icon">＋</span><strong>Import 3D model</strong>
+            <small>GLB, GLTF, FBX</small>
+          </label>
+          <input id="modelInput" type="file" accept=".glb,.gltf,.fbx" hidden>
+          <label class="import-card compact" for="environmentInput">
+            <span class="import-icon">◉</span><span><strong>360° Environment</strong><small>Panorama JPG, PNG, HDR*</small></span>
+          </label>
+          <input id="environmentInput" type="file" accept=".jpg,.jpeg,.png,.webp" hidden>
+          <p class="hint">* HDRI support will be added in a later stage. Use an equirectangular panorama image for now.</p>
+        </section>
+        <section class="asset-section">
+          <div class="section-title">SCENE HIERARCHY <button class="tiny-action" id="addPrimitiveBtn">＋ Add</button></div>
+          <div id="sceneList" class="scene-list"><div class="empty-assets">No objects in scene yet.<br>Import a model to get started.</div></div>
+        </section>
+        <section class="asset-section camera-section">
+          <div class="section-title">CAMERA</div>
+          <button class="wide-button active" id="orbitModeBtn">◉ Orbit camera <span>Active</span></button>
+          <button class="wide-button" id="flyModeBtn">✧ Fly camera <span>WASD</span></button>
+          <p class="hint">Orbit: drag to rotate · scroll to zoom · right-drag to pan. Fly: click viewport, WASD + mouse, Esc to exit.</p>
+        </section>
+      </aside>
+
+      <section class="viewport-column">
+        <div class="viewport-toolbar">
+          <div class="view-tabs"><button class="view-tab active">Perspective</button><button class="view-tab" id="frontViewBtn">Front</button><button class="view-tab" id="sideViewBtn">Side</button><button class="view-tab" id="topViewBtn">Top</button></div>
+          <div class="viewport-tools"><button id="gridBtn" class="icon-button active" title="Toggle grid">▦</button><button id="wireBtn" class="icon-button" title="Wireframe">◇</button><span class="toolbar-divider"></span><span class="view-label">REALTIME VIEWPORT</span></div>
+        </div>
+        <div id="viewport" class="viewport">
+          <div class="viewport-empty" id="viewportEmpty">
+            <div class="empty-orbit"><span>＋</span></div>
+            <h2>Your 3D world starts here</h2>
+            <p>Import a model or drop a GLB file into the viewport</p>
+            <label for="modelInput" class="empty-cta">Import 3D model <span>↑</span></label>
+          </div>
+          <div class="viewport-status"><span class="status-pill"><i></i> WEBGL READY</span><span id="objectCount">0 OBJECTS</span></div>
+          <div class="drop-overlay" id="dropOverlay">Drop your 3D model here</div>
+          <div class="fly-hint" id="flyHint">FLY MODE · WASD to move · ESC to exit</div>
+        </div>
+        <div class="viewport-footer"><span id="selectionLabel">Nothing selected</span><span>Orbit controls <b>●</b> · Three.js</span></div>
+      </section>
+
+      <aside class="panel right-panel">
+        <div class="panel-heading"><div><span class="eyebrow">INSPECTOR</span><h2>Properties</h2></div><span class="panel-icon">☷</span></div>
+        <div id="inspectorEmpty" class="inspector-empty"><div class="inspector-glyph">◇</div><strong>No object selected</strong><p>Select an object in the scene to edit its transform.</p></div>
+        <div id="inspector" class="inspector hidden">
+          <div class="selected-object"><span class="object-glyph">◈</span><div><strong id="selectedName">Object</strong><small>3D Object</small></div></div>
+          <div class="property-group">
+            <div class="property-title">TRANSFORM <span>⌄</span></div>
+            <div class="axis-row"><label>Position</label><div class="vector-inputs"><label>X<input id="posX" type="number" step=".1"></label><label>Y<input id="posY" type="number" step=".1"></label><label>Z<input id="posZ" type="number" step=".1"></label></div></div>
+            <div class="axis-row"><label>Rotation</label><div class="vector-inputs"><label>X<input id="rotX" type="number" step="1"></label><label>Y<input id="rotY" type="number" step="1"></label><label>Z<input id="rotZ" type="number" step="1"></label></div></div>
+            <div class="axis-row"><label>Scale</label><div class="vector-inputs"><label>X<input id="scaleX" type="number" step=".1"></label><label>Y<input id="scaleY" type="number" step=".1"></label><label>Z<input id="scaleZ" type="number" step=".1"></label></div></div>
+            <label class="check-row"><input type="checkbox" id="uniformScale" checked> Uniform scale</label>
+          </div>
+          <div class="property-group">
+            <div class="property-title">DISPLAY</div>
+            <label class="check-row"><input type="checkbox" id="visibleToggle" checked> Visible</label>
+          </div>
+          <button class="danger-button" id="deleteObjectBtn">⌫ Remove from scene</button>
+        </div>
+        <div class="property-group lighting-group"><div class="property-title">SCENE LIGHTING</div><div class="light-control"><label for="lightIntensity">Ambient light</label><output id="lightValue">1.2</output></div><input id="lightIntensity" type="range" min="0" max="3" step=".1" value="1.2"></div>
+      </aside>
+    </main>
+
+    <section class="timeline-panel">
+      <div class="timeline-head"><div><span class="eyebrow">ANIMATION</span><h2>Timeline</h2></div><div class="timeline-controls"><button id="playBtn" class="play-button">▶</button><span id="timecode">00:00.00</span><span class="timeline-divider"></span><button id="stopBtn" class="icon-button">■</button><button id="addKeyBtn" class="small-button">＋ Add keyframe</button></div><div class="timeline-end"><span id="clipStatus">No animation clips</span></div></div>
+      <div class="timeline-track-area"><div class="track-label">SCENE</div><div class="track-ruler" id="trackRuler"><span>00:00</span><span>00:02</span><span>00:04</span><span>00:06</span><span>00:08</span><span>00:10</span></div><div class="track-content"><div class="playhead" id="playhead"></div><div class="track-empty" id="trackEmpty">Import a model with animation clips to play them here.</div><div id="clipTracks"></div></div></div>
+    </section>
+    <div class="toast" id="toast"></div>
+  </div>
+  <script type="module" src="js/studio.js"></script>
+</body>
+</html>
