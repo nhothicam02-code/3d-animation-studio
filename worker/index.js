@@ -57,8 +57,8 @@ export default {
       };
       const input = [
         'You are a professional 3D character animator. Create local bone rotation keyframes for this exact Mixamo skeleton.',
-        'Return rotations in DEGREES as local Euler XYZ values. Use only bone names from the provided list. Do not invent names.',
-        'Keep motion natural, physically plausible and smooth. Include neutral starting and ending poses. Use 2-8 keyframes per animated bone.',
+        'Return rotations in DEGREES as local Euler XYZ OFFSETS relative to each bone bind/rest pose. Use only bone names from the provided list. Do not invent names.',
+        'Keep motion natural, physically plausible and smooth. Include zero-offset starting and ending poses. Use 2-8 keyframes per animated bone. Values are additive pose offsets, not absolute bone rotations.',
         'Animate only necessary bones; usually hips, spine, head, arms, forearms, hands, thighs, legs and feet.',
         'Use a duration between 2 and 12 seconds unless the user explicitly asks otherwise. Keep root movement modest because this first version animates in-place.',
         'The user request is in Vietnamese; interpret it faithfully. Output concise Vietnamese summary.',
