@@ -91,6 +91,27 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
     if (item.keyframes.length < 1) { skippedNoFrames.push(item.bone); continue; }
 
     const base = (basePose.get(bone.name) || basePose.get(item.bone) || bone.userData.bindQuaternion || bone.quaternion).clone();
+
+    // Gemini describes rotations in the character's T-pose axes (not each
+    // bone's arbitrary local axes). Convert that character-space delta into
+    // the bone's local quaternion using the FBX bind-pose hierarchy.
+    // This prevents forearms/thighs from inheriting 90-degree bone-axis rolls.
+    const parentChain = [];
+    let ancestor = bone.parent;
+    while (ancestor && ancestor !== root) {
+      parentChain.push(ancestor);
+      ancestor = ancestor.parent;
+    }
+    const parentRest = new THREE.Quaternion();
+    for (let i = parentChain.length - 1; i >= 0; i--) {
+      const node = parentChain[i];
+      const nodeRest = node.isBone
+        ? (basePose.get(node.name) || node.userData.bindQuaternion || node.quaternion)
+        : node.quaternion;
+      parentRest.multiply(nodeRest);
+    }
+    const boneRestWorld = parentRest.clone().multiply(base);
+    const parentRestInverse = parentRest.clone().invert();
     const limit = maxAngleForBone(bone.name);
     const frames = item.keyframes
       .map(frame => ({
@@ -122,7 +143,7 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
         'XYZ'
       );
       const delta = new THREE.Quaternion().setFromEuler(euler);
-      const quaternion = base.clone().multiply(delta).normalize();
+      const quaternion = parentRestInverse.clone().multiply(delta).multiply(boneRestWorld).normalize();
       times.push(frame.time);
       values.push(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
     }
