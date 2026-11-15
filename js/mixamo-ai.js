@@ -28,52 +28,72 @@ export function createMixamoAnimation(data, root, basePose = new Map()) {
   if (!data || !Array.isArray(data.tracks) || !data.tracks.length) {
     throw new Error('Gemini không trả về dữ liệu keyframe hợp lệ.');
   }
+
   const boneMap = new Map();
-  root.traverse(node => { if (node.isBone) boneMap.set(node.name, node); });
-  const requested = new Map(data.tracks.map(item => [item.bone, item]));
+  root.traverse(node => {
+    if (node.isBone) boneMap.set(node.name, node);
+  });
+
   const duration = THREE.MathUtils.clamp(Number(data.duration) || 4, 1, 30);
   const tracks = [];
+  const unmatched = [];
 
-  for (const [name, bone] of boneMap) {
-    const base = (basePose.get(name) || bone.userData.bindQuaternion || bone.quaternion).clone();
-    const item = requested.get(name);
+  // Chỉ animate các xương Gemini thực sự yêu cầu.
+  // Không tạo track tĩnh cho toàn bộ skeleton vì chúng có thể khóa/chồng
+  // chuyển động của các xương khác trong rig.
+  for (const item of data.tracks) {
+    if (!item || typeof item.bone !== 'string' || !Array.isArray(item.keyframes)) continue;
+    const bone = boneMap.get(item.bone);
+    if (!bone) {
+      unmatched.push(item.bone);
+      continue;
+    }
+    if (item.keyframes.length < 2) continue;
+
+    const base = (basePose.get(item.bone) || bone.userData.bindQuaternion || bone.quaternion).clone();
+    const limit = maxAngleForBone(item.bone);
+    const frames = item.keyframes
+      .map(frame => ({
+        time: THREE.MathUtils.clamp(Number(frame.time) || 0, 0, duration),
+        x: Number(frame.x) || 0,
+        y: Number(frame.y) || 0,
+        z: Number(frame.z) || 0
+      }))
+      .sort((a, b) => a.time - b.time);
+
+    const safeFrames = [{ time: 0, x: 0, y: 0, z: 0 }];
+    for (const frame of frames) {
+      if (frame.time <= 0.001) continue;
+      safeFrames.push(frame);
+    }
+
+    const lastFrame = safeFrames[safeFrames.length - 1];
+    if (lastFrame.time < duration - 0.001) {
+      safeFrames.push({ time: duration, x: lastFrame.x, y: lastFrame.y, z: lastFrame.z });
+    }
+
     const times = [];
     const values = [];
-    const push = (time, quaternion) => {
-      times.push(time);
+    for (const frame of safeFrames) {
+      const euler = new THREE.Euler(
+        THREE.MathUtils.degToRad(THREE.MathUtils.clamp(frame.x, -limit, limit)),
+        THREE.MathUtils.degToRad(THREE.MathUtils.clamp(frame.y, -limit, limit)),
+        THREE.MathUtils.degToRad(THREE.MathUtils.clamp(frame.z, -limit, limit)),
+        'XYZ'
+      );
+      const delta = new THREE.Quaternion().setFromEuler(euler);
+      const quaternion = base.clone().multiply(delta).normalize();
+      times.push(frame.time);
       values.push(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
-    };
-
-    if (!item || !Array.isArray(item.keyframes) || item.keyframes.length < 2) {
-      push(0, base);
-      push(duration, base);
-    } else {
-      const limit = maxAngleForBone(name);
-      const frames = item.keyframes
-        .map(frame => ({ ...frame, time: THREE.MathUtils.clamp(Number(frame.time) || 0, 0, duration) }))
-        .sort((a, b) => a.time - b.time);
-      const safeFrames = [{ time: 0, x: 0, y: 0, z: 0 }];
-      for (const frame of frames) {
-        if (frame.time <= 0.001) continue;
-        safeFrames.push(frame);
-      }
-      const lastFrame = safeFrames[safeFrames.length - 1];
-      if (lastFrame.time < duration - 0.001) {
-        safeFrames.push({ time: duration, x: lastFrame.x, y: lastFrame.y, z: lastFrame.z });
-      }
-      for (const frame of safeFrames) {
-        const euler = new THREE.Euler(
-          THREE.MathUtils.degToRad(THREE.MathUtils.clamp(Number(frame.x) || 0, -limit, limit)),
-          THREE.MathUtils.degToRad(THREE.MathUtils.clamp(Number(frame.y) || 0, -limit, limit)),
-          THREE.MathUtils.degToRad(THREE.MathUtils.clamp(Number(frame.z) || 0, -limit, limit)),
-          'XYZ'
-        );
-        const delta = new THREE.Quaternion().setFromEuler(euler);
-        push(frame.time, base.clone().multiply(delta).normalize());
-      }
     }
-    tracks.push(new THREE.QuaternionKeyframeTrack(name + '.quaternion', times, values));
+
+    tracks.push(new THREE.QuaternionKeyframeTrack(bone.name + '.quaternion', times, values));
   }
-  if (!tracks.length) throw new Error('Không có xương nào khớp với rig hiện tại.');
+
+  if (!tracks.length) {
+    const detail = unmatched.length ? ' Tên xương không khớp: ' + unmatched.join(', ') : '';
+    throw new Error('Không có keyframe nào khớp với xương của model.' + detail);
+  }
+
   return new THREE.AnimationClip(data.name || 'AI Motion', duration, tracks);
 }
