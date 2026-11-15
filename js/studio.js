@@ -1,5 +1,6 @@
 import { StudioScene } from './scene.js';
 import { bindImporters } from './importer.js';
+import { createMixamoAnimation, describeMixamoRig } from './mixamo-ai.js';
 
 const $ = id => document.getElementById(id);
 const viewport = $('viewport');
@@ -7,6 +8,11 @@ const studio = new StudioScene(viewport);
 let selected = null, activeAction = null, flyMode = false, wireframe = false, uniform = true;
 const keys = new Set();
 let toastTimer;
+let generatedAction = null;
+const motionApiUrl = $('motionApiUrl');
+const savedMotionUrl = localStorage.getItem('mixamoGeminiWorkerUrl') || '';
+motionApiUrl.value = savedMotionUrl;
+motionApiUrl.addEventListener('change', () => localStorage.setItem('mixamoGeminiWorkerUrl', motionApiUrl.value.trim()));
 function toast(message) {
   const el = $('toast'); el.textContent = message; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
@@ -41,6 +47,10 @@ async function importModel(file) {
   const result = await studio.loadFile(file);
   $('viewportEmpty').classList.add('hidden');
   selectObject(result.object); updateSceneList();
+  const rig = describeMixamoRig(result.object);
+  $('motionStatus').textContent = rig.isMixamo
+    ? `Mixamo rig: ${rig.bones.length} bones detected.`
+    : `Đã import model có ${rig.bones.length} xương. Nên dùng FBX Mixamo.`;
   if (result.animations.length) {
     $('clipStatus').textContent = result.animations.length+' animation clip'+(result.animations.length>1?'s':'');
     $('trackEmpty').classList.add('hidden'); $('clipTracks').innerHTML='';
@@ -123,6 +133,54 @@ $('playBtn').onclick=()=>{
 };
 $('stopBtn').onclick=()=>{if(activeAction){activeAction.stop();activeAction=null;}$('playBtn').textContent='▶';};
 $('addKeyBtn').onclick=()=>toast('Keyframe editor is coming in the animation phase.');
+
+$('generateMotionBtn').onclick = async () => {
+  const prompt = $('motionPrompt').value.trim();
+  const endpoint = motionApiUrl.value.trim().replace(/\/$/, '');
+  if (!selected) { toast('Hãy import và chọn nhân vật FBX trước.'); return; }
+  if (!prompt) { toast('Hãy nhập mô tả chuyển động.'); return; }
+  if (!endpoint) { toast('Nhập Gemini Worker URL trước nhé.'); motionApiUrl.focus(); return; }
+  const rig = describeMixamoRig(selected);
+  if (!rig.bones.length) { toast('Không tìm thấy xương trong model này.'); return; }
+  const button = $('generateMotionBtn');
+  button.disabled = true; button.textContent = 'Đang tạo...';
+  $('motionStatus').textContent = 'Gemini đang phân tích chuyển động...';
+  try {
+    const response = await fetch(endpoint + '/animate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, bones: rig.bones, rigName: selected.name })
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || 'Gemini Worker request failed');
+    const clip = createMixamoAnimation(payload.animation, selected);
+    if (!selected.userData.mixer) {
+      const { AnimationMixer } = await import('three');
+      selected.userData.mixer = new AnimationMixer(selected);
+      studio.mixers.push(selected.userData.mixer);
+    }
+    if (activeAction) activeAction.stop();
+    if (generatedAction) generatedAction.stop();
+    const mixer = selected.userData.mixer;
+    const action = mixer.clipAction(clip);
+    action.reset(); action.setLoop(2201, Infinity); action.play();
+    activeAction = action; generatedAction = action;
+    $('playBtn').textContent = 'Ⅱ';
+    $('clipStatus').textContent = 'AI: ' + clip.name;
+    $('trackEmpty').classList.add('hidden');
+    $('clipTracks').innerHTML = '';
+    const row = document.createElement('div'); row.className = 'clip-row'; row.textContent = clip.name;
+    $('clipTracks').append(row);
+    $('motionStatus').textContent = payload.animation.summary || 'Chuyển động đã được tạo.';
+    toast('Đã tạo chuyển động cho Mixamo!');
+  } catch (error) {
+    console.error(error);
+    $('motionStatus').textContent = error.message;
+    toast('Không tạo được: ' + error.message);
+  } finally {
+    button.disabled = false; button.textContent = '✦ Tạo chuyển động';
+  }
+};
 function screenshot(){
   studio.renderer.render(studio.scene,studio.camera);
   const link=document.createElement('a');link.download='3d-studio-frame.png';link.href=studio.renderer.domElement.toDataURL('image/png');link.click();
