@@ -154,6 +154,7 @@ $('generateMotionBtn').onclick = async () => {
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || 'Gemini Worker request failed');
     const clip = createMixamoAnimation(payload.animation, selected);
+    selected.userData.clips = [clip];
     if (!selected.userData.mixer) {
       const { AnimationMixer } = await import('three');
       selected.userData.mixer = new AnimationMixer(selected);
