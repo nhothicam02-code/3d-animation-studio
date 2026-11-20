@@ -34,3 +34,23 @@ Never commit personal access tokens or API keys. Never store long-lived credenti
 
 ## Prototype limitations
 The current model is procedural placeholder geometry. Asset selectors save IDs but do not yet load corresponding GLB files. Motion controls are preview-only, not a production rig or keyframe system.
+
+## GLB Asset Library (prototype)
+
+The Asset page can load a public `.glb` file into the 3D viewport:
+1. Put GLB files in the repository under the matching folder, for example `assets/hair/hair_bob_01.glb`.
+2. Open Asset and paste the public/raw URL or a relative path such as `assets/hair/hair_bob_01.glb`.
+3. Choose the category and select **Tải vào viewport**.
+4. To make an asset appear in the reusable library, add an entry to `data/asset-manifest.json` under `assets`, for example:
+
+```json
+{
+  "id": "hair_bob_01",
+  "name": "Tóc bob 01",
+  "category": "hair",
+  "path": "assets/hair/hair_bob_01.glb",
+  "format": "glb"
+}
+```
+
+The GLB loader uses Three.js GLTFLoader. A loaded category replaces its corresponding procedural placeholder part. Current attachment positions and target sizes are approximate prototype defaults in `js/viewport.js`; production assets still need consistent pivots, scale, orientation and attachment points. The loader currently replaces one asset per category, and does not yet perform true bone/socket binding, outfit fitting, rig retargeting, or persistent GitHub writes from the browser. Public cross-origin URLs must permit browser CORS access.
