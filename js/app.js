@@ -103,7 +103,8 @@ $("#name-dialog-cancel").onclick=closeNameDialog;
 $("#name-dialog").addEventListener("click",e=>{if(e.target.id==="name-dialog")closeNameDialog();});
 $("#name-dialog-form").addEventListener("submit",e=>{e.preventDefault();const value=$("#name-dialog-input").value.trim();if(!value){toast("Tên nhân vật không được để trống.");return;}const cb=nameDialogCallback;closeNameDialog();if(cb)cb(value);});
 
-try{const savedToken=localStorage.getItem("3d-character-studio-github-token");if(savedToken)setGitHubToken(savedToken);}catch(error){console.warn("Không đọc được GitHub token từ Local Storage",error);}\n$("#open-settings").onclick=()=>{$("#settings-dialog").hidden=false;$("#github-token").value="";$("#github-status").textContent=hasGitHubToken()?"Đã lưu token trên thiết bị này.":"Chưa kết nối GitHub.";};
+try{const savedToken=localStorage.getItem("3d-character-studio-github-token");if(savedToken)setGitHubToken(savedToken);}catch(error){console.warn("Không đọc được GitHub token từ Local Storage",error);}
+$("#open-settings").onclick=()=>{$("#settings-dialog").hidden=false;$("#github-token").value="";$("#github-status").textContent=hasGitHubToken()?"Đã lưu token trên thiết bị này.":"Chưa kết nối GitHub.";};
 $("#close-settings").onclick=()=>{$("#settings-dialog").hidden=true;};
 $("#settings-dialog").addEventListener("click",e=>{if(e.target.id==="settings-dialog")$("#settings-dialog").hidden=true;});
 $("#save-github").onclick=()=>{const value=$("#github-token").value.trim();if(!value){toast("Hãy nhập GitHub Token.");return;}setGitHubToken(value);try{localStorage.setItem("3d-character-studio-github-token",value);}catch(error){toast("Trình duyệt không cho phép lưu Local Storage.");return;}$("#github-token").value="";$("#github-status").textContent="Token đã được lưu trên thiết bị này.";toast("Đã lưu GitHub Token trên thiết bị.");};
