@@ -46,19 +46,6 @@ function alignCharacterToGround(){
  character.position.y=Number.isFinite(targetY)?targetY:previousY;
  character.updateMatrixWorld(true);
 }
-function mat(color,rough=.75){return new THREE.MeshStandardMaterial({color,roughness:rough});}
-function sphere(parent,pos,scale,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);m.position.set(...pos);m.scale.set(...scale);parent.add(m);return m;}
-sphere(character,[0,.55,0],[.48,.62,.34],mat("#d9b4d1"));
-sphere(character,[0,1.55,0],[.66,.72,.57],skin);
-sphere(character,[0,1.93,-.02],[.68,.43,.58],hair);
-sphere(character,[-.34,1.55,.37],[.13,.25,.12],hair);sphere(character,[.34,1.55,.37],[.13,.25,.12],hair);
-for(const x of [-.23,.23]){sphere(character,[x,1.62,.505],[.105,.14,.055],white);sphere(character,[x,1.62,.552],[.052,.085,.025],iris);sphere(character,[x,1.62,.574],[.022,.05,.012],dark);sphere(character,[x-.025,1.68,.584],[.018,.018,.01],white);}
-sphere(character,[0,1.43,.555],[.055,.065,.05],pink);
-const smile=new THREE.Mesh(new THREE.TorusGeometry(.105,.018,8,24,Math.PI),pink);smile.position.set(0,1.31,.55);smile.rotation.z=Math.PI;character.add(smile);
-for(const x of [-.72,.72]){sphere(character,[x,.61,0],[.24,.5,.25],mat("#d9b4d1"));}
-sphere(character,[-.22,-.05,0],[.19,.42,.2],mat("#f4c9b4"));sphere(character,[.22,-.05,0],[.19,.42,.2],mat("#f4c9b4"));
-}
-
 alignCharacterToGround();
 const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};new ResizeObserver(resize).observe(canvas);resize();
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
@@ -164,11 +151,15 @@ function renameCharacter(id){
  showNameDialog("Đổi tên nhân vật",record.name,clean=>{record.name=clean;renderCharacterList();if(record.id===activeCharacterId)toast("Đã đổi tên nhân vật.");});
 }
 function activateCharacter(id){
- if(id===activeCharacterId)return;
- saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
- activeCharacter=characters.find(c=>c.id===id);activeCharacterId=activeCharacter.id;
+ const target=characters.find(c=>c.id===id);if(!target)return;
+ if(activeCharacter&&activeCharacterId!==id){saveActiveCharacterParts();captureCharacterThumbnail();}
+ clearActiveCharacterModels();
+ activeCharacter=target;activeCharacterId=target.id;
  alignCharacterToGround();
- categories.forEach(c=>{const item=activeCharacter.parts[c.id];if(item)loadItem(item,c.id);});
+ categories.forEach(c=>{
+  const item=activeCharacter.parts?.[c.id];
+  if(item)loadItem(item,c.id);
+ });
  renderCharacterList();renderItems();
 }
 $("#add-character").onclick=()=>{
