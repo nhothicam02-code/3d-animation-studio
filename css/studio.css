@@ -19,3 +19,5 @@
 .item-card-none .item-preview img{padding:5px}
 .item-card-none .item-name{color:#654bb0}
 .item-card-none .item-kind{color:#8065c9;font-weight:700;font-size:7px;overflow-wrap:anywhere;white-space:normal;line-height:1.45}
+
+.github-save-progress{margin:14px 0 4px;padding:14px 16px;background:#fbfaff;border:1px solid #e7e0f2;border-radius:12px}.github-save-progress[hidden]{display:none}.github-progress-top,.github-progress-bottom{display:flex;justify-content:space-between;gap:12px;align-items:center}.github-progress-top{font-size:12px;color:#40364f}.github-progress-top span{font-weight:800;color:#7656bd;font-variant-numeric:tabular-nums}.github-progress-track{height:9px;background:#e9e4f0;border-radius:20px;overflow:hidden;margin:10px 0 8px}.github-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#8c6bd0,#5caa83);border-radius:20px;transition:width .2s ease}.github-progress-bottom{font-size:10px;color:#81798b}
