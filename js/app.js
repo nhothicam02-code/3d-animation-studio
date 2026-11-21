@@ -100,7 +100,7 @@ $("#save-github").onclick=()=>{const value=$("#github-token").value.trim();if(!v
 $("#test-github").onclick=async()=>{const value=$("#github-token").value.trim();if(value)setGitHubToken(value);const status=$("#github-status");status.textContent="Đang kiểm tra...";try{status.textContent="Kết nối thành công: "+await verifyToken();toast("GitHub đã kết nối.");}catch(error){status.textContent="Lỗi: "+error.message;toast("Không kết nối được GitHub.");}};
 
 
-$("#load-github-characters").onclick=async()=>{const status=$("#github-status");status.textContent="Đang tải hồ sơ...";try{await loadManifestAssets();const profiles=await listCharacterProfiles();if(!profiles.length){status.textContent="Chưa có hồ sơ trên GitHub.";return;}characters.splice(0,characters.length,...profiles.map(p=>{for(const category of categories){for(const asset of items[category.id]){const position=p.positions?.[asset.id];if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[p.id]=position;}const scale=p.scales?.[asset.id];if(scale){asset.scaleByCharacter=asset.scaleByCharacter||{};asset.scaleByCharacter[p.id]=scale;}const color=p.colors?.[asset.id];if(color){asset.colorByCharacter=asset.colorByCharacter||{};asset.colorByCharacter[p.id]=color;}}}return{id:p.id,name:p.name,parts:Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===p.parts?.[c.id])||null])),thumbnail:p.thumbnail||null};}));activeCharacter=characters[0];activeCharacterId=activeCharacter.id;clearActiveCharacterModels();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();renderItems();status.textContent="Đã tải "+profiles.length+" hồ sơ từ GitHub.";toast("Đã tải hồ sơ nhân vật.");}catch(error){status.textContent="Lỗi tải hồ sơ: "+error.message;}};
+$("#load-github-characters").onclick=async()=>{const status=$("#github-status");status.textContent="Đang tải hồ sơ...";try{await loadManifestAssets();const profiles=await listCharacterProfiles();if(!profiles.length){status.textContent="Chưa có hồ sơ trên GitHub.";return;}characters.splice(0,characters.length,...profiles.map(p=>{for(const category of categories){for(const asset of items[category.id]){const position=p.positions?.[asset.id];if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[p.id]=position;}const scale=p.scales?.[asset.id];if(scale){asset.scaleByCharacter=asset.scaleByCharacter||{};asset.scaleByCharacter[p.id]=scale;}const rotation=p.rotations?.[asset.id];if(rotation){asset.rotationByCharacter=asset.rotationByCharacter||{};asset.rotationByCharacter[p.id]=rotation;}const color=p.colors?.[asset.id];if(color){asset.colorByCharacter=asset.colorByCharacter||{};asset.colorByCharacter[p.id]=color;}}}return{id:p.id,name:p.name,parts:Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===p.parts?.[c.id])||null])),thumbnail:p.thumbnail||null};}));activeCharacter=characters[0];activeCharacterId=activeCharacter.id;clearActiveCharacterModels();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();renderItems();status.textContent="Đã tải "+profiles.length+" hồ sơ từ GitHub.";toast("Đã tải hồ sơ nhân vật.");}catch(error){status.textContent="Lỗi tải hồ sơ: "+error.message;}};
 
 function updateGitHubProgress(percent,title,detail,count=""){
  const panel=$("#github-save-progress");if(!panel)return;
@@ -131,11 +131,11 @@ async function saveCharacterProfiles(){
   updateGitHubProgress(82,"Đang cập nhật thư viện","Đang lưu asset-manifest.json",(completed+1)+"/"+total+" tác vụ");
   await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update uploaded asset library");completed++;
   for(const record of characters){
-   const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter?.[record.id]||{x:1,y:1,z:1}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter?.[record.id]||null]))),updatedAt:new Date().toISOString()};
+   const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter?.[record.id]||{x:1,y:1,z:1}]))),rotations:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.rotationByCharacter?.[record.id]||{x:0,y:0,z:0}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter?.[record.id]||null]))),updatedAt:new Date().toISOString()};
    updateGitHubProgress(82+18*(completed/Math.max(total,1)),"Đang lưu hồ sơ nhân vật",record.name,(completed+1)+"/"+total+" tác vụ");
    await putText("characters/"+record.id+".json",JSON.stringify(profile,null,2),"Save character "+record.name);completed++;
   }
-  const data={version:1,savedAt:new Date().toISOString(),activeCharacterId,characters:characters.map(record=>({id:record.id,name:record.name,thumbnail:record.thumbnail,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter||{}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter||{}])))}))};
+  const data={version:1,savedAt:new Date().toISOString(),activeCharacterId,characters:characters.map(record=>({id:record.id,name:record.name,thumbnail:record.thumbnail,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter||{}]))),rotations:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.rotationByCharacter||{}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter||{}])))}))};
   localStorage.setItem("character-studio-profiles",JSON.stringify(data));
   updateGitHubProgress(100,"Đã lưu thành công","Toàn bộ mô hình và hồ sơ đã được đồng bộ lên GitHub",completed+"/"+total+" tác vụ");
   toast("Đã lưu nhân vật và toàn bộ item lên GitHub thành công.");
@@ -211,6 +211,11 @@ function getItemScale(item,characterId=activeCharacterId){
  if(!item.scaleByCharacter[characterId])item.scaleByCharacter[characterId]={x:1,y:1,z:1};
  return item.scaleByCharacter[characterId];
 }
+function getItemRotation(item,characterId=activeCharacterId){
+ if(!item.rotationByCharacter)item.rotationByCharacter={};
+ if(!item.rotationByCharacter[characterId])item.rotationByCharacter[characterId]={x:0,y:0,z:0};
+ return item.rotationByCharacter[characterId];
+}
 function getItemColor(item,characterId=activeCharacterId){
  if(!item.colorByCharacter)item.colorByCharacter={};
  return item.colorByCharacter[characterId]||null;
@@ -224,6 +229,11 @@ function applyItemScale(item,categoryId=activeCategory){
  const model=loadedModels[categoryId];if(!model||selectedItems[categoryId]!==item)return;
  const scale=getItemScale(item);
  model.scale.set(model.userData.baseScale.x*scale.x,model.userData.baseScale.y*scale.y,model.userData.baseScale.z*scale.z);
+}
+function applyItemRotation(item,categoryId=activeCategory){
+ const model=loadedModels[categoryId];if(!model||selectedItems[categoryId]!==item)return;
+ const rotation=getItemRotation(item);
+ model.rotation.set(THREE.MathUtils.degToRad(rotation.x),THREE.MathUtils.degToRad(rotation.y),THREE.MathUtils.degToRad(rotation.z),"XYZ");
 }
 function applyItemColor(item,categoryId=activeCategory){
  const model=loadedModels[categoryId];if(!model||selectedItems[categoryId]!==item)return;
@@ -241,8 +251,8 @@ function renderTransformPanel(){
  const panel=$("#transform-panel"),item=selectedItems[activeCategory];
  panel.hidden=!item||item.isNone;if(!item||item.isNone)return;
  $("#transform-item-name").textContent=item.name;
- const pos=getItemPosition(item),scale=getItemScale(item),color=getItemColor(item)||"#ffffff";
- ["x","y","z"].forEach(axis=>{$("#position-"+axis).value=pos[axis];$("#position-"+axis+"-value").textContent=Number(pos[axis]).toFixed(2);$("#scale-"+axis).value=scale[axis];$("#scale-"+axis+"-value").textContent=Number(scale[axis]).toFixed(2)+"×";});
+ const pos=getItemPosition(item),scale=getItemScale(item),rotation=getItemRotation(item),color=getItemColor(item)||"#ffffff";
+ ["x","y","z"].forEach(axis=>{$("#position-"+axis).value=pos[axis];$("#position-"+axis+"-value").textContent=Number(pos[axis]).toFixed(2);$("#scale-"+axis).value=scale[axis];$("#scale-"+axis+"-value").textContent=Number(scale[axis]).toFixed(2)+"×";$("#rotation-"+axis).value=rotation[axis];$("#rotation-"+axis+"-value").textContent=Number(rotation[axis])+"°";});
  $("#item-color").value=color;$("#item-color-hex").value=color.toUpperCase();
 }
 function updateItemAxis(axis,value){
@@ -257,6 +267,11 @@ function updateItemScale(axis,value){
  else{scale[axis]=n;$("#scale-"+axis+"-value").textContent=n.toFixed(2)+"×";}
  applyItemScale(item);
 }
+function updateItemRotation(axis,value){
+ const item=selectedItems[activeCategory];if(!item)return;
+ const n=Number(value);getItemRotation(item)[axis]=n;
+ $("#rotation-"+axis+"-value").textContent=n+"°";applyItemRotation(item);
+}
 function updateItemColor(value){
  const item=selectedItems[activeCategory];if(!item||!/^#[0-9a-fA-F]{6}$/.test(value))return;
  item.colorByCharacter=item.colorByCharacter||{};item.colorByCharacter[activeCharacterId]=value.toLowerCase();
@@ -264,14 +279,16 @@ function updateItemColor(value){
 }
 ["x","y","z"].forEach(axis=>$("#position-"+axis).addEventListener("input",e=>updateItemAxis(axis,e.target.value)));
 ["x","y","z"].forEach(axis=>$("#scale-"+axis).addEventListener("input",e=>updateItemScale(axis,e.target.value)));
+["x","y","z"].forEach(axis=>$("#rotation-"+axis).addEventListener("input",e=>updateItemRotation(axis,e.target.value)));
 $("#item-color").addEventListener("input",e=>updateItemColor(e.target.value));
 $("#item-color-hex").addEventListener("change",e=>{const value=e.target.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(value))updateItemColor(value);else{toast("Mã màu HEX không hợp lệ.");renderTransformPanel();}});
 $("#reset-item-position").onclick=()=>{
  const item=selectedItems[activeCategory];if(!item)return;
  item.positionByCharacter[activeCharacterId]={x:0,y:0,z:0};
  item.scaleByCharacter=item.scaleByCharacter||{};item.scaleByCharacter[activeCharacterId]={x:1,y:1,z:1};
+ item.rotationByCharacter=item.rotationByCharacter||{};item.rotationByCharacter[activeCharacterId]={x:0,y:0,z:0};
  item.colorByCharacter=item.colorByCharacter||{};delete item.colorByCharacter[activeCharacterId];
- applyItemPosition(item);applyItemScale(item);applyItemColor(item);renderTransformPanel();
+ applyItemPosition(item);applyItemScale(item);applyItemRotation(item);applyItemColor(item);renderTransformPanel();
 };
 function loadItem(item,categoryOverride=activeCategory){
  const categoryId=categoryOverride;selectedItems[categoryId]=item;const version=++loadVersions[categoryId];
@@ -288,6 +305,7 @@ function loadItem(item,categoryOverride=activeCategory){
   model.traverse(child=>{if(child.isMesh&&child.material){const mats=Array.isArray(child.material)?child.material:[child.material];child.material=mats.length>1?mats.map(m=>m.clone()):mats[0].clone();child.userData.originalColors=(Array.isArray(child.material)?child.material:[child.material]).map(m=>m.color?m.color.clone():null);}});
   const offset=getItemPosition(item);model.position.add(new THREE.Vector3(offset.x,offset.y,offset.z));
   const savedScale=getItemScale(item);model.scale.set(model.userData.baseScale.x*savedScale.x,model.userData.baseScale.y*savedScale.y,model.userData.baseScale.z*savedScale.z);
+  const savedRotation=getItemRotation(item);model.rotation.set(THREE.MathUtils.degToRad(savedRotation.x),THREE.MathUtils.degToRad(savedRotation.y),THREE.MathUtils.degToRad(savedRotation.z),"XYZ");
   const savedColor=getItemColor(item);if(savedColor){model.traverse(child=>{if(child.isMesh&&child.material){const mats=Array.isArray(child.material)?child.material:[child.material];mats.forEach(m=>{if(m.color)m.color.set(savedColor);});}});}
   if(loadedModels[categoryId])character.remove(loadedModels[categoryId]);
   loadedModels[categoryId]=model;character.add(model);alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();
@@ -381,7 +399,7 @@ async function loadManifestAssets(){
      for(const category of categories){
       for(const asset of items[category.id]){
        const position=savedRecord.positions?.[asset.id]?.[record.id]||savedRecord.positions?.[asset.id];
-       if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[record.id]=position;}const scale=savedRecord.scales?.[asset.id]?.[record.id]||savedRecord.scales?.[asset.id];if(scale){asset.scaleByCharacter=asset.scaleByCharacter||{};asset.scaleByCharacter[record.id]=scale;}const color=savedRecord.colors?.[asset.id]?.[record.id]||savedRecord.colors?.[asset.id];if(color){asset.colorByCharacter=asset.colorByCharacter||{};asset.colorByCharacter[record.id]=color;}
+       if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[record.id]=position;}const scale=savedRecord.scales?.[asset.id]?.[record.id]||savedRecord.scales?.[asset.id];if(scale){asset.scaleByCharacter=asset.scaleByCharacter||{};asset.scaleByCharacter[record.id]=scale;}const rotation=savedRecord.rotations?.[asset.id]?.[record.id]||savedRecord.rotations?.[asset.id];if(rotation){asset.rotationByCharacter=asset.rotationByCharacter||{};asset.rotationByCharacter[record.id]=rotation;}const color=savedRecord.colors?.[asset.id]?.[record.id]||savedRecord.colors?.[asset.id];if(color){asset.colorByCharacter=asset.colorByCharacter||{};asset.colorByCharacter[record.id]=color;}
       }
      }
     }
