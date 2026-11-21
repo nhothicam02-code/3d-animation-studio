@@ -213,8 +213,50 @@ function loadItem(item,categoryOverride=activeCategory){
   toast("Đã cập nhật "+categories.find(c=>c.id===categoryId).name+": "+item.name);
  },undefined,error=>{console.error(error);if(version===loadVersions[categoryId])toast("Không thể mở mô hình GLB này.");});
 }
+const LOCAL_ASSET_DB="3d-character-studio-assets";
+function openLocalAssetDB(){
+ return new Promise((resolve,reject)=>{
+  const request=indexedDB.open(LOCAL_ASSET_DB,1);
+  request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains("assets"))db.createObjectStore("assets",{keyPath:"id"});};
+  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+ });
+}
+async function storeLocalAsset(record){
+ const db=await openLocalAssetDB();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction("assets","readwrite");tx.objectStore("assets").put(record);
+  tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>{db.close();reject(tx.error);};
+ });
+}
+async function readLocalAssets(){
+ const db=await openLocalAssetDB();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction("assets","readonly"),request=tx.objectStore("assets").getAll();
+  request.onsuccess=()=>{db.close();resolve(request.result||[]);};request.onerror=()=>{db.close();reject(request.error);};
+ });
+}
 $("#add-item").onclick=()=>$("#file-input").click();
-$("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".glb")){toast("Vui lòng chọn tệp .glb");e.target.value="";return;}const item={id:"asset-"+crypto.randomUUID(),name:file.name.replace(/\\.glb$/i,""),url:URL.createObjectURL(file),file,positionByCharacter:{}};items[activeCategory].push(item);renderItems();loadItem(item);toast("Đã thêm item vào danh mục "+categories.find(c=>c.id===activeCategory).name+" (phiên hiện tại)");if(hasGitHubToken()){(async()=>{try{const path="assets/"+activeCategory+"/"+item.id+".glb";await putBinary(path,file,"Add asset "+item.name);const manifest=await readJson("data/asset-manifest.json");manifest.data.assets=(manifest.data.assets||[]).filter(a=>a.id!==item.id);manifest.data.assets.push({id:item.id,name:item.name,category:activeCategory,path,format:"glb",size:file.size});await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update asset manifest");item.url="https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/"+path;item.path=path;toast("Đã tải GLB lên GitHub và cập nhật manifest.");}catch(error){toast("Lỗi đồng bộ GLB: "+error.message);}})();}e.target.value="";};
+$("#file-input").onchange=async e=>{
+ const file=e.target.files[0];if(!file)return;
+ if(!file.name.toLowerCase().endsWith(".glb")){toast("Vui lòng chọn tệp .glb");e.target.value="";return;}
+ const categoryId=activeCategory,id="asset-"+crypto.randomUUID(),name=file.name.replace(/\\.glb$/i,"");
+ const item={id,name,url:URL.createObjectURL(file),file,positionByCharacter:{}};
+ items[categoryId].push(item);renderItems();loadItem(item);
+ try{await storeLocalAsset({id,name,category:categoryId,blob:file,size:file.size,updatedAt:new Date().toISOString()});toast("Đã lưu item trên thiết bị; có thể khôi phục sau khi tải lại trang.");}
+ catch(error){console.error("IndexedDB save failed",error);toast("Không lưu được file trên thiết bị: "+error.message);}
+ if(hasGitHubToken()){
+  try{
+   const path="assets/"+categoryId+"/"+id+".glb";await putBinary(path,file,"Add asset "+name);
+   const manifest=await readJson("data/asset-manifest.json");
+   manifest.data.assets=(manifest.data.assets||[]).filter(a=>a.id!==id);
+   manifest.data.assets.push({id,name,category:categoryId,path,format:"glb",size:file.size});
+   await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update asset manifest");
+   item.url="https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/"+path;item.path=path;
+   toast("Đã đồng bộ GLB lên GitHub.");
+  }catch(error){toast("Đã lưu trên thiết bị nhưng GitHub lỗi: "+error.message);}
+ }
+ e.target.value="";
+};
 $("#item-search").oninput=renderItems;
 $("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
@@ -237,6 +279,15 @@ async function loadManifestAssets(){
    const path=asset.path||("assets/"+asset.category+"/"+asset.id+".glb");
    items[asset.category].push({id:asset.id,name:asset.name||asset.id,path,url:new URL(path,document.baseURI).href,thumbnail:asset.thumbnail||null,isNone:asset.id==="none-"+asset.category||asset.type==="none",positionByCharacter:{}});
   }
+  // Load user-uploaded GLB files persisted in this browser's IndexedDB.
+  try{
+   const localAssets=await readLocalAssets();
+   for(const asset of localAssets){
+    if(!asset.id||!items[asset.category]||items[asset.category].some(x=>x.id===asset.id))continue;
+    const url=URL.createObjectURL(asset.blob);
+    items[asset.category].push({id:asset.id,name:asset.name||asset.id,url,file:asset.blob,path:null,positionByCharacter:{}});
+   }
+  }catch(error){console.warn("Không thể khôi phục GLB đã upload trên thiết bị",error);}
   // Restore saved local character parts only after the manifest assets are available.
   try{
    const saved=JSON.parse(localStorage.getItem("character-studio-profiles")||"null");
