@@ -89,11 +89,32 @@ function renderCharacterList(){
   actions.append(rename);card.append(select,actions);list.append(card);
  });
 }
+let nameDialogCallback=null;
+function showNameDialog(title,defaultValue,onSave){
+ const modal=$("#name-dialog"),input=$("#name-dialog-input");
+ $("#name-dialog-title").textContent=title;input.value=defaultValue||"";nameDialogCallback=onSave;modal.hidden=false;
+ requestAnimationFrame(()=>{input.focus();input.select();});
+}
+function closeNameDialog(){$("#name-dialog").hidden=true;nameDialogCallback=null;}
+$("#name-dialog-cancel").onclick=closeNameDialog;
+$("#name-dialog").addEventListener("click",e=>{if(e.target.id==="name-dialog")closeNameDialog();});
+$("#name-dialog-form").addEventListener("submit",e=>{e.preventDefault();const value=$("#name-dialog-input").value.trim();if(!value){toast("Tên nhân vật không được để trống.");return;}const cb=nameDialogCallback;closeNameDialog();if(cb)cb(value);});
+function saveCharacterProfiles(){
+ saveActiveCharacterParts();captureCharacterThumbnail();
+ const data={version:1,savedAt:new Date().toISOString(),activeCharacterId,characters:characters.map(record=>({
+  id:record.id,name:record.name,thumbnail:record.thumbnail,
+  parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),
+  positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}])))
+ }))};
+ try{localStorage.setItem("character-studio-profiles",JSON.stringify(data));}catch(error){console.warn(error);}
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="character-profiles.json";a.click();URL.revokeObjectURL(url);
+ toast("Đã lưu hồ sơ nhân vật (JSON).");
+}
+$("#save-characters").onclick=saveCharacterProfiles;
 function renameCharacter(id){
  const record=characters.find(c=>c.id===id);if(!record)return;
- const name=prompt("Nhập tên nhân vật:",record.name);if(name===null)return;
- const clean=name.trim();if(!clean){toast("Tên nhân vật không được để trống.");return;}
- record.name=clean;renderCharacterList();if(record.id===activeCharacterId)toast("Đã đổi tên nhân vật.");
+ showNameDialog("Đổi tên nhân vật",record.name,clean=>{record.name=clean;renderCharacterList();if(record.id===activeCharacterId)toast("Đã đổi tên nhân vật.");});
 }
 function activateCharacter(id){
  if(id===activeCharacterId)return;
@@ -105,13 +126,12 @@ function activateCharacter(id){
 }
 $("#add-character").onclick=()=>{
  const proposed="Nhân vật "+(characters.length+1);
- const name=prompt("Đặt tên cho nhân vật mới:",proposed);
- if(name===null)return;const clean=name.trim();
- if(!clean){toast("Tên nhân vật không được để trống.");return;}
+ showNameDialog("Tạo nhân vật mới",proposed,clean=>{
  saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
  const record={id:"char-"+crypto.randomUUID(),name:clean,parts:{},thumbnail:null};
  characters.push(record);activeCharacter=record;activeCharacterId=record.id;
  makeCharacter();alignCharacterToGround();renderCharacterList();renderItems();toast("Đã tạo "+clean);
+});
 };
 function getItemPosition(item,characterId=activeCharacterId){
  if(!item.positionByCharacter)item.positionByCharacter={};
