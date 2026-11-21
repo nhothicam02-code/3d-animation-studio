@@ -1,62 +1,33 @@
 # 3D Character Studio
 
-A modular browser-based character creation workspace built with HTML, CSS, JavaScript and Three.js.
+A browser-based character creator built with HTML, CSS, JavaScript and Three.js.
 
-## Current foundation
-- Responsive studio shell with character list, 3D viewport and inspector.
-- Procedural placeholder character with selectable meshes.
-- Drag-to-rotate, wheel zoom, grid toggle and camera reset.
-- Versioned JSON profiles with stable IDs.
-- Local browser persistence, duplicate, delete, import and export.
-- Asset taxonomy and manifest contract.
-- Starter motion previews.
-- Session-only API key/token field placeholder.
+## Character architecture
+- One unified **Full Body Mesh** is the character base. Head, torso, arms and legs are not separate library slots.
+- Upload the body GLB to **Cơ thể nền**. It should contain Blender Shape Keys exported as glTF morph targets.
+- Hair, eyes/face details, clothes, dresses, shoes and accessories remain independent GLB assets.
+- The character root has its own unbounded X/Y/Z position. Each item has its own unbounded X/Y/Z offset, plus per-axis scale and rotation.
+- Item transforms, character transform and body Shape Key values are stored per character and synced to GitHub/local backup.
+
+## Body GLB / Shape Key contract
+- Export one full-body character mesh (or multiple material meshes inside one GLB that together form the full body).
+- Use a neutral A-pose or T-pose, Y-up, facing -Z, with origin at the character root.
+- Export Shape Keys as glTF morph targets. Three.js GLTFLoader exposes morphTargetDictionary and morphTargetInfluences.
+- Use stable names such as Head_Size, Eye_Size, Body_Width, Arm_Length, Leg_Length, Chest_Size, Belly_Size, Hip_Width and Butt_Size.
+- The website discovers morph targets from the loaded GLB; it does not create missing Shape Keys. Create deformations in Blender first.
+- The UI exposes values from -1 to 1. Use matching names across meshes when a deformation spans multiple mesh objects.
+
+## Clothing compatibility
+Clothing remains independent but must be fitted to the same neutral body. For reliable customization, add matching morph targets to garment meshes (using the same names as the body where possible), or prepare fitted clothing variants. Static clothing will not automatically follow arbitrary body deformations.
+
+## GitHub persistence and safety
+- Enter a fine-grained GitHub token in Settings; grant Contents: Read and write only for this repository.
+- The token is held in current page memory and must be re-entered after reload. Never commit it or paste it into chat.
+- Profiles under characters/<id>.json store asset IDs, item transforms, character root transform, Shape Key values and metadata.
+- GLB uploads are limited to 20 MB. A browser-entered token is available to page JavaScript while the tab is open.
 
 ## Run locally
-Serve this folder through an HTTP server because ES modules and import maps may not work from a file URL. Example: python -m http.server 8000, then open http://localhost:8000.
+Serve the folder through HTTP (for example python -m http.server 8000) and open http://localhost:8000.
 
-## Asset contract
-Production models should use GLB/glTF and share a documented scale, Y-up / -Z-forward convention, pivots, attachment socket names, material naming, rig profile and stable asset IDs. The data/asset-manifest.json file defines the catalog categories.
-
-## Character data
-A profile stores asset IDs, colors, rig profile, animation references and metadata. It should not duplicate the underlying model files. The schema is versioned to allow future migrations.
-
-## GitHub connection (browser session)
-- Open **Settings**, enter a fine-grained GitHub token, then use **Kiểm tra kết nối**.
-- Required repository permission: **Contents: Read and write** for this repository.
-- The token is held only in the current JavaScript page memory. It is not written to Local Storage, downloaded profile files, or committed source code. Reloading the page clears it.
-- **Lưu nhân vật** exports a JSON backup and, when connected, writes one JSON profile per character under `characters/`.
-- **Tải hồ sơ** reads the saved profile JSON files from GitHub.
-- Adding a GLB while connected uploads it under `assets/<category>/` and updates `data/asset-manifest.json`. Browser upload is limited to 20 MB per GLB.
-- Important: a public static website cannot provide the same secret isolation as a trusted backend. A token entered into the page is available to the page's JavaScript while the tab is open. Use a fine-grained token limited to this one repository, set an expiry, and revoke it if exposed. Never paste the token into chat or commit it.
-
-## Remaining production milestones
-1. Complete robust restore of each character's selected GLB parts and per-character XYZ transforms from GitHub.
-2. Add real attachment sockets and compatible modular assembly for all categories.
-3. Add rig profiles, skinning validation and animation retargeting.
-4. Build reusable clips and a timeline/keyframe editor.
-5. Add a trusted backend or GitHub App flow for stronger credential isolation.
-6. Add assembled character GLB and animation export.
-
-## Prototype limitations
-The base model is still procedural placeholder geometry. GLB assets can be uploaded to the repository manifest and loaded into the preview, but attachment points and fit remain approximate. Character JSON sync stores part IDs; complete reconstruction of all selected GLB meshes and per-character transforms is still in progress. Motion previews are not a production rig or keyframe system.
-
-## GLB Asset Library (prototype)
-
-The Asset page can load a public `.glb` file into the 3D viewport:
-1. Put GLB files in the repository under the matching folder, for example `assets/hair/hair_bob_01.glb`.
-2. Open Asset and paste the public/raw URL or a relative path such as `assets/hair/hair_bob_01.glb`.
-3. Choose the category and select **Tải vào viewport**.
-4. To make an asset appear in the reusable library, add an entry to `data/asset-manifest.json` under `assets`, for example:
-
-```json
-{
-  "id": "hair_bob_01",
-  "name": "Tóc bob 01",
-  "category": "hair",
-  "path": "assets/hair/hair_bob_01.glb",
-  "format": "glb"
-}
-```
-
-The GLB loader uses Three.js GLTFLoader. A loaded category replaces its corresponding procedural placeholder part. Current attachment positions and target sizes are approximate prototype defaults in `js/viewport.js`; production assets still need consistent pivots, scale, orientation and attachment points. The loader currently replaces one asset per category, and does not yet perform true bone/socket binding, outfit fitting, rig retargeting, or persistent GitHub writes from the browser. Public cross-origin URLs must permit browser CORS access.
+## Current limitation
+The repository does not yet contain the final production Full Body GLB. Upload a full-body GLB with Blender Shape Keys to Cơ thể nền. Until then the Shape Key editor has no body morph targets to display.
