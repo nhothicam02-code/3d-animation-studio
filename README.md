@@ -5,7 +5,7 @@ A browser-based character creator built with HTML, CSS, JavaScript and Three.js.
 ## Character architecture
 - One unified **Full Body Mesh** is the character base. Head, torso, arms and legs are not separate library slots.
 - Upload the body GLB to **Cơ thể nền**. It should contain Blender Shape Keys exported as glTF morph targets.
-- Hair, eyes/face details, clothes, dresses, shoes and accessories remain independent GLB assets.
+- Hair, face details and each clothing layer are independent GLB assets: áo lót, quần lót, áo trong, áo ngoài, áo khoác, tay áo, quần, váy, vớ, shoes and accessories.
 - The character root has its own unbounded X/Y/Z position. Each item has its own unbounded X/Y/Z offset, plus per-axis scale and rotation.
 - Item transforms, character transform and body Shape Key values are stored per character and synced to GitHub/local backup.
 
@@ -31,3 +31,19 @@ Serve the folder through HTTP (for example python -m http.server 8000) and open 
 
 ## Current limitation
 The repository does not yet contain the final production Full Body GLB. Upload a full-body GLB with Blender Shape Keys to Cơ thể nền. Until then the Shape Key editor has no body morph targets to display.
+
+## Clothing categories
+
+| Category | Purpose |
+|---|---|
+| Áo lót | Undergarment top |
+| Quần lót | Undergarment bottom |
+| Áo trong | Inner top |
+| Áo ngoài | Outer top layer; keeps the previous clothing assets for compatibility |
+| Áo khoác | Jacket / hoodie / cardigan |
+| Tay áo | Separate sleeve pieces |
+| Quần | Pants and shorts |
+| Váy | Skirts |
+| Vớ | Socks and leg warmers |
+
+Garments are independent GLBs, each with its own transform. Match garment morph targets to body Shape Keys or provide fitted variants to avoid clipping.
