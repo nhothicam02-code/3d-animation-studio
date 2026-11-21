@@ -11,7 +11,7 @@
 <header class="topbar"><a class="brand" href="#"><span class="brand-icon">✦</span><span>CHARACTER<span class="brand-light"> STUDIO</span></span></a><div class="top-note">THƯ VIỆN NHÂN VẬT 3D</div><div class="top-actions"><span class="status-dot"></span><span class="status-text">Không gian làm việc</span></div></header>
 <main class="app">
 <section class="intro"><div><p class="eyebrow">YOUR CREATIVE WORKSPACE</p><h1>Thiết kế nhân vật</h1><p class="subhead">Lắp ráp nhân vật từ những bộ phận 3D của riêng bạn.</p></div><button id="reset-character" class="button button-light">↺ Đặt lại nhân vật</button></section>
-<section class="character-manager"><div class="character-manager-heading"><div><span class="eyebrow">CHARACTER COLLECTION</span><h2>Danh sách nhân vật</h2><p>Chọn nhân vật để tiếp tục chỉnh sửa hoặc tạo nhân vật mới.</p></div><button id="add-character" class="button button-primary">＋ Thêm nhân vật</button></div><div id="character-list" class="character-list"></div></section>
+<section class="character-manager"><div class="character-manager-heading"><div><span class="eyebrow">CHARACTER COLLECTION</span><h2>Danh sách nhân vật</h2><p>Chọn nhân vật để tiếp tục chỉnh sửa hoặc tạo nhân vật mới.</p></div><div class="character-actions"><button id="save-characters" class="button button-light" type="button">↓ Lưu nhân vật</button><button id="add-character" class="button button-primary" type="button">＋ Thêm nhân vật</button></div></div><div id="character-list" class="character-list"></div></section>
 <nav class="category-tabs" id="category-tabs" aria-label="Danh mục tài nguyên"></nav>
 <section class="workspace">
 <div class="viewer-panel">
@@ -32,5 +32,6 @@
 <input id="file-input" type="file" accept=".glb,model/gltf-binary" hidden>
 </main>
 <div id="toast" class="toast" role="status"></div>
+<div id="name-dialog" class="name-dialog" hidden><form id="name-dialog-form" class="name-dialog-card"><h3 id="name-dialog-title">Tên nhân vật</h3><input id="name-dialog-input" type="text" maxlength="40" autocomplete="off" placeholder="Nhập tên nhân vật"><div class="name-dialog-actions"><button id="name-dialog-cancel" class="button button-light" type="button">Hủy</button><button class="button button-primary" type="submit">Xác nhận</button></div></form></div>
 <script type="module" src="./js/app.js"></script>
 </body></html>
