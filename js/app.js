@@ -102,49 +102,45 @@ $("#test-github").onclick=async()=>{const value=$("#github-token").value.trim();
 
 $("#load-github-characters").onclick=async()=>{const status=$("#github-status");status.textContent="Đang tải hồ sơ...";try{await loadManifestAssets();const profiles=await listCharacterProfiles();if(!profiles.length){status.textContent="Chưa có hồ sơ trên GitHub.";return;}characters.splice(0,characters.length,...profiles.map(p=>{for(const category of categories){for(const asset of items[category.id]){const position=p.positions?.[asset.id];if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[p.id]=position;}}}return{id:p.id,name:p.name,parts:Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===p.parts?.[c.id])||null])),thumbnail:p.thumbnail||null};}));activeCharacter=characters[0];activeCharacterId=activeCharacter.id;clearActiveCharacterModels();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();renderItems();status.textContent="Đã tải "+profiles.length+" hồ sơ từ GitHub.";toast("Đã tải hồ sơ nhân vật.");}catch(error){status.textContent="Lỗi tải hồ sơ: "+error.message;}};
 
+function updateGitHubProgress(percent,title,detail,count=""){
+ const panel=$("#github-save-progress");if(!panel)return;
+ panel.hidden=false;$("#github-progress-title").textContent=title;
+ $("#github-progress-percent").textContent=Math.round(percent)+"%";
+ $("#github-progress-fill").style.width=Math.max(0,Math.min(100,percent))+"%";
+ $("#github-progress-detail").textContent=detail;$("#github-progress-count").textContent=count;
+}
 async function saveCharacterProfiles(){
  if(!hasGitHubToken()){toast("Hãy kết nối GitHub Token trong Settings trước khi lưu.");return;}
  saveActiveCharacterParts();captureCharacterThumbnail();
  const button=$("#save-characters");if(button){button.disabled=true;button.textContent="Đang lưu GitHub...";}
+ const panel=$("#github-save-progress");if(panel)panel.hidden=false;
  try{
-  // Upload every local GLB that has not yet been committed to the repository.
-  const manifest=await readJson("data/asset-manifest.json");
-  manifest.data.assets=manifest.data.assets||[];
-  let manifestChanged=false;
-  for(const category of categories){
-   for(const item of items[category.id]){
-    if(item.path&&manifest.data.assets.some(a=>a.id===item.id))continue;
-    const file=item.file;
-    if(!file)continue;
-    const path="assets/"+category.id+"/"+item.id+".glb";
-    await putBinary(path,file,"Upload asset "+item.name);
-    manifest.data.assets=manifest.data.assets.filter(a=>a.id!==item.id);
-    manifest.data.assets.push({id:item.id,name:item.name,category:category.id,path,format:"glb",size:file.size});
-    item.path=path;item.url="https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/"+path;
-    manifestChanged=true;
-   }
+  updateGitHubProgress(2,"Đang chuẩn bị lưu lên GitHub","Đang đọc thư viện tài nguyên...");
+  const manifest=await readJson("data/asset-manifest.json");manifest.data.assets=manifest.data.assets||[];
+  const pending=[];
+  for(const category of categories)for(const item of items[category.id]){if(item.path&&manifest.data.assets.some(a=>a.id===item.id))continue;if(item.file)pending.push({category,item});}
+  const total=pending.length+1+characters.length;let completed=0;
+  for(const entry of pending){
+   const category=entry.category,item=entry.item,path="assets/"+category.id+"/"+item.id+".glb";
+   updateGitHubProgress(5+75*(completed/Math.max(total,1)),"Đang upload mô hình GLB",item.name,(completed+1)+"/"+total+" tác vụ");
+   await putBinary(path,item.file,"Upload asset "+item.name);
+   manifest.data.assets=manifest.data.assets.filter(a=>a.id!==item.id);manifest.data.assets.push({id:item.id,name:item.name,category:category.id,path,format:"glb",size:item.file.size});
+   item.path=path;item.url="https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/"+path;completed++;
+   updateGitHubProgress(5+75*(completed/Math.max(total,1)),"Đang upload mô hình GLB","Đã tải: "+item.name,completed+"/"+total+" tác vụ");
   }
-  if(manifestChanged)await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update uploaded asset library");
-  const data={version:1,savedAt:new Date().toISOString(),activeCharacterId,characters:characters.map(record=>({
-   id:record.id,name:record.name,thumbnail:record.thumbnail,
-   parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),
-   positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}])))
-  }))};
-  localStorage.setItem("character-studio-profiles",JSON.stringify(data));
+  updateGitHubProgress(82,"Đang cập nhật thư viện","Đang lưu asset-manifest.json",(completed+1)+"/"+total+" tác vụ");
+  await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update uploaded asset library");completed++;
   for(const record of characters){
-   const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,
-    parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),
-    positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),
-    updatedAt:new Date().toISOString()};
-   await putText("characters/"+record.id+".json",JSON.stringify(profile,null,2),"Save character "+record.name);
+   const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),updatedAt:new Date().toISOString()};
+   updateGitHubProgress(82+18*(completed/Math.max(total,1)),"Đang lưu hồ sơ nhân vật",record.name,(completed+1)+"/"+total+" tác vụ");
+   await putText("characters/"+record.id+".json",JSON.stringify(profile,null,2),"Save character "+record.name);completed++;
   }
+  const data={version:1,savedAt:new Date().toISOString(),activeCharacterId,characters:characters.map(record=>({id:record.id,name:record.name,thumbnail:record.thumbnail,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}])))}))};
+  localStorage.setItem("character-studio-profiles",JSON.stringify(data));
+  updateGitHubProgress(100,"Đã lưu thành công","Toàn bộ mô hình và hồ sơ đã được đồng bộ lên GitHub",completed+"/"+total+" tác vụ");
   toast("Đã lưu nhân vật và toàn bộ item lên GitHub thành công.");
- }catch(error){
-  console.error("GitHub save failed",error);
-  toast("Lưu GitHub thất bại: "+error.message);
- }finally{
-  if(button){button.disabled=false;button.textContent="Lưu nhân vật";}
- }
+ }catch(error){console.error("GitHub save failed",error);updateGitHubProgress(0,"Lưu GitHub thất bại",error.message,"Có thể thử lại");toast("Lưu GitHub thất bại: "+error.message);}
+ finally{if(button){button.disabled=false;button.textContent="↓ Lưu nhân vật";}}
 }
 
 $("#save-characters").onclick=saveCharacterProfiles;
