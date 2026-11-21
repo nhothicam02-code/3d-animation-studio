@@ -47,7 +47,7 @@ const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)ret
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
 function renderTabs(){const nav=$("#category-tabs");nav.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.className="category-tab"+(c.id===activeCategory?" active":"");b.innerHTML='<span class="tab-icon"></span>';b.querySelector(".tab-icon").textContent=c.icon;b.append(document.createTextNode(c.name));b.onclick=()=>selectCategory(c.id);nav.append(b);});}
 function renderItems(){const c=categories.find(x=>x.id===activeCategory),grid=$("#item-grid"),q=$("#item-search").value.trim().toLowerCase();$("#active-category-title").textContent=c.name;$("#category-description").textContent=c.description;const filtered=items[activeCategory].filter(i=>i.name.toLowerCase().includes(q));grid.innerHTML="";filtered.forEach(item=>{const b=document.createElement("button");b.className="item-card"+(item===selectedItems[activeCategory]?" active":"");const preview=document.createElement("div");preview.className="item-preview";preview.textContent="◇";const name=document.createElement("span");name.className="item-name";name.textContent=item.name;const kind=document.createElement("span");kind.className="item-kind";kind.textContent="GLB MODEL";b.append(preview,name,kind);b.onclick=()=>loadItem(item);grid.append(b);});$("#empty-hint").classList.toggle("show",filtered.length===0);$("#item-total").textContent=items[activeCategory].length+" item";$("#item-count").textContent=categories.reduce((n,c)=>n+items[c.id].length,0)+" item đã thêm";renderTransformPanel();}
-function selectCategory(id){activeCategory=id;renderTabs();renderItems();renderCharacterList();}
+function selectCategory(id){activeCategory=id;renderTabs();renderItems();}
 function saveActiveCharacterParts(){
  if(!activeCharacter)return;
  categories.forEach(c=>{activeCharacter.parts[c.id]=selectedItems[c.id]||null;});
@@ -126,8 +126,8 @@ function updateItemAxis(axis,value){
 }
 ["x","y","z"].forEach(axis=>$("#position-"+axis).addEventListener("input",e=>updateItemAxis(axis,e.target.value)));
 $("#reset-item-position").onclick=()=>{const item=selectedItems[activeCategory];if(!item)return;item.positionByCharacter[activeCharacterId]={x:0,y:0,z:0};applyItemPosition(item);renderTransformPanel();};
-function loadItem(item){
- const categoryId=activeCategory;selectedItems[categoryId]=item;const version=++loadVersions[categoryId];renderItems();
+function loadItem(item,categoryOverride=activeCategory){
+ const categoryId=categoryOverride;selectedItems[categoryId]=item;const version=++loadVersions[categoryId];renderItems();
  new GLTFLoader().load(item.url,gltf=>{
   if(version!==loadVersions[categoryId])return;
   const model=gltf.scene,box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),maxDimension=Math.max(size.x,size.y,size.z);
@@ -146,4 +146,4 @@ $("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!f
 $("#item-search").oninput=renderItems;
 $("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};makeCharacter();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
-renderTabs();renderItems();
+renderTabs();renderItems();renderCharacterList();
