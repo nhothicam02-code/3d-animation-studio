@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "units": "meters",
   "upAxis": "Y",
   "forwardAxis": "-Z",
@@ -19,11 +19,6 @@
     }
   ],
   "categories": [
-    {
-      "id": "faces",
-      "path": "assets/faces/",
-      "attachment": "head"
-    },
     {
       "id": "eyes",
       "path": "assets/eyes/",
@@ -62,17 +57,10 @@
     {
       "id": "body",
       "path": "assets/body/",
-      "attachment": "root"
-    },
-    {
-      "id": "arms",
-      "path": "assets/arms/",
-      "attachment": "upper_arm"
-    },
-    {
-      "id": "legs",
-      "path": "assets/legs/",
-      "attachment": "upper_leg"
+      "attachment": "character-root",
+      "label": "Cơ thể nền · Full Body",
+      "required": true,
+      "morphTargets": true
     },
     {
       "id": "clothes",
@@ -91,16 +79,6 @@
     }
   ],
   "assets": [
-    {
-      "id": "none-faces",
-      "name": "Không dùng",
-      "category": "faces",
-      "path": "assets/faces/none.glb",
-      "format": "glb",
-      "size": 136,
-      "type": "none",
-      "thumbnail": "assets/ui/none-thumbnail.svg"
-    },
     {
       "id": "none-eyes",
       "name": "Không dùng",
@@ -162,26 +140,6 @@
       "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
-      "id": "none-arms",
-      "name": "Không dùng",
-      "category": "arms",
-      "path": "assets/arms/none.glb",
-      "format": "glb",
-      "size": 136,
-      "type": "none",
-      "thumbnail": "assets/ui/none-thumbnail.svg"
-    },
-    {
-      "id": "none-legs",
-      "name": "Không dùng",
-      "category": "legs",
-      "path": "assets/legs/none.glb",
-      "format": "glb",
-      "size": 136,
-      "type": "none",
-      "thumbnail": "assets/ui/none-thumbnail.svg"
-    },
-    {
       "id": "none-clothes",
       "name": "Không dùng",
       "category": "clothes",
@@ -230,22 +188,6 @@
       "size": 136,
       "type": "none",
       "thumbnail": "assets/ui/none-thumbnail.svg"
-    },
-    {
-      "id": "faces-chibi-01",
-      "name": "Mặt oval",
-      "category": "faces",
-      "path": "assets/faces/faces-chibi-01.glb",
-      "format": "glb",
-      "size": 5328
-    },
-    {
-      "id": "faces-chibi-02",
-      "name": "Mặt tròn",
-      "category": "faces",
-      "path": "assets/faces/faces-chibi-02.glb",
-      "format": "glb",
-      "size": 5328
     },
     {
       "id": "hair-chibi-01",
@@ -360,54 +302,6 @@
       "size": 5289
     },
     {
-      "id": "body-chibi-01",
-      "name": "Thân chibi nhỏ",
-      "category": "body",
-      "path": "assets/body/body-chibi-01.glb",
-      "format": "glb",
-      "size": 5334
-    },
-    {
-      "id": "body-chibi-02",
-      "name": "Thân chibi tròn",
-      "category": "body",
-      "path": "assets/body/body-chibi-02.glb",
-      "format": "glb",
-      "size": 5280
-    },
-    {
-      "id": "arms-chibi-01",
-      "name": "Tay ngắn",
-      "category": "arms",
-      "path": "assets/arms/arms-chibi-01.glb",
-      "format": "glb",
-      "size": 5412
-    },
-    {
-      "id": "arms-chibi-02",
-      "name": "Tay mũm mĩm",
-      "category": "arms",
-      "path": "assets/arms/arms-chibi-02.glb",
-      "format": "glb",
-      "size": 5361
-    },
-    {
-      "id": "legs-chibi-01",
-      "name": "Chân ngắn",
-      "category": "legs",
-      "path": "assets/legs/legs-chibi-01.glb",
-      "format": "glb",
-      "size": 5421
-    },
-    {
-      "id": "legs-chibi-02",
-      "name": "Chân tròn",
-      "category": "legs",
-      "path": "assets/legs/legs-chibi-02.glb",
-      "format": "glb",
-      "size": 5370
-    },
-    {
       "id": "clothes-chibi-01",
       "name": "Váy yếm hồng",
       "category": "clothes",
@@ -455,5 +349,57 @@
       "format": "glb",
       "size": 5364
     }
-  ]
+  ],
+  "characterArchitecture": {
+    "body": "one-full-body-mesh",
+    "deformation": "glTF morph targets / Blender Shape Keys",
+    "characterRootTransform": [
+      "x",
+      "y",
+      "z"
+    ],
+    "itemTransform": [
+      "positionX",
+      "positionY",
+      "positionZ",
+      "scaleX",
+      "scaleY",
+      "scaleZ",
+      "rotationX",
+      "rotationY",
+      "rotationZ"
+    ],
+    "clothingCompatibility": "Matching morph targets on garments or fitted variants are required for deformation."
+  },
+  "shapeKeyContract": {
+    "bodyAssetCategory": "body",
+    "glTF": "Each body mesh may expose morphTargetDictionary and morphTargetInfluences.",
+    "naming": "Use stable unique names across body meshes; values stored per character in shapeKeys.",
+    "recommendedNames": [
+      "Head_Size",
+      "Head_Width",
+      "Eye_Size",
+      "Eye_Spacing",
+      "Neck_Length",
+      "Shoulder_Width",
+      "Torso_Length",
+      "Body_Width",
+      "Chest_Size",
+      "Waist_Size",
+      "Belly_Size",
+      "Hip_Width",
+      "Butt_Size",
+      "Arm_Length",
+      "Arm_Width",
+      "Leg_Length",
+      "Leg_Width",
+      "Hand_Size",
+      "Foot_Size"
+    ],
+    "range": {
+      "min": -1,
+      "max": 1,
+      "step": 0.01
+    }
+  }
 }
