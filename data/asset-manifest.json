@@ -230,6 +230,230 @@
       "size": 136,
       "type": "none",
       "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "faces-chibi-01",
+      "name": "Mặt oval",
+      "category": "faces",
+      "path": "assets/faces/faces-chibi-01.glb",
+      "format": "glb",
+      "size": 5328
+    },
+    {
+      "id": "faces-chibi-02",
+      "name": "Mặt tròn",
+      "category": "faces",
+      "path": "assets/faces/faces-chibi-02.glb",
+      "format": "glb",
+      "size": 5328
+    },
+    {
+      "id": "hair-chibi-01",
+      "name": "Tóc bob nâu",
+      "category": "hair",
+      "path": "assets/hair/hair-chibi-01.glb",
+      "format": "glb",
+      "size": 5589
+    },
+    {
+      "id": "hair-chibi-02",
+      "name": "Tóc mái đen",
+      "category": "hair",
+      "path": "assets/hair/hair-chibi-02.glb",
+      "format": "glb",
+      "size": 5592
+    },
+    {
+      "id": "eyes-chibi-01",
+      "name": "Mắt long lanh",
+      "category": "eyes",
+      "path": "assets/eyes/eyes-chibi-01.glb",
+      "format": "glb",
+      "size": 5562
+    },
+    {
+      "id": "eyes-chibi-02",
+      "name": "Mắt tròn đáng yêu",
+      "category": "eyes",
+      "path": "assets/eyes/eyes-chibi-02.glb",
+      "format": "glb",
+      "size": 5562
+    },
+    {
+      "id": "extra-eyes-1-chibi-01",
+      "name": "Mắt phụ long lanh",
+      "category": "extra-eyes-1",
+      "path": "assets/extra-eyes-1/extra-eyes-1-chibi-01.glb",
+      "format": "glb",
+      "size": 5373
+    },
+    {
+      "id": "extra-eyes-1-chibi-02",
+      "name": "Mắt phụ tròn",
+      "category": "extra-eyes-1",
+      "path": "assets/extra-eyes-1/extra-eyes-1-chibi-02.glb",
+      "format": "glb",
+      "size": 5373
+    },
+    {
+      "id": "extra-eyes-2-chibi-01",
+      "name": "Mắt phụ long lanh 2",
+      "category": "extra-eyes-2",
+      "path": "assets/extra-eyes-2/extra-eyes-2-chibi-01.glb",
+      "format": "glb",
+      "size": 5373
+    },
+    {
+      "id": "extra-eyes-2-chibi-02",
+      "name": "Mắt phụ tròn 2",
+      "category": "extra-eyes-2",
+      "path": "assets/extra-eyes-2/extra-eyes-2-chibi-02.glb",
+      "format": "glb",
+      "size": 5373
+    },
+    {
+      "id": "eyebrows-chibi-01",
+      "name": "Mày cong",
+      "category": "eyebrows",
+      "path": "assets/eyebrows/eyebrows-chibi-01.glb",
+      "format": "glb",
+      "size": 5433
+    },
+    {
+      "id": "eyebrows-chibi-02",
+      "name": "Mày ngang",
+      "category": "eyebrows",
+      "path": "assets/eyebrows/eyebrows-chibi-02.glb",
+      "format": "glb",
+      "size": 5436
+    },
+    {
+      "id": "noses-chibi-01",
+      "name": "Mũi nhỏ",
+      "category": "noses",
+      "path": "assets/noses/noses-chibi-01.glb",
+      "format": "glb",
+      "size": 5337
+    },
+    {
+      "id": "noses-chibi-02",
+      "name": "Mũi hạt đậu",
+      "category": "noses",
+      "path": "assets/noses/noses-chibi-02.glb",
+      "format": "glb",
+      "size": 5337
+    },
+    {
+      "id": "mouths-chibi-01",
+      "name": "Miệng cười",
+      "category": "mouths",
+      "path": "assets/mouths/mouths-chibi-01.glb",
+      "format": "glb",
+      "size": 5340
+    },
+    {
+      "id": "mouths-chibi-02",
+      "name": "Miệng chữ O",
+      "category": "mouths",
+      "path": "assets/mouths/mouths-chibi-02.glb",
+      "format": "glb",
+      "size": 5289
+    },
+    {
+      "id": "body-chibi-01",
+      "name": "Thân chibi nhỏ",
+      "category": "body",
+      "path": "assets/body/body-chibi-01.glb",
+      "format": "glb",
+      "size": 5334
+    },
+    {
+      "id": "body-chibi-02",
+      "name": "Thân chibi tròn",
+      "category": "body",
+      "path": "assets/body/body-chibi-02.glb",
+      "format": "glb",
+      "size": 5280
+    },
+    {
+      "id": "arms-chibi-01",
+      "name": "Tay ngắn",
+      "category": "arms",
+      "path": "assets/arms/arms-chibi-01.glb",
+      "format": "glb",
+      "size": 5412
+    },
+    {
+      "id": "arms-chibi-02",
+      "name": "Tay mũm mĩm",
+      "category": "arms",
+      "path": "assets/arms/arms-chibi-02.glb",
+      "format": "glb",
+      "size": 5361
+    },
+    {
+      "id": "legs-chibi-01",
+      "name": "Chân ngắn",
+      "category": "legs",
+      "path": "assets/legs/legs-chibi-01.glb",
+      "format": "glb",
+      "size": 5421
+    },
+    {
+      "id": "legs-chibi-02",
+      "name": "Chân tròn",
+      "category": "legs",
+      "path": "assets/legs/legs-chibi-02.glb",
+      "format": "glb",
+      "size": 5370
+    },
+    {
+      "id": "clothes-chibi-01",
+      "name": "Váy yếm hồng",
+      "category": "clothes",
+      "path": "assets/clothes/clothes-chibi-01.glb",
+      "format": "glb",
+      "size": 5412
+    },
+    {
+      "id": "clothes-chibi-02",
+      "name": "Áo hoodie xanh",
+      "category": "clothes",
+      "path": "assets/clothes/clothes-chibi-02.glb",
+      "format": "glb",
+      "size": 5280
+    },
+    {
+      "id": "accessories-chibi-01",
+      "name": "Kính tròn",
+      "category": "accessories",
+      "path": "assets/accessories/accessories-chibi-01.glb",
+      "format": "glb",
+      "size": 5508
+    },
+    {
+      "id": "accessories-chibi-02",
+      "name": "Nơ tóc",
+      "category": "accessories",
+      "path": "assets/accessories/accessories-chibi-02.glb",
+      "format": "glb",
+      "size": 5448
+    },
+    {
+      "id": "footwear-chibi-01",
+      "name": "Giày búp bê",
+      "category": "footwear",
+      "path": "assets/footwear/footwear-chibi-01.glb",
+      "format": "glb",
+      "size": 5418
+    },
+    {
+      "id": "footwear-chibi-02",
+      "name": "Sneaker",
+      "category": "footwear",
+      "path": "assets/footwear/footwear-chibi-02.glb",
+      "format": "glb",
+      "size": 5364
     }
   ]
 }

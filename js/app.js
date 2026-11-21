@@ -234,7 +234,7 @@ function loadItem(item,categoryOverride=activeCategory){
   if(version!==loadVersions[categoryId])return;
   const model=gltf.scene,box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),maxDimension=Math.max(size.x,size.y,size.z);
   if(!Number.isFinite(maxDimension)||maxDimension<=0){toast("Mô hình GLB không có kích thước hợp lệ.");return;}
-  const scale=1.8/maxDimension;model.scale.setScalar(scale);
+  const targetSizes={faces:1.45,hair:1.55,eyes:.48,"extra-eyes-1":.34,"extra-eyes-2":.34,eyebrows:.34,noses:.16,mouths:.30,body:1.35,arms:.82,legs:.72,clothes:1.28,accessories:.48,footwear:.48};const targetSize=targetSizes[categoryId]||1.0;const scale=targetSize/maxDimension;model.scale.setScalar(scale);
   model.position.set(-center.x*scale,1.15-center.y*scale,-center.z*scale);
   model.userData.basePosition=model.position.clone();
   const offset=getItemPosition(item);model.position.add(new THREE.Vector3(offset.x,offset.y,offset.z));
