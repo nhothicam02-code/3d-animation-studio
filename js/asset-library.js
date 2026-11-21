@@ -1,1 +1,0 @@
-export class AssetLibrary{constructor(manifestUrl){this.manifestUrl=manifestUrl;this.manifest=null;}async load(){if(!this.manifest){const r=await fetch(this.manifestUrl,{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);this.manifest=await r.json();}return this.manifest.assets||[];}get categories(){return this.manifest?.categories||[];}}
