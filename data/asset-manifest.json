@@ -87,7 +87,9 @@
       "category": "faces",
       "path": "assets/faces/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-eyes",
@@ -95,7 +97,9 @@
       "category": "eyes",
       "path": "assets/eyes/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-eyebrows",
@@ -103,7 +107,9 @@
       "category": "eyebrows",
       "path": "assets/eyebrows/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-noses",
@@ -111,7 +117,9 @@
       "category": "noses",
       "path": "assets/noses/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-mouths",
@@ -119,7 +127,9 @@
       "category": "mouths",
       "path": "assets/mouths/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-hair",
@@ -127,7 +137,9 @@
       "category": "hair",
       "path": "assets/hair/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-body",
@@ -135,7 +147,9 @@
       "category": "body",
       "path": "assets/body/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-arms",
@@ -143,7 +157,9 @@
       "category": "arms",
       "path": "assets/arms/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-legs",
@@ -151,7 +167,9 @@
       "category": "legs",
       "path": "assets/legs/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-clothes",
@@ -159,7 +177,9 @@
       "category": "clothes",
       "path": "assets/clothes/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-accessories",
@@ -167,7 +187,9 @@
       "category": "accessories",
       "path": "assets/accessories/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
       "id": "none-footwear",
@@ -175,7 +197,9 @@
       "category": "footwear",
       "path": "assets/footwear/none.glb",
       "format": "glb",
-      "size": 136
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     }
   ]
 }
