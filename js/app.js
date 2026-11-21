@@ -7,7 +7,9 @@ import {setGitHubToken,hasGitHubToken,verifyToken,putText,putBinary,readJson,lis
 const categories=[
 {id:"faces",name:"Khuôn mặt",icon:"◉",description:"Hình dạng đầu và khuôn mặt"},
 {id:"hair",name:"Tóc",icon:"♧",description:"Tóc mái, tóc trước và tóc sau"},
-{id:"eyes",name:"Mắt",icon:"◎",description:"Kiểu mắt và tròng mắt"},
+{id:"eyes",name:"Mắt đôi",icon:"◎",description:"Mô hình gồm cả hai mắt"},
+{id:"extra-eyes-1",name:"Mắt bổ sung 1",icon:"◉",description:"Một mắt độc lập, có vị trí riêng"},
+{id:"extra-eyes-2",name:"Mắt bổ sung 2",icon:"◉",description:"Một mắt độc lập, có vị trí riêng"},
 {id:"eyebrows",name:"Lông mày",icon:"⌒",description:"Hình dáng lông mày"},
 {id:"noses",name:"Mũi",icon:"⌁",description:"Các kiểu mũi nhân vật"},
 {id:"mouths",name:"Miệng",icon:"⌣",description:"Miệng và biểu cảm"},
