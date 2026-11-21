@@ -39,7 +39,7 @@ The repository does not yet contain the final production Full Body GLB. Upload a
 | Áo lót | Undergarment top |
 | Quần lót | Undergarment bottom |
 | Áo trong | Inner top |
-| Áo ngoài | Outer top layer; keeps the previous clothing assets for compatibility |
+| Áo ngoài | Outer shirts worn over innerwear, separate from jackets |
 | Áo khoác | Jacket / hoodie / cardigan |
 | Tay áo | Separate sleeve pieces |
 | Quần | Pants and shorts |
