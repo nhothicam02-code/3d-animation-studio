@@ -71,5 +71,48 @@
   "clothing": {
     "strategy": "matching-morph-targets-or-fitted-variants",
     "warning": "Static garments do not automatically deform with body Shape Keys."
-  }
+  },
+  "clothingCategories": [
+    {
+      "id": "underwear-tops",
+      "name": "Áo lót"
+    },
+    {
+      "id": "underwear-bottoms",
+      "name": "Quần lót"
+    },
+    {
+      "id": "innerwear",
+      "name": "Áo trong"
+    },
+    {
+      "id": "jackets",
+      "name": "Áo khoác"
+    },
+    {
+      "id": "sleeves",
+      "name": "Tay áo"
+    },
+    {
+      "id": "pants",
+      "name": "Quần"
+    },
+    {
+      "id": "skirts",
+      "name": "Váy"
+    },
+    {
+      "id": "socks",
+      "name": "Vớ"
+    },
+    {
+      "id": "outerwear",
+      "name": "Áo ngoài"
+    },
+    {
+      "id": "footwear",
+      "name": "Giày dép"
+    }
+  ],
+  "clothingShapeKeyCompatibility": "Garment GLBs should carry corresponding morph targets with the same names as the body for shape-conforming fit; otherwise use fitted variants."
 }
