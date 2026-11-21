@@ -82,7 +82,7 @@
     },
     {
       "id": "outerwear",
-      "path": "assets/clothes/",
+      "path": "assets/outerwear/",
       "attachment": "body",
       "label": "Áo ngoài",
       "layer": 3
@@ -183,7 +183,7 @@
       "id": "none-outerwear",
       "name": "Không dùng",
       "category": "outerwear",
-      "path": "assets/clothes/none.glb",
+      "path": "assets/outerwear/none.glb",
       "format": "glb",
       "size": 136,
       "type": "none",
@@ -344,7 +344,7 @@
     {
       "id": "clothes-chibi-01",
       "name": "Váy yếm hồng",
-      "category": "outerwear",
+      "category": "skirts",
       "path": "assets/clothes/clothes-chibi-01.glb",
       "format": "glb",
       "size": 5412
@@ -352,7 +352,7 @@
     {
       "id": "clothes-chibi-02",
       "name": "Áo hoodie xanh",
-      "category": "outerwear",
+      "category": "jackets",
       "path": "assets/clothes/clothes-chibi-02.glb",
       "format": "glb",
       "size": 5280
@@ -541,7 +541,7 @@
     {
       "category": "outerwear",
       "order": 3,
-      "description": "Áo ngoài; chứa hai mẫu trang phục cũ để tương thích"
+      "description": "Áo mặc bên ngoài áo trong"
     },
     {
       "category": "jackets",
