@@ -43,6 +43,7 @@ function applyShapeKey(name,value){const body=loadedModels.body;if(!body)return;
 function renderShapeKeyPanel(){const panel=$("#body-shape-panel"),list=$("#body-shape-list"),body=loadedModels.body;if(!panel||!list)return;list.innerHTML="";if(!body){panel.hidden=true;return;}const keys=new Set();body.traverse(n=>{if(n.isMesh&&n.morphTargetDictionary)Object.keys(n.morphTargetDictionary).forEach(k=>keys.add(k));});panel.hidden=false;if(!keys.size){list.innerHTML='<p class="shape-key-empty">Mô hình chưa có Shape Keys. Hãy tạo Shape Keys trong Blender rồi export GLB có morph targets.</p>';return;}const saved=getCharacterShapeKeys();[...keys].sort().forEach(name=>{const row=document.createElement("div");row.className="shape-key-row";const top=document.createElement("div");top.className="shape-key-top";const label=document.createElement("label");label.textContent=name.replace(/[_-]+/g," ");const out=document.createElement("output");out.textContent=(Number(saved[name])||0).toFixed(2);const slider=document.createElement("input");slider.type="range";slider.min="-1";slider.max="1";slider.step="0.01";slider.value=Number(saved[name])||0;slider.addEventListener("input",()=>{const v=Number(slider.value);saved[name]=v;out.textContent=v.toFixed(2);applyShapeKey(name,v);});top.append(label,out);row.append(top,slider);list.append(row);applyShapeKey(name,Number(saved[name])||0);});}
 $("#reset-body-shapes").onclick=()=>{if(activeCharacter)activeCharacter.shapeKeys={};renderShapeKeyPanel();};
 ["x","y","z"].forEach(a=>$("#character-position-"+a).addEventListener("change",e=>updateCharacterTransform(a,e.target.value)));
+$("#reset-character-position").onclick=()=>{activeCharacter.transform={x:0,y:0,z:0};applyCharacterTransform();};
 alignCharacterToGround();
 const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};new ResizeObserver(resize).observe(canvas);resize();
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
@@ -52,6 +53,7 @@ function selectCategory(id){activeCategory=id;renderTabs();renderItems();}
 function saveActiveCharacterParts(){
  if(!activeCharacter)return;
  categories.forEach(c=>{activeCharacter.parts[c.id]=selectedItems[c.id]||null;});activeCharacter.transform={...getCharacterTransform()};
+}
 function clearActiveCharacterModels(){
  categories.forEach(c=>{
   loadVersions[c.id]++;
@@ -145,7 +147,7 @@ function safeFileName(name){
 }
 async function exportCharacterGLB(){
  const button=$("#export-character");
- if(!character.children.length){toast("Nhân vật hiện chưa có mô hình để xuất.");return;}
+ if(!characterContent.children.length){toast("Nhân vật hiện chưa có mô hình để xuất.");return;}
  button.disabled=true;button.textContent="Đang xuất...";
  try{
   character.updateMatrixWorld(true);
