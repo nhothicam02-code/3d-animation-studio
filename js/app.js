@@ -144,59 +144,145 @@ function exportCharacter() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+let allAssets = [];
+let assetCategories = [];
+let selectedAssetCategory = "all";
+let assetPage = 1;
+const ASSETS_PER_PAGE = 12;
+
+function renderAssetTabs() {
+  const tabs = $("#asset-category-tabs");
+  tabs.replaceChildren();
+  const allButton = document.createElement("button");
+  allButton.className = "asset-category-tab" + (selectedAssetCategory === "all" ? " active" : "");
+  allButton.setAttribute("role", "tab");
+  allButton.setAttribute("aria-selected", String(selectedAssetCategory === "all"));
+  allButton.textContent = "Tất cả";
+  const allCount = document.createElement("span");
+  allCount.className = "tab-count";
+  allCount.textContent = allAssets.length;
+  allButton.append(allCount);
+  allButton.addEventListener("click", () => { selectedAssetCategory = "all"; assetPage = 1; renderAssetBrowser(); });
+  tabs.append(allButton);
+
+  assetCategories.forEach((category) => {
+    const button = document.createElement("button");
+    const count = allAssets.filter((asset) => asset.category === category.id).length;
+    button.className = "asset-category-tab" + (selectedAssetCategory === category.id ? " active" : "");
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", String(selectedAssetCategory === category.id));
+    button.append(document.createTextNode(categoryLabels[category.id] || category.label || category.id));
+    const badge = document.createElement("span");
+    badge.className = "tab-count";
+    badge.textContent = count;
+    button.append(badge);
+    button.addEventListener("click", () => { selectedAssetCategory = category.id; assetPage = 1; renderAssetBrowser(); });
+    tabs.append(button);
+  });
+}
+
+function renderAssetBrowser() {
+  renderAssetTabs();
+  const query = $("#asset-search").value.trim().toLocaleLowerCase();
+  const filtered = allAssets.filter((asset) => {
+    const categoryMatch = selectedAssetCategory === "all" || asset.category === selectedAssetCategory;
+    const text = [asset.name, asset.id, asset.category].filter(Boolean).join(" ").toLocaleLowerCase();
+    return categoryMatch && (!query || text.includes(query));
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ASSETS_PER_PAGE));
+  assetPage = Math.min(assetPage, totalPages);
+  const start = (assetPage - 1) * ASSETS_PER_PAGE;
+  const pageItems = filtered.slice(start, start + ASSETS_PER_PAGE);
+  $("#asset-total").textContent = allAssets.length + " mô hình";
+  $("#asset-results-label").textContent = selectedAssetCategory === "all"
+    ? "Tất cả mô hình" : (categoryLabels[selectedAssetCategory] || selectedAssetCategory);
+  $("#asset-page-label").textContent = filtered.length
+    ? "Hiển thị " + (start + 1) + "–" + Math.min(start + ASSETS_PER_PAGE, filtered.length) + " / " + filtered.length
+    : "Không có kết quả";
+
+  const grid = $("#asset-grid");
+  grid.replaceChildren();
+  if (!pageItems.length) {
+    const empty = document.createElement("div");
+    empty.className = "asset-empty";
+    empty.textContent = query ? "Không tìm thấy mô hình phù hợp." : "Danh mục này chưa có mô hình. Hãy thêm asset GLB vào manifest.";
+    grid.append(empty);
+  }
+  pageItems.forEach((asset) => {
+    const card = document.createElement("article");
+    card.className = "asset-card";
+    const preview = document.createElement("div");
+    preview.className = "asset-preview";
+    const thumbnail = asset.thumbnail || asset.preview || asset.image;
+    if (thumbnail) {
+      const image = document.createElement("img");
+      image.src = thumbnail;
+      image.alt = "Xem trước " + (asset.name || asset.id);
+      image.loading = "lazy";
+      image.onerror = () => { image.remove(); const fallback = document.createElement("span"); fallback.className = "asset-preview-fallback"; fallback.textContent = "◇"; preview.append(fallback); };
+      preview.append(image);
+    } else {
+      const fallback = document.createElement("span");
+      fallback.className = "asset-preview-fallback";
+      fallback.textContent = "◇";
+      preview.append(fallback);
+    }
+    const title = document.createElement("h3");
+    title.textContent = asset.name || asset.id;
+    const meta = document.createElement("p");
+    meta.textContent = (categoryLabels[asset.category] || asset.category || "Asset") + " · " + (asset.format || "glb");
+    const path = document.createElement("span");
+    path.className = "asset-count";
+    path.textContent = asset.id || asset.path || "";
+    const use = document.createElement("button");
+    use.className = "button button-primary asset-use";
+    use.textContent = "Dùng mô hình này";
+    use.addEventListener("click", async () => {
+      try {
+        await viewport.loadGLB(asset);
+        $("#asset-feedback").textContent = "Đã tải: " + (asset.name || asset.id);
+        toast("Đã tải mô hình GLB.");
+      } catch (error) {
+        $("#asset-feedback").textContent = "Lỗi tải GLB: " + error.message;
+        toast("Không tải được GLB.");
+      }
+    });
+    card.append(preview, title, meta, path, use);
+    grid.append(card);
+  });
+
+  const pagination = $("#asset-pagination");
+  pagination.replaceChildren();
+  if (totalPages > 1) {
+    const addPageButton = (label, page, disabled = false, active = false) => {
+      const button = document.createElement("button");
+      button.className = "asset-page-button" + (active ? " active" : "");
+      button.textContent = label;
+      button.disabled = disabled;
+      if (active) button.setAttribute("aria-current", "page");
+      button.addEventListener("click", () => { assetPage = page; renderAssetBrowser(); });
+      pagination.append(button);
+    };
+    addPageButton("‹", assetPage - 1, assetPage === 1);
+    const pages = new Set([1, totalPages, assetPage - 1, assetPage, assetPage + 1]);
+    let previous = 0;
+    [...pages].filter((page) => page >= 1 && page <= totalPages).sort((a,b) => a-b).forEach((page) => {
+      if (previous && page - previous > 1) {
+        const dots = document.createElement("span"); dots.className = "asset-page-ellipsis"; dots.textContent = "…"; pagination.append(dots);
+      }
+      addPageButton(String(page), page, false, page === assetPage);
+      previous = page;
+    });
+    addPageButton("›", assetPage + 1, assetPage === totalPages);
+  }
+}
+
 async function renderAssets() {
   const grid = $("#asset-grid");
   grid.replaceChildren();
   try {
-    const [assets, categories] = await Promise.all([
-      assetLibrary.load(),
-      assetLibrary.loadCategories()
-    ]);
-    categories.forEach((category) => {
-      const card = document.createElement("article");
-      card.className = "asset-card";
-      const title = document.createElement("h3");
-      title.textContent = categoryLabels[category.id] || category.id;
-      const description = document.createElement("p");
-      description.textContent = "Thư mục: " + (category.path || ("assets/" + category.id + "/"));
-      const count = document.createElement("span");
-      count.className = "asset-count";
-      count.textContent = assets.filter((asset) => asset.category === category.id).length + " asset";
-      card.append(title, description, count);
-      grid.append(card);
-    });
-    assets.forEach((asset) => {
-      const card = document.createElement("article");
-      card.className = "asset-card";
-      const title = document.createElement("h3");
-      title.textContent = asset.name || asset.id;
-      const meta = document.createElement("p");
-      meta.textContent = (categoryLabels[asset.category] || asset.category || "Asset") + " · " + (asset.format || "glb");
-      const path = document.createElement("code");
-      path.className = "asset-count";
-      path.textContent = asset.path || "";
-      const use = document.createElement("button");
-      use.className = "button button-primary asset-use";
-      use.textContent = "Dùng trong viewport";
-      use.addEventListener("click", async () => {
-        try {
-          await viewport.loadGLB(asset);
-          $("#asset-feedback").textContent = "Đã tải: " + (asset.name || asset.id);
-          toast("Đã tải mô hình GLB.");
-        } catch (error) {
-          $("#asset-feedback").textContent = "Lỗi tải GLB: " + error.message;
-          toast("Không tải được GLB.");
-        }
-      });
-      card.append(title, meta, path, use);
-      grid.append(card);
-    });
-    if (!categories.length && !assets.length) {
-      const empty = document.createElement("div");
-      empty.className = "asset-empty";
-      empty.textContent = "Manifest chưa có danh mục hoặc asset nào.";
-      grid.append(empty);
-    }
+    [allAssets, assetCategories] = await Promise.all([assetLibrary.load(), assetLibrary.loadCategories()]);
+    renderAssetBrowser();
   } catch (error) {
     const message = document.createElement("div");
     message.className = "asset-empty";
@@ -204,7 +290,6 @@ async function renderAssets() {
     grid.append(message);
   }
 }
-
 buildControls();
 render();
 renderAssets();
@@ -226,6 +311,7 @@ $("#character-name").addEventListener("change", () => {
 });
 $("#character-description").addEventListener("change", () => store.update({ description: $("#character-description").value }));
 $("#character-search").addEventListener("input", listCharacters);
+$("#asset-search").addEventListener("input", () => { assetPage = 1; renderAssetBrowser(); });
 $("#duplicate-character").addEventListener("click", () => { store.duplicate(); render(); toast("Đã nhân bản."); });
 $("#delete-character").addEventListener("click", () => {
   if (!confirm("Xóa hồ sơ nhân vật này?")) return;
