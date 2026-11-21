@@ -20,6 +20,14 @@
   ],
   "categories": [
     {
+      "id": "body",
+      "path": "assets/body/",
+      "label": "Cơ thể nền · Full Body",
+      "attachment": "character-root",
+      "required": true,
+      "morphTargets": true
+    },
+    {
       "id": "eyes",
       "path": "assets/eyes/",
       "attachment": "face"
@@ -53,14 +61,6 @@
       "id": "hair",
       "path": "assets/hair/",
       "attachment": "head"
-    },
-    {
-      "id": "body",
-      "path": "assets/body/",
-      "attachment": "character-root",
-      "label": "Cơ thể nền · Full Body",
-      "required": true,
-      "morphTargets": true
     },
     {
       "id": "clothes",
@@ -124,16 +124,6 @@
       "name": "Không dùng",
       "category": "hair",
       "path": "assets/hair/none.glb",
-      "format": "glb",
-      "size": 136,
-      "type": "none",
-      "thumbnail": "assets/ui/none-thumbnail.svg"
-    },
-    {
-      "id": "none-body",
-      "name": "Không dùng",
-      "category": "body",
-      "path": "assets/body/none.glb",
       "format": "glb",
       "size": 136,
       "type": "none",
