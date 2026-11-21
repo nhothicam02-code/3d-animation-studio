@@ -83,7 +83,7 @@
   "assets": [
     {
       "id": "none-faces",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "faces",
       "path": "assets/faces/none.glb",
       "format": "glb",
@@ -91,7 +91,7 @@
     },
     {
       "id": "none-eyes",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "eyes",
       "path": "assets/eyes/none.glb",
       "format": "glb",
@@ -99,7 +99,7 @@
     },
     {
       "id": "none-eyebrows",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "eyebrows",
       "path": "assets/eyebrows/none.glb",
       "format": "glb",
@@ -107,7 +107,7 @@
     },
     {
       "id": "none-noses",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "noses",
       "path": "assets/noses/none.glb",
       "format": "glb",
@@ -115,7 +115,7 @@
     },
     {
       "id": "none-mouths",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "mouths",
       "path": "assets/mouths/none.glb",
       "format": "glb",
@@ -123,7 +123,7 @@
     },
     {
       "id": "none-hair",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "hair",
       "path": "assets/hair/none.glb",
       "format": "glb",
@@ -131,7 +131,7 @@
     },
     {
       "id": "none-body",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "body",
       "path": "assets/body/none.glb",
       "format": "glb",
@@ -139,7 +139,7 @@
     },
     {
       "id": "none-arms",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "arms",
       "path": "assets/arms/none.glb",
       "format": "glb",
@@ -147,7 +147,7 @@
     },
     {
       "id": "none-legs",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "legs",
       "path": "assets/legs/none.glb",
       "format": "glb",
@@ -155,7 +155,7 @@
     },
     {
       "id": "none-clothes",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "clothes",
       "path": "assets/clothes/none.glb",
       "format": "glb",
@@ -163,7 +163,7 @@
     },
     {
       "id": "none-accessories",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "accessories",
       "path": "assets/accessories/none.glb",
       "format": "glb",
@@ -171,7 +171,7 @@
     },
     {
       "id": "none-footwear",
-      "name": "Khong dung",
+      "name": "Không dùng",
       "category": "footwear",
       "path": "assets/footwear/none.glb",
       "format": "glb",
