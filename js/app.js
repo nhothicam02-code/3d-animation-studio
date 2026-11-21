@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import { GLTFExporter } from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/exporters/GLTFExporter.js";
 import {setGitHubToken,hasGitHubToken,verifyToken,putText,putBinary,readJson,listCharacterProfiles} from "./github-sync.js";
 
 const categories=[
@@ -125,7 +126,40 @@ async function saveCharacterProfiles(){
  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="character-profiles.json";a.click();URL.revokeObjectURL(url);
  toast("Đã xuất hồ sơ JSON.");if(hasGitHubToken()){try{for(const record of characters){const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(a=>[a.id,a.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),updatedAt:new Date().toISOString()};await putText("characters/"+record.id+".json",JSON.stringify(profile,null,2),"Save character "+record.name);}toast("Đã lưu hồ sơ nhân vật lên GitHub.");}catch(error){toast("Lỗi GitHub: "+error.message);}}
 }
+
 $("#save-characters").onclick=saveCharacterProfiles;
+function safeFileName(name){
+ return String(name||"character").normalize("NFKD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-zA-Z0-9_-]+/g,"-").replace(/^-+|-+$/g,"")||"character";
+}
+async function exportCharacterGLB(){
+ const button=$("#export-character");
+ if(!character.children.length){toast("Nhân vật hiện chưa có mô hình để xuất.");return;}
+ button.disabled=true;button.textContent="Đang xuất...";
+ try{
+  character.updateMatrixWorld(true);
+  const exporter=new GLTFExporter();
+  const result=await exporter.parseAsync(character,{
+   binary:true,
+   onlyVisible:true,
+   trs:false,
+   maxTextureSize:4096
+  });
+  const blob=new Blob([result],{type:"model/gltf-binary"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;
+  link.download=safeFileName(activeCharacter?.name)+".glb";
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  toast("Đã xuất mô hình "+link.download+" thành công.");
+ }catch(error){
+  console.error("GLB export failed",error);
+  toast("Xuất GLB thất bại: "+(error?.message||"Lỗi không xác định"));
+ }finally{
+  button.disabled=false;button.textContent="⬇ Xuất mô hình 3D";
+ }
+}
+$("#export-character").onclick=exportCharacterGLB;
 function renameCharacter(id){
  const record=characters.find(c=>c.id===id);if(!record)return;
  showNameDialog("Đổi tên nhân vật",record.name,clean=>{record.name=clean;renderCharacterList();if(record.id===activeCharacterId)toast("Đã đổi tên nhân vật.");});
