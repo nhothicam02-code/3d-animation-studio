@@ -80,5 +80,102 @@
       "attachment": "foot"
     }
   ],
-  "assets": []
+  "assets": [
+    {
+      "id": "none-faces",
+      "name": "Khong dung",
+      "category": "faces",
+      "path": "assets/faces/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-eyes",
+      "name": "Khong dung",
+      "category": "eyes",
+      "path": "assets/eyes/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-eyebrows",
+      "name": "Khong dung",
+      "category": "eyebrows",
+      "path": "assets/eyebrows/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-noses",
+      "name": "Khong dung",
+      "category": "noses",
+      "path": "assets/noses/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-mouths",
+      "name": "Khong dung",
+      "category": "mouths",
+      "path": "assets/mouths/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-hair",
+      "name": "Khong dung",
+      "category": "hair",
+      "path": "assets/hair/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-body",
+      "name": "Khong dung",
+      "category": "body",
+      "path": "assets/body/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-arms",
+      "name": "Khong dung",
+      "category": "arms",
+      "path": "assets/arms/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-legs",
+      "name": "Khong dung",
+      "category": "legs",
+      "path": "assets/legs/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-clothes",
+      "name": "Khong dung",
+      "category": "clothes",
+      "path": "assets/clothes/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-accessories",
+      "name": "Khong dung",
+      "category": "accessories",
+      "path": "assets/accessories/none.glb",
+      "format": "glb",
+      "size": 136
+    },
+    {
+      "id": "none-footwear",
+      "name": "Khong dung",
+      "category": "footwear",
+      "path": "assets/footwear/none.glb",
+      "format": "glb",
+      "size": 136
+    }
+  ]
 }
