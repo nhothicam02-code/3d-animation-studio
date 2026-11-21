@@ -18,13 +18,13 @@ const categories=[
 ];
 const items=Object.fromEntries(categories.map(c=>[c.id,[]]));
 let activeCategory="eyes";
-let activeCharacterId="character-1"; // Each item keeps independent XYZ offsets for each character.
+let activeCharacterId="character-1"; // Each item keeps independent XYZ offsets for each character.\nconst characters=[{id:activeCharacterId,name:"Nhân vật 1",parts:{},thumbnail:null}];\nlet activeCharacter=characters[0];
 const selectedItems=Object.fromEntries(categories.map(c=>[c.id,null]));
 const loadedModels=Object.fromEntries(categories.map(c=>[c.id,null]));
 const loadVersions=Object.fromEntries(categories.map(c=>[c.id,0]));
 const $=s=>document.querySelector(s),canvas=$("#character-canvas"),scene=new THREE.Scene();scene.background=new THREE.Color("#e9e5ef");
 const camera=new THREE.PerspectiveCamera(35,1,.1,100);camera.position.set(0,1.4,5.6);
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,1.15,0);controls.minDistance=2.5;controls.maxDistance=9;
 scene.add(new THREE.HemisphereLight(0xffffff,0xc9bddb,2));const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);const fill=new THREE.DirectionalLight(0xd7c7ff,1.2);fill.position.set(-4,2,-3);scene.add(fill);
 const floor=new THREE.Mesh(new THREE.CircleGeometry(2.2,64),new THREE.MeshBasicMaterial({color:0xded8e8}));floor.rotation.x=-Math.PI/2;floor.position.y=-.03;scene.add(floor);
@@ -47,7 +47,60 @@ const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)ret
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
 function renderTabs(){const nav=$("#category-tabs");nav.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.className="category-tab"+(c.id===activeCategory?" active":"");b.innerHTML='<span class="tab-icon"></span>';b.querySelector(".tab-icon").textContent=c.icon;b.append(document.createTextNode(c.name));b.onclick=()=>selectCategory(c.id);nav.append(b);});}
 function renderItems(){const c=categories.find(x=>x.id===activeCategory),grid=$("#item-grid"),q=$("#item-search").value.trim().toLowerCase();$("#active-category-title").textContent=c.name;$("#category-description").textContent=c.description;const filtered=items[activeCategory].filter(i=>i.name.toLowerCase().includes(q));grid.innerHTML="";filtered.forEach(item=>{const b=document.createElement("button");b.className="item-card"+(item===selectedItems[activeCategory]?" active":"");const preview=document.createElement("div");preview.className="item-preview";preview.textContent="◇";const name=document.createElement("span");name.className="item-name";name.textContent=item.name;const kind=document.createElement("span");kind.className="item-kind";kind.textContent="GLB MODEL";b.append(preview,name,kind);b.onclick=()=>loadItem(item);grid.append(b);});$("#empty-hint").classList.toggle("show",filtered.length===0);$("#item-total").textContent=items[activeCategory].length+" item";$("#item-count").textContent=categories.reduce((n,c)=>n+items[c.id].length,0)+" item đã thêm";renderTransformPanel();}
-function selectCategory(id){activeCategory=id;renderTabs();renderItems();}
+function selectCategory(id){activeCategory=id;renderTabs();renderItems();renderCharacterList();}
+function saveActiveCharacterParts(){
+ if(!activeCharacter)return;
+ categories.forEach(c=>{activeCharacter.parts[c.id]=selectedItems[c.id]||null;});
+}
+function clearActiveCharacterModels(){
+ categories.forEach(c=>{
+  loadVersions[c.id]++;
+  if(loadedModels[c.id])character.remove(loadedModels[c.id]);
+  loadedModels[c.id]=null;selectedItems[c.id]=null;
+ });
+}
+function captureCharacterThumbnail(){
+ try{renderer.render(scene,camera);activeCharacter.thumbnail=renderer.domElement.toDataURL("image/jpeg",.72);}catch(error){console.warn("Không tạo được thumbnail",error);}
+}
+function renderCharacterList(){
+ const list=$("#character-list");list.innerHTML="";
+ characters.forEach(record=>{
+  const card=document.createElement("div");card.className="character-card"+(record.id===activeCharacterId?" active":"");
+  const select=document.createElement("button");select.type="button";select.className="character-select";select.style.cssText="display:block;width:100%;padding:0;border:0;background:transparent;text-align:left;cursor:pointer";
+  const thumb=document.createElement("div");thumb.className="character-thumb";
+  if(record.thumbnail){const img=document.createElement("img");img.src=record.thumbnail;img.alt="Ảnh thu nhỏ "+record.name;thumb.append(img);}else thumb.textContent="✧";
+  const name=document.createElement("span");name.className="character-card-name";name.textContent=record.name;
+  const id=document.createElement("span");id.className="character-card-id";id.textContent=record.id;
+  select.append(thumb,name,id);select.onclick=()=>activateCharacter(record.id);
+  const actions=document.createElement("div");actions.className="character-card-actions";
+  const rename=document.createElement("button");rename.type="button";rename.className="character-rename";rename.textContent="Đổi tên";rename.onclick=()=>renameCharacter(record.id);
+  actions.append(rename);card.append(select,actions);list.append(card);
+ });
+}
+function renameCharacter(id){
+ const record=characters.find(c=>c.id===id);if(!record)return;
+ const name=prompt("Nhập tên nhân vật:",record.name);if(name===null)return;
+ const clean=name.trim();if(!clean){toast("Tên nhân vật không được để trống.");return;}
+ record.name=clean;renderCharacterList();if(record.id===activeCharacterId)toast("Đã đổi tên nhân vật.");
+}
+function activateCharacter(id){
+ if(id===activeCharacterId)return;
+ saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
+ activeCharacter=characters.find(c=>c.id===id);activeCharacterId=activeCharacter.id;
+ makeCharacter();
+ categories.forEach(c=>{const item=activeCharacter.parts[c.id];if(item)loadItem(item,c.id);});
+ renderCharacterList();renderItems();
+}
+$("#add-character").onclick=()=>{
+ const proposed="Nhân vật "+(characters.length+1);
+ const name=prompt("Đặt tên cho nhân vật mới:",proposed);
+ if(name===null)return;const clean=name.trim();
+ if(!clean){toast("Tên nhân vật không được để trống.");return;}
+ saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
+ const record={id:"char-"+crypto.randomUUID(),name:clean,parts:{},thumbnail:null};
+ characters.push(record);activeCharacter=record;activeCharacterId=record.id;
+ makeCharacter();renderCharacterList();renderItems();toast("Đã tạo "+clean);
+};
 function getItemPosition(item,characterId=activeCharacterId){
  if(!item.positionByCharacter)item.positionByCharacter={};
  if(!item.positionByCharacter[characterId])item.positionByCharacter[characterId]={x:0,y:0,z:0};
@@ -91,6 +144,6 @@ function loadItem(item){
 $("#add-item").onclick=()=>$("#file-input").click();
 $("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".glb")){toast("Vui lòng chọn tệp .glb");e.target.value="";return;}const item={name:file.name.replace(/\.glb$/i,""),url:URL.createObjectURL(file),file};items[activeCategory].push(item);renderItems();loadItem(item);toast("Đã thêm item vào danh mục "+categories.find(c=>c.id===activeCategory).name+" (phiên hiện tại)");e.target.value="";};
 $("#item-search").oninput=renderItems;
-$("#reset-character").onclick=()=>{categories.forEach(c=>{loadVersions[c.id]++;if(loadedModels[c.id]){character.remove(loadedModels[c.id]);loadedModels[c.id]=null;}selectedItems[c.id]=null;});makeCharacter();renderItems();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật xem trước.");};
+$("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};makeCharacter();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
 renderTabs();renderItems();
