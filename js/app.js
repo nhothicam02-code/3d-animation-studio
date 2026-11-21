@@ -48,7 +48,6 @@ function alignCharacterToGround(){
 }
 function mat(color,rough=.75){return new THREE.MeshStandardMaterial({color,roughness:rough});}
 function sphere(parent,pos,scale,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);m.position.set(...pos);m.scale.set(...scale);parent.add(m);return m;}
-function makeCharacter(){character.position.set(0,0,0);while(character.children.length)character.remove(character.children[0]);const skin=mat("#f4c9b4"),hair=mat("#55405d"),white=mat("#fffdf9"),iris=mat("#8b70bd"),dark=mat("#382d3d"),pink=mat("#d98e91");
 sphere(character,[0,.55,0],[.48,.62,.34],mat("#d9b4d1"));
 sphere(character,[0,1.55,0],[.66,.72,.57],skin);
 sphere(character,[0,1.93,-.02],[.68,.43,.58],hair);
@@ -59,7 +58,7 @@ const smile=new THREE.Mesh(new THREE.TorusGeometry(.105,.018,8,24,Math.PI),pink)
 for(const x of [-.72,.72]){sphere(character,[x,.61,0],[.24,.5,.25],mat("#d9b4d1"));}
 sphere(character,[-.22,-.05,0],[.19,.42,.2],mat("#f4c9b4"));sphere(character,[.22,-.05,0],[.19,.42,.2],mat("#f4c9b4"));
 }
-makeCharacter();
+
 alignCharacterToGround();
 const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};new ResizeObserver(resize).observe(canvas);resize();
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
@@ -114,7 +113,7 @@ $("#save-github").onclick=()=>{const value=$("#github-token").value.trim();if(!v
 $("#test-github").onclick=async()=>{const value=$("#github-token").value.trim();if(value)setGitHubToken(value);const status=$("#github-status");status.textContent="Đang kiểm tra...";try{status.textContent="Kết nối thành công: "+await verifyToken();toast("GitHub đã kết nối.");}catch(error){status.textContent="Lỗi: "+error.message;toast("Không kết nối được GitHub.");}};
 
 
-$("#load-github-characters").onclick=async()=>{const status=$("#github-status");status.textContent="Đang tải hồ sơ...";try{await loadManifestAssets();const profiles=await listCharacterProfiles();if(!profiles.length){status.textContent="Chưa có hồ sơ trên GitHub.";return;}characters.splice(0,characters.length,...profiles.map(p=>{for(const category of categories){for(const asset of items[category.id]){const position=p.positions?.[asset.id];if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[p.id]=position;}}}return{id:p.id,name:p.name,parts:Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===p.parts?.[c.id])||null])),thumbnail:p.thumbnail||null};}));activeCharacter=characters[0];activeCharacterId=activeCharacter.id;clearActiveCharacterModels();makeCharacter();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();renderItems();status.textContent="Đã tải "+profiles.length+" hồ sơ từ GitHub.";toast("Đã tải hồ sơ nhân vật.");}catch(error){status.textContent="Lỗi tải hồ sơ: "+error.message;}};
+$("#load-github-characters").onclick=async()=>{const status=$("#github-status");status.textContent="Đang tải hồ sơ...";try{await loadManifestAssets();const profiles=await listCharacterProfiles();if(!profiles.length){status.textContent="Chưa có hồ sơ trên GitHub.";return;}characters.splice(0,characters.length,...profiles.map(p=>{for(const category of categories){for(const asset of items[category.id]){const position=p.positions?.[asset.id];if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[p.id]=position;}}}return{id:p.id,name:p.name,parts:Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===p.parts?.[c.id])||null])),thumbnail:p.thumbnail||null};}));activeCharacter=characters[0];activeCharacterId=activeCharacter.id;clearActiveCharacterModels();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();renderItems();status.textContent="Đã tải "+profiles.length+" hồ sơ từ GitHub.";toast("Đã tải hồ sơ nhân vật.");}catch(error){status.textContent="Lỗi tải hồ sơ: "+error.message;}};
 
 async function saveCharacterProfiles(){
  saveActiveCharacterParts();captureCharacterThumbnail();
@@ -168,7 +167,7 @@ function activateCharacter(id){
  if(id===activeCharacterId)return;
  saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
  activeCharacter=characters.find(c=>c.id===id);activeCharacterId=activeCharacter.id;
- makeCharacter();alignCharacterToGround();
+ alignCharacterToGround();
  categories.forEach(c=>{const item=activeCharacter.parts[c.id];if(item)loadItem(item,c.id);});
  renderCharacterList();renderItems();
 }
@@ -178,7 +177,7 @@ $("#add-character").onclick=()=>{
  saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
  const record={id:"char-"+crypto.randomUUID(),name:clean,parts:{},thumbnail:null};
  characters.push(record);activeCharacter=record;activeCharacterId=record.id;
- makeCharacter();alignCharacterToGround();renderCharacterList();renderItems();toast("Đã tạo "+clean);
+ alignCharacterToGround();renderCharacterList();renderItems();toast("Đã tạo "+clean);
 });
 };
 function getItemPosition(item,characterId=activeCharacterId){
@@ -226,7 +225,7 @@ function loadItem(item,categoryOverride=activeCategory){
 $("#add-item").onclick=()=>$("#file-input").click();
 $("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".glb")){toast("Vui lòng chọn tệp .glb");e.target.value="";return;}const item={id:"asset-"+crypto.randomUUID(),name:file.name.replace(/\\.glb$/i,""),url:URL.createObjectURL(file),file,positionByCharacter:{}};items[activeCategory].push(item);renderItems();loadItem(item);toast("Đã thêm item vào danh mục "+categories.find(c=>c.id===activeCategory).name+" (phiên hiện tại)");if(hasGitHubToken()){(async()=>{try{const path="assets/"+activeCategory+"/"+item.id+".glb";await putBinary(path,file,"Add asset "+item.name);const manifest=await readJson("data/asset-manifest.json");manifest.data.assets=(manifest.data.assets||[]).filter(a=>a.id!==item.id);manifest.data.assets.push({id:item.id,name:item.name,category:activeCategory,path,format:"glb",size:file.size});await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update asset manifest");item.url="https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/"+path;item.path=path;toast("Đã tải GLB lên GitHub và cập nhật manifest.");}catch(error){toast("Lỗi đồng bộ GLB: "+error.message);}})();}e.target.value="";};
 $("#item-search").oninput=renderItems;
-$("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};makeCharacter();alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
+$("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
 function restoreCharacterProfiles(){
  try{
@@ -264,11 +263,11 @@ async function loadManifestAssets(){
      }
     }
     const restored=characters.find(c=>c.id===saved.activeCharacterId);
-    if(restored){clearActiveCharacterModels();activeCharacter=restored;activeCharacterId=restored.id;makeCharacter();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();}
+    if(restored){clearActiveCharacterModels();activeCharacter=restored;activeCharacterId=restored.id;alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();}
    }
   }catch(error){console.warn("Không thể khôi phục các bộ phận đã lưu",error);}
   renderItems();toast("Đã nạp "+(manifest.assets||[]).length+" mô hình từ thư viện GitHub.");
  }catch(error){console.warn("Không nạp được asset manifest",error);}
 }
-restoreCharacterProfiles();makeCharacter();alignCharacterToGround();
+restoreCharacterProfiles();alignCharacterToGround();
 renderTabs();renderItems();captureCharacterThumbnail();renderCharacterList();loadManifestAssets();
