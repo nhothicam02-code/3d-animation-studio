@@ -197,5 +197,18 @@ function restoreCharacterProfiles(){
   activeCharacter=characters.find(c=>c.id===activeCharacterId)||characters[0];
  }catch(error){console.warn("Không thể khôi phục hồ sơ nhân vật",error);}
 }
+async function loadManifestAssets(){
+ try{
+  const response=await fetch("./data/asset-manifest.json",{cache:"no-store"});if(!response.ok)throw new Error("HTTP "+response.status);
+  const manifest=await response.json();
+  for(const asset of (manifest.assets||[])){
+   if(!asset.id||!asset.category||!items[asset.category])continue;
+   if(items[asset.category].some(item=>item.id===asset.id))continue;
+   const path=asset.path||("assets/"+asset.category+"/"+asset.id+".glb");
+   items[asset.category].push({id:asset.id,name:asset.name||asset.id,path,url:new URL(path,document.baseURI).href,positionByCharacter:{}});
+  }
+  renderItems();toast("Đã nạp "+(manifest.assets||[]).length+" mô hình từ thư viện GitHub.");
+ }catch(error){console.warn("Không nạp được asset manifest",error);}
+}
 restoreCharacterProfiles();makeCharacter();alignCharacterToGround();
-renderTabs();renderItems();captureCharacterThumbnail();renderCharacterList();
+renderTabs();renderItems();captureCharacterThumbnail();renderCharacterList();loadManifestAssets();
