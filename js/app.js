@@ -122,9 +122,7 @@ async function saveCharacterProfiles(){
   positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}])))
  }))};
  try{localStorage.setItem("character-studio-profiles",JSON.stringify(data));}catch(error){console.warn(error);}
- const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
- const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="character-profiles.json";a.click();URL.revokeObjectURL(url);
- toast("Đã xuất hồ sơ JSON.");if(hasGitHubToken()){try{for(const record of characters){const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(a=>[a.id,a.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),updatedAt:new Date().toISOString()};await putText("characters/"+record.id+".json",JSON.stringify(profile,null,2),"Save character "+record.name);}toast("Đã lưu hồ sơ nhân vật lên GitHub.");}catch(error){toast("Lỗi GitHub: "+error.message);}}
+ toast("Đã lưu hồ sơ nhân vật trên thiết bị.");if(hasGitHubToken()){try{for(const record of characters){const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(a=>[a.id,a.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),updatedAt:new Date().toISOString()};await putText("characters/"+record.id+".json",JSON.stringify(profile,null,2),"Save character "+record.name);}toast("Đã lưu hồ sơ nhân vật lên GitHub.");}catch(error){toast("Lỗi GitHub: "+error.message);}}
 }
 
 $("#save-characters").onclick=saveCharacterProfiles;
