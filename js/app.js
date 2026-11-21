@@ -18,7 +18,9 @@ const categories=[
 ];
 const items=Object.fromEntries(categories.map(c=>[c.id,[]]));
 let activeCategory="eyes";
-let activeCharacterId="character-1"; // Each item keeps independent XYZ offsets for each character.\nconst characters=[{id:activeCharacterId,name:"Nhân vật 1",parts:{},thumbnail:null}];\nlet activeCharacter=characters[0];
+let activeCharacterId="character-1"; // Each item keeps independent XYZ offsets for each character.
+const characters=[{id:activeCharacterId,name:"Nhân vật 1",parts:{},thumbnail:null}];
+let activeCharacter=characters[0];
 const selectedItems=Object.fromEntries(categories.map(c=>[c.id,null]));
 const loadedModels=Object.fromEntries(categories.map(c=>[c.id,null]));
 const loadVersions=Object.fromEntries(categories.map(c=>[c.id,0]));
