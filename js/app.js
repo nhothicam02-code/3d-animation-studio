@@ -103,10 +103,10 @@ $("#name-dialog-cancel").onclick=closeNameDialog;
 $("#name-dialog").addEventListener("click",e=>{if(e.target.id==="name-dialog")closeNameDialog();});
 $("#name-dialog-form").addEventListener("submit",e=>{e.preventDefault();const value=$("#name-dialog-input").value.trim();if(!value){toast("Tên nhân vật không được để trống.");return;}const cb=nameDialogCallback;closeNameDialog();if(cb)cb(value);});
 
-$("#open-settings").onclick=()=>{$("#settings-dialog").hidden=false;$("#github-token").value="";$("#github-status").textContent=hasGitHubToken()?"Token đã được nhập trong tab này.":"Chưa kết nối GitHub.";};
+try{const savedToken=localStorage.getItem("3d-character-studio-github-token");if(savedToken)setGitHubToken(savedToken);}catch(error){console.warn("Không đọc được GitHub token từ Local Storage",error);}\n$("#open-settings").onclick=()=>{$("#settings-dialog").hidden=false;$("#github-token").value="";$("#github-status").textContent=hasGitHubToken()?"Đã lưu token trên thiết bị này.":"Chưa kết nối GitHub.";};
 $("#close-settings").onclick=()=>{$("#settings-dialog").hidden=true;};
 $("#settings-dialog").addEventListener("click",e=>{if(e.target.id==="settings-dialog")$("#settings-dialog").hidden=true;});
-$("#save-github").onclick=()=>{const value=$("#github-token").value.trim();if(!value){toast("Hãy nhập GitHub Token.");return;}setGitHubToken(value);$("#github-token").value="";$("#github-status").textContent="Token đã được giữ trong bộ nhớ tab.";toast("Đã nhận token trong phiên này.");};
+$("#save-github").onclick=()=>{const value=$("#github-token").value.trim();if(!value){toast("Hãy nhập GitHub Token.");return;}setGitHubToken(value);try{localStorage.setItem("3d-character-studio-github-token",value);}catch(error){toast("Trình duyệt không cho phép lưu Local Storage.");return;}$("#github-token").value="";$("#github-status").textContent="Token đã được lưu trên thiết bị này.";toast("Đã lưu GitHub Token trên thiết bị.");};
 $("#test-github").onclick=async()=>{const value=$("#github-token").value.trim();if(value)setGitHubToken(value);const status=$("#github-status");status.textContent="Đang kiểm tra...";try{status.textContent="Kết nối thành công: "+await verifyToken();toast("GitHub đã kết nối.");}catch(error){status.textContent="Lỗi: "+error.message;toast("Không kết nối được GitHub.");}};
 
 
