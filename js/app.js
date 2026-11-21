@@ -349,17 +349,23 @@ $("#stop-motion").addEventListener("click", () => {
     viewport.updateColors(store.active.colors);
   });
 });
-$("#test-token").addEventListener("click", () => {
-  $("#token-feedback").textContent = $("#service-token").value.trim()
-    ? "Đã nhận trong phiên này, chưa gửi đi xác thực."
-    : "Bạn chưa nhập key hoặc token.";
+$("#test-token").addEventListener("click", async () => {
+  const token = $("#service-token").value.trim();
+  if (!token) { $("#token-feedback").textContent = "Bạn chưa nhập GitHub token."; return; }
+  $("#token-feedback").textContent = "Đang kiểm tra quyền truy cập repository...";
+  try {
+    await githubContents("data/asset-manifest.json", token);
+    $("#token-feedback").textContent = "Kết nối thành công. Token có thể đọc manifest; quyền ghi sẽ được kiểm tra khi upload.";
+  } catch (error) {
+    $("#token-feedback").textContent = "Kết nối thất bại: " + error.message;
+  }
 });
 $("#service-token").addEventListener("input", () => { $("#token-feedback").textContent = ""; });
 const GITHUB_OWNER = "nhothicam02-code";
 const GITHUB_REPO = "3d-animation-studio";
 const GITHUB_BRANCH = "main";
 const GITHUB_API = "https://api.github.com";
-const slugify = (value) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+const slugify = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 48);
 
 function githubHeaders(token) {
@@ -395,14 +401,14 @@ async function putGitHubFile(path, content, token, message, existingSha) {
 }
 async function readManifestForWrite(token) {
   const response = await githubContents("data/asset-manifest.json", token);
-  const bytes = Uint8Array.from(atob(response.content.replace(/\\s/g, "")), (char) => char.charCodeAt(0));
+  const bytes = Uint8Array.from(atob(response.content.replace(/\s/g, "")), (char) => char.charCodeAt(0));
   return { manifest: JSON.parse(new TextDecoder().decode(bytes)), sha: response.sha };
 }
 
 $("#asset-file").addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   $("#asset-file-name").textContent = file ? file.name + " · " + (file.size / 1048576).toFixed(1) + " MB" : "Chưa chọn tệp";
-  if (file && !$("#asset-name").value.trim()) $("#asset-name").value = file.name.replace(/\\.glb$/i, "").replace(/[_-]+/g, " ");
+  if (file && !$("#asset-name").value.trim()) $("#asset-name").value = file.name.replace(/\.glb$/i, "").replace(/[_-]+/g, " ");
 });
 
 $("#save-asset-github").addEventListener("click", async () => {
@@ -410,7 +416,7 @@ $("#save-asset-github").addEventListener("click", async () => {
   const name = $("#asset-name").value.trim();
   const category = $("#asset-category").value;
   const token = $("#service-token").value.trim();
-  if (!file || !/\\.glb$/i.test(file.name)) return toast("Hãy chọn một file .glb hợp lệ.");
+  if (!file || !/\.glb$/i.test(file.name)) return toast("Hãy chọn một file .glb hợp lệ.");
   if (!name) return toast("Hãy nhập tên mô hình.");
   if (!token) return toast("Hãy nhập GitHub token trong Cài đặt.");
   if (file.size > 50 * 1024 * 1024) return toast("File vượt quá giới hạn 50 MB cho trình tải trên web.");
@@ -432,7 +438,7 @@ $("#save-asset-github").addEventListener("click", async () => {
     manifest.assets ||= [];
     if (manifest.assets.some((asset) => asset.id === id)) throw new Error("Asset ID đã tồn tại trong manifest.");
     manifest.assets.push({ id, name, category, path: modelPath, thumbnail: thumbnailPath, format: "glb" });
-    await putGitHubFile("data/asset-manifest.json", JSON.stringify(manifest, null, 2) + "\\n",
+    await putGitHubFile("data/asset-manifest.json", JSON.stringify(manifest, null, 2) + "\n",
       token, "Register 3D asset " + id, sha);
     assetLibrary.manifest = null;
     assetLibrary.pending = null;
