@@ -30,10 +30,15 @@ scene.add(new THREE.HemisphereLight(0xffffff,0xc9bddb,2));const key=new THREE.Di
 const floor=new THREE.Mesh(new THREE.CircleGeometry(2.2,64),new THREE.MeshBasicMaterial({color:0xded8e8}));floor.rotation.x=-Math.PI/2;floor.position.y=-.03;scene.add(floor);
 const character=new THREE.Group();scene.add(character);
 function alignCharacterToGround(){
+ // Calculate from a neutral root position so repeated calls never accumulate offsets.
+ const previousY=character.position.y;
+ character.position.y=0;
+ character.updateMatrixWorld(true);
  const bounds=new THREE.Box3().setFromObject(character);
- if(bounds.isEmpty())return;
- const correction=floor.position.y-bounds.min.y;
- if(Number.isFinite(correction))character.position.y+=correction;
+ if(bounds.isEmpty()){character.position.y=previousY;return;}
+ const targetY=floor.position.y-bounds.min.y;
+ character.position.y=Number.isFinite(targetY)?targetY:previousY;
+ character.updateMatrixWorld(true);
 }
 function mat(color,rough=.75){return new THREE.MeshStandardMaterial({color,roughness:rough});}
 function sphere(parent,pos,scale,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);m.position.set(...pos);m.scale.set(...scale);parent.add(m);return m;}
