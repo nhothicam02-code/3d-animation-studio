@@ -180,4 +180,14 @@ $("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!f
 $("#item-search").oninput=renderItems;
 $("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};makeCharacter();alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
+function restoreCharacterProfiles(){
+ try{
+  const raw=localStorage.getItem("character-studio-profiles");if(!raw)return;
+  const data=JSON.parse(raw);if(!Array.isArray(data.characters)||!data.characters.length)return;
+  characters.splice(0,characters.length,...data.characters.map(record=>({id:String(record.id),name:String(record.name||"Nhân vật"),parts:{},thumbnail:record.thumbnail||null})));
+  activeCharacterId=characters.some(c=>c.id===data.activeCharacterId)?data.activeCharacterId:characters[0].id;
+  activeCharacter=characters.find(c=>c.id===activeCharacterId)||characters[0];
+ }catch(error){console.warn("Không thể khôi phục hồ sơ nhân vật",error);}
+}
+restoreCharacterProfiles();makeCharacter();alignCharacterToGround();
 renderTabs();renderItems();captureCharacterThumbnail();renderCharacterList();
