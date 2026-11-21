@@ -21,19 +21,25 @@ Production models should use GLB/glTF and share a documented scale, Y-up / -Z-fo
 ## Character data
 A profile stores asset IDs, colors, rig profile, animation references and metadata. It should not duplicate the underlying model files. The schema is versioned to allow future migrations.
 
-## Security
-Never commit personal access tokens or API keys. Never store long-lived credentials in localStorage or public client-side JavaScript. A public static site cannot safely hold a private GitHub token. Use GitHub OAuth or a GitHub App through a trusted backend for repository writes. The current Settings field is a non-persistent placeholder and makes no network requests.
+## GitHub connection (browser session)
+- Open **Settings**, enter a fine-grained GitHub token, then use **Kiểm tra kết nối**.
+- Required repository permission: **Contents: Read and write** for this repository.
+- The token is held only in the current JavaScript page memory. It is not written to Local Storage, downloaded profile files, or committed source code. Reloading the page clears it.
+- **Lưu nhân vật** exports a JSON backup and, when connected, writes one JSON profile per character under `characters/`.
+- **Tải hồ sơ** reads the saved profile JSON files from GitHub.
+- Adding a GLB while connected uploads it under `assets/<category>/` and updates `data/asset-manifest.json`. Browser upload is limited to 20 MB per GLB.
+- Important: a public static website cannot provide the same secret isolation as a trusted backend. A token entered into the page is available to the page's JavaScript while the tab is open. Use a fine-grained token limited to this one repository, set an expiry, and revoke it if exposed. Never paste the token into chat or commit it.
 
-## Next milestones
-1. Load real GLB assets from the manifest.
-2. Implement attachment sockets and modular assembly.
+## Remaining production milestones
+1. Complete robust restore of each character's selected GLB parts and per-character XYZ transforms from GitHub.
+2. Add real attachment sockets and compatible modular assembly for all categories.
 3. Add rig profiles, skinning validation and animation retargeting.
 4. Build reusable clips and a timeline/keyframe editor.
-5. Add secure GitHub authentication and profile sync.
-6. Add character and animation export.
+5. Add a trusted backend or GitHub App flow for stronger credential isolation.
+6. Add assembled character GLB and animation export.
 
 ## Prototype limitations
-The current model is procedural placeholder geometry. Asset selectors save IDs but do not yet load corresponding GLB files. Motion controls are preview-only, not a production rig or keyframe system.
+The base model is still procedural placeholder geometry. GLB assets can be uploaded to the repository manifest and loaded into the preview, but attachment points and fit remain approximate. Character JSON sync stores part IDs; complete reconstruction of all selected GLB meshes and per-character transforms is still in progress. Motion previews are not a production rig or keyframe system.
 
 ## GLB Asset Library (prototype)
 
