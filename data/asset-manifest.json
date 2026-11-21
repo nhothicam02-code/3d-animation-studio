@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "units": "meters",
   "upAxis": "Y",
   "forwardAxis": "-Z",
@@ -63,9 +63,59 @@
       "attachment": "head"
     },
     {
-      "id": "clothes",
+      "id": "underwear-tops",
+      "path": "assets/underwear-tops/",
+      "attachment": "body",
+      "layer": 1
+    },
+    {
+      "id": "underwear-bottoms",
+      "path": "assets/underwear-bottoms/",
+      "attachment": "body",
+      "layer": 1
+    },
+    {
+      "id": "innerwear",
+      "path": "assets/innerwear/",
+      "attachment": "body",
+      "layer": 2
+    },
+    {
+      "id": "outerwear",
       "path": "assets/clothes/",
-      "attachment": "body"
+      "attachment": "body",
+      "label": "Áo ngoài",
+      "layer": 3
+    },
+    {
+      "id": "jackets",
+      "path": "assets/jackets/",
+      "attachment": "body",
+      "layer": 4
+    },
+    {
+      "id": "sleeves",
+      "path": "assets/sleeves/",
+      "attachment": "arms",
+      "layer": 3
+    },
+    {
+      "id": "pants",
+      "path": "assets/pants/",
+      "attachment": "legs",
+      "layer": 2
+    },
+    {
+      "id": "skirts",
+      "path": "assets/skirts/",
+      "attachment": "hips",
+      "layer": 2
+    },
+    {
+      "id": "socks",
+      "path": "assets/socks/",
+      "attachment": "feet",
+      "layer": 3
     },
     {
       "id": "accessories",
@@ -130,9 +180,9 @@
       "thumbnail": "assets/ui/none-thumbnail.svg"
     },
     {
-      "id": "none-clothes",
+      "id": "none-outerwear",
       "name": "Không dùng",
-      "category": "clothes",
+      "category": "outerwear",
       "path": "assets/clothes/none.glb",
       "format": "glb",
       "size": 136,
@@ -294,7 +344,7 @@
     {
       "id": "clothes-chibi-01",
       "name": "Váy yếm hồng",
-      "category": "clothes",
+      "category": "outerwear",
       "path": "assets/clothes/clothes-chibi-01.glb",
       "format": "glb",
       "size": 5412
@@ -302,7 +352,7 @@
     {
       "id": "clothes-chibi-02",
       "name": "Áo hoodie xanh",
-      "category": "clothes",
+      "category": "outerwear",
       "path": "assets/clothes/clothes-chibi-02.glb",
       "format": "glb",
       "size": 5280
@@ -338,6 +388,86 @@
       "path": "assets/footwear/footwear-chibi-02.glb",
       "format": "glb",
       "size": 5364
+    },
+    {
+      "id": "none-underwear-tops",
+      "name": "Không dùng",
+      "category": "underwear-tops",
+      "path": "assets/underwear-tops/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-underwear-bottoms",
+      "name": "Không dùng",
+      "category": "underwear-bottoms",
+      "path": "assets/underwear-bottoms/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-innerwear",
+      "name": "Không dùng",
+      "category": "innerwear",
+      "path": "assets/innerwear/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-jackets",
+      "name": "Không dùng",
+      "category": "jackets",
+      "path": "assets/jackets/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-sleeves",
+      "name": "Không dùng",
+      "category": "sleeves",
+      "path": "assets/sleeves/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-pants",
+      "name": "Không dùng",
+      "category": "pants",
+      "path": "assets/pants/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-skirts",
+      "name": "Không dùng",
+      "category": "skirts",
+      "path": "assets/skirts/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-socks",
+      "name": "Không dùng",
+      "category": "socks",
+      "path": "assets/socks/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
     }
   ],
   "characterArchitecture": {
@@ -391,5 +521,57 @@
       "max": 1,
       "step": 0.01
     }
+  },
+  "clothingLayers": [
+    {
+      "category": "underwear-tops",
+      "order": 1,
+      "description": "Áo lót sát cơ thể"
+    },
+    {
+      "category": "underwear-bottoms",
+      "order": 1,
+      "description": "Quần lót sát cơ thể"
+    },
+    {
+      "category": "innerwear",
+      "order": 2,
+      "description": "Áo trong"
+    },
+    {
+      "category": "outerwear",
+      "order": 3,
+      "description": "Áo ngoài; chứa hai mẫu trang phục cũ để tương thích"
+    },
+    {
+      "category": "jackets",
+      "order": 4,
+      "description": "Áo khoác ngoài"
+    },
+    {
+      "category": "sleeves",
+      "order": 3,
+      "description": "Tay áo rời hoặc chi tiết phủ tay"
+    },
+    {
+      "category": "pants",
+      "order": 2,
+      "description": "Quần"
+    },
+    {
+      "category": "skirts",
+      "order": 2,
+      "description": "Váy"
+    },
+    {
+      "category": "socks",
+      "order": 3,
+      "description": "Vớ"
+    }
+  ],
+  "clothingCompatibility": {
+    "allGarmentsMustBeFittedTo": "same neutral Full Body base",
+    "morphTargets": "For body shape changes, clothing should contain corresponding morph targets with the same names, or be provided as fitted variants.",
+    "layering": "Independent category slots permit combinations; artist must prevent mesh intersections."
   }
 }
