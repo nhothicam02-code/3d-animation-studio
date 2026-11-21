@@ -29,9 +29,15 @@ const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamp
 scene.add(new THREE.HemisphereLight(0xffffff,0xc9bddb,2));const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);const fill=new THREE.DirectionalLight(0xd7c7ff,1.2);fill.position.set(-4,2,-3);scene.add(fill);
 const floor=new THREE.Mesh(new THREE.CircleGeometry(2.2,64),new THREE.MeshBasicMaterial({color:0xded8e8}));floor.rotation.x=-Math.PI/2;floor.position.y=-.03;scene.add(floor);
 const character=new THREE.Group();scene.add(character);
+function alignCharacterToGround(){
+ const bounds=new THREE.Box3().setFromObject(character);
+ if(bounds.isEmpty())return;
+ const correction=floor.position.y-bounds.min.y;
+ if(Number.isFinite(correction))character.position.y+=correction;
+}
 function mat(color,rough=.75){return new THREE.MeshStandardMaterial({color,roughness:rough});}
 function sphere(parent,pos,scale,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);m.position.set(...pos);m.scale.set(...scale);parent.add(m);return m;}
-function makeCharacter(){while(character.children.length)character.remove(character.children[0]);const skin=mat("#f4c9b4"),hair=mat("#55405d"),white=mat("#fffdf9"),iris=mat("#8b70bd"),dark=mat("#382d3d"),pink=mat("#d98e91");
+function makeCharacter(){character.position.set(0,0,0);while(character.children.length)character.remove(character.children[0]);const skin=mat("#f4c9b4"),hair=mat("#55405d"),white=mat("#fffdf9"),iris=mat("#8b70bd"),dark=mat("#382d3d"),pink=mat("#d98e91");
 sphere(character,[0,.55,0],[.48,.62,.34],mat("#d9b4d1"));
 sphere(character,[0,1.55,0],[.66,.72,.57],skin);
 sphere(character,[0,1.93,-.02],[.68,.43,.58],hair);
@@ -43,6 +49,7 @@ for(const x of [-.72,.72]){sphere(character,[x,.61,0],[.24,.5,.25],mat("#d9b4d1"
 sphere(character,[-.22,-.05,0],[.19,.42,.2],mat("#f4c9b4"));sphere(character,[.22,-.05,0],[.19,.42,.2],mat("#f4c9b4"));
 }
 makeCharacter();
+alignCharacterToGround();
 const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};new ResizeObserver(resize).observe(canvas);resize();
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
 function renderTabs(){const nav=$("#category-tabs");nav.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.className="category-tab"+(c.id===activeCategory?" active":"");b.innerHTML='<span class="tab-icon"></span>';b.querySelector(".tab-icon").textContent=c.icon;b.append(document.createTextNode(c.name));b.onclick=()=>selectCategory(c.id);nav.append(b);});}
@@ -87,7 +94,7 @@ function activateCharacter(id){
  if(id===activeCharacterId)return;
  saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
  activeCharacter=characters.find(c=>c.id===id);activeCharacterId=activeCharacter.id;
- makeCharacter();
+ makeCharacter();alignCharacterToGround();
  categories.forEach(c=>{const item=activeCharacter.parts[c.id];if(item)loadItem(item,c.id);});
  renderCharacterList();renderItems();
 }
@@ -99,7 +106,7 @@ $("#add-character").onclick=()=>{
  saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
  const record={id:"char-"+crypto.randomUUID(),name:clean,parts:{},thumbnail:null};
  characters.push(record);activeCharacter=record;activeCharacterId=record.id;
- makeCharacter();renderCharacterList();renderItems();toast("Đã tạo "+clean);
+ makeCharacter();alignCharacterToGround();renderCharacterList();renderItems();toast("Đã tạo "+clean);
 };
 function getItemPosition(item,characterId=activeCharacterId){
  if(!item.positionByCharacter)item.positionByCharacter={};
@@ -137,13 +144,13 @@ function loadItem(item,categoryOverride=activeCategory){
   model.userData.basePosition=model.position.clone();
   const offset=getItemPosition(item);model.position.add(new THREE.Vector3(offset.x,offset.y,offset.z));
   if(loadedModels[categoryId])character.remove(loadedModels[categoryId]);
-  loadedModels[categoryId]=model;character.add(model);renderItems();captureCharacterThumbnail();renderCharacterList();
+  loadedModels[categoryId]=model;character.add(model);alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();
   toast("Đã cập nhật "+categories.find(c=>c.id===categoryId).name+": "+item.name);
  },undefined,error=>{console.error(error);if(version===loadVersions[categoryId])toast("Không thể mở mô hình GLB này.");});
 }
 $("#add-item").onclick=()=>$("#file-input").click();
 $("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".glb")){toast("Vui lòng chọn tệp .glb");e.target.value="";return;}const item={id:"asset-"+crypto.randomUUID(),name:file.name.replace(/\\.glb$/i,""),url:URL.createObjectURL(file),file,positionByCharacter:{}};items[activeCategory].push(item);renderItems();loadItem(item);toast("Đã thêm item vào danh mục "+categories.find(c=>c.id===activeCategory).name+" (phiên hiện tại)");e.target.value="";};
 $("#item-search").oninput=renderItems;
-$("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};makeCharacter();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
+$("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};makeCharacter();alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
 renderTabs();renderItems();captureCharacterThumbnail();renderCharacterList();
