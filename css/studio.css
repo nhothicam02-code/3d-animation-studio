@@ -33,3 +33,15 @@
 .asset-page-ellipsis{padding:0 4px;color:var(--muted);font-size:10px}
 @media(max-width:700px){.asset-library-toolbar{display:block}.asset-category-tabs{margin-bottom:8px}.asset-search{width:100%}.asset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.asset-library-heading{align-items:flex-start}}
 @media(min-width:1100px){.asset-grid{grid-template-columns:repeat(auto-fill,minmax(175px,1fr))}}
+
+/* GitHub GLB uploader */
+.asset-upload-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.upload-cloud{font-size:8px;letter-spacing:1px;color:#a997d9;border:1px solid #51446e;border-radius:20px;padding:6px 9px;white-space:nowrap}
+.asset-upload-fields{grid-template-columns:1.1fr .9fr 1.5fr auto;align-items:stretch}
+.asset-file-picker{min-width:0;border:1px dashed #62518b;border-radius:7px;background:#11131a;padding:7px 9px;display:flex;flex-direction:column;justify-content:center;gap:3px;cursor:pointer}
+.asset-file-picker input{display:none}
+.asset-file-picker span{font-size:9px;color:#d7caff}
+.asset-file-picker small{font-size:8px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#save-asset-github:disabled{opacity:.6;cursor:wait}
+@media(max-width:900px){.asset-upload-fields{grid-template-columns:1fr 1fr}.asset-upload-fields .asset-file-picker{grid-column:1/-1}}
+@media(max-width:560px){.asset-upload-fields{grid-template-columns:1fr}.asset-upload-fields .asset-file-picker{grid-column:auto}.asset-upload-heading{display:block}.upload-cloud{display:inline-block;margin-top:8px}}
