@@ -30,6 +30,16 @@
       "attachment": "face"
     },
     {
+      "id": "extra-eyes-1",
+      "path": "assets/extra-eyes-1/",
+      "attachment": "face"
+    },
+    {
+      "id": "extra-eyes-2",
+      "path": "assets/extra-eyes-2/",
+      "attachment": "face"
+    },
+    {
       "id": "eyebrows",
       "path": "assets/eyebrows/",
       "attachment": "face"
@@ -196,6 +206,26 @@
       "name": "Không dùng",
       "category": "footwear",
       "path": "assets/footwear/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-extra-eyes-1",
+      "name": "Không dùng",
+      "category": "extra-eyes-1",
+      "path": "assets/extra-eyes-1/none.glb",
+      "format": "glb",
+      "size": 136,
+      "type": "none",
+      "thumbnail": "assets/ui/none-thumbnail.svg"
+    },
+    {
+      "id": "none-extra-eyes-2",
+      "name": "Không dùng",
+      "category": "extra-eyes-2",
+      "path": "assets/extra-eyes-2/none.glb",
       "format": "glb",
       "size": 136,
       "type": "none",
