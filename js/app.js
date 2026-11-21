@@ -62,7 +62,7 @@ alignCharacterToGround();
 const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};new ResizeObserver(resize).observe(canvas);resize();
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
 function renderTabs(){const nav=$("#category-tabs");nav.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.className="category-tab"+(c.id===activeCategory?" active":"");b.innerHTML='<span class="tab-icon"></span>';b.querySelector(".tab-icon").textContent=c.icon;b.append(document.createTextNode(c.name));b.onclick=()=>selectCategory(c.id);nav.append(b);});}
-function renderItems(){const c=categories.find(x=>x.id===activeCategory),grid=$("#item-grid"),q=$("#item-search").value.trim().toLowerCase();$("#active-category-title").textContent=c.name;$("#category-description").textContent=c.description;const filtered=items[activeCategory].filter(i=>i.name.toLowerCase().includes(q));grid.innerHTML="";filtered.forEach(item=>{const b=document.createElement("button");b.className="item-card"+(item===selectedItems[activeCategory]?" active":"");const preview=document.createElement("div");preview.className="item-preview";preview.textContent="◇";const name=document.createElement("span");name.className="item-name";name.textContent=item.name;const kind=document.createElement("span");kind.className="item-kind";kind.textContent="GLB MODEL";b.append(preview,name,kind);b.onclick=()=>loadItem(item);grid.append(b);});$("#empty-hint").classList.toggle("show",filtered.length===0);$("#item-total").textContent=items[activeCategory].length+" item";$("#item-count").textContent=categories.reduce((n,c)=>n+items[c.id].length,0)+" item đã thêm";renderTransformPanel();}
+function renderItems(){const c=categories.find(x=>x.id===activeCategory),grid=$("#item-grid"),q=$("#item-search").value.trim().toLowerCase();$("#active-category-title").textContent=c.name;$("#category-description").textContent=c.description;const filtered=items[activeCategory].filter(i=>(i.name+" "+i.id).toLowerCase().includes(q));grid.innerHTML="";filtered.forEach(item=>{const b=document.createElement("button");b.className="item-card"+(item===selectedItems[activeCategory]?" active":"")+(item.isNone?" item-card-none":"");const preview=document.createElement("div");preview.className="item-preview";if(item.thumbnail){const img=document.createElement("img");img.src=new URL(item.thumbnail,document.baseURI).href;img.alt="Thumbnail "+item.name;preview.append(img);}else preview.textContent=item.isNone?"⊘":"◇";const name=document.createElement("span");name.className="item-name";name.textContent=item.name;const kind=document.createElement("span");kind.className="item-kind";kind.textContent=item.isNone?"TÙY CHỌN · "+item.id:"GLB MODEL · "+item.id;b.append(preview,name,kind);b.onclick=()=>loadItem(item);grid.append(b);});$("#empty-hint").classList.toggle("show",filtered.length===0);$("#item-total").textContent=items[activeCategory].length+" item";$("#item-count").textContent=categories.reduce((n,c)=>n+items[c.id].length,0)+" item đã thêm";renderTransformPanel();}
 function selectCategory(id){activeCategory=id;renderTabs();renderItems();}
 function saveActiveCharacterParts(){
  if(!activeCharacter)return;
@@ -192,7 +192,7 @@ function applyItemPosition(item){
 }
 function renderTransformPanel(){
  const panel=$("#transform-panel"),item=selectedItems[activeCategory];
- panel.hidden=!item;if(!item)return;
+ panel.hidden=!item||item.isNone;if(!item||item.isNone)return;
  $("#transform-item-name").textContent=item.name;
  const pos=getItemPosition(item);
  ["x","y","z"].forEach(axis=>{$("#position-"+axis).value=pos[axis];$("#position-"+axis+"-value").textContent=Number(pos[axis]).toFixed(2);});
@@ -205,7 +205,9 @@ function updateItemAxis(axis,value){
 ["x","y","z"].forEach(axis=>$("#position-"+axis).addEventListener("input",e=>updateItemAxis(axis,e.target.value)));
 $("#reset-item-position").onclick=()=>{const item=selectedItems[activeCategory];if(!item)return;item.positionByCharacter[activeCharacterId]={x:0,y:0,z:0};applyItemPosition(item);renderTransformPanel();};
 function loadItem(item,categoryOverride=activeCategory){
- const categoryId=categoryOverride;selectedItems[categoryId]=item;const version=++loadVersions[categoryId];renderItems();
+ const categoryId=categoryOverride;selectedItems[categoryId]=item;const version=++loadVersions[categoryId];
+ if(item.isNone||item.id==="none-"+categoryId){if(loadedModels[categoryId])character.remove(loadedModels[categoryId]);loadedModels[categoryId]=null;if(activeCharacter)activeCharacter.parts[categoryId]=item;renderItems();alignCharacterToGround();captureCharacterThumbnail();renderCharacterList();toast("Đã bỏ qua danh mục "+categories.find(c=>c.id===categoryId).name+".");return;}
+ renderItems();
  new GLTFLoader().load(item.url,gltf=>{
   if(version!==loadVersions[categoryId])return;
   const model=gltf.scene,box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),maxDimension=Math.max(size.x,size.y,size.z);
@@ -241,7 +243,7 @@ async function loadManifestAssets(){
    if(!asset.id||!asset.category||!items[asset.category])continue;
    if(items[asset.category].some(item=>item.id===asset.id))continue;
    const path=asset.path||("assets/"+asset.category+"/"+asset.id+".glb");
-   items[asset.category].push({id:asset.id,name:asset.name||asset.id,path,url:new URL(path,document.baseURI).href,positionByCharacter:{}});
+   items[asset.category].push({id:asset.id,name:asset.name||asset.id,path,url:new URL(path,document.baseURI).href,thumbnail:asset.thumbnail||null,isNone:asset.id==="none-"+asset.category||asset.type==="none",positionByCharacter:{}});
   }
   renderItems();toast("Đã nạp "+(manifest.assets||[]).length+" mô hình từ thư viện GitHub.");
  }catch(error){console.warn("Không nạp được asset manifest",error);}
