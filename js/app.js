@@ -13,9 +13,17 @@ const categories=[
 {id:"noses",name:"Mũi",icon:"⌁",description:"Mũi thay thế"},
 {id:"mouths",name:"Miệng",icon:"⌣",description:"Miệng và biểu cảm"},
 {id:"hair",name:"Tóc",icon:"♧",description:"Tóc mái, tóc trước và tóc sau"},
-{id:"clothes",name:"Trang phục",icon:"◇",description:"Áo, quần, váy và trang phục"},
-{id:"accessories",name:"Phụ kiện",icon:"✧",description:"Kính, nơ, mũ và phụ kiện"},
-{id:"footwear",name:"Giày dép",icon:"⌑",description:"Giày, bốt và dép"}
+{id:"underwear-tops",name:"Áo lót",icon:"♧",description:"Áo lót mặc sát cơ thể"},
+{id:"underwear-bottoms",name:"Quần lót",icon:"◇",description:"Quần lót và đồ mặc trong phần hông"},
+{id:"innerwear",name:"Áo trong",icon:"▱",description:"Áo mặc bên trong lớp trang phục ngoài"},
+{id:"outerwear",name:"Áo ngoài",icon:"▤",description:"Áo mặc bên ngoài áo trong"},
+{id:"jackets",name:"Áo khoác",icon:"▥",description:"Áo khoác, hoodie, cardigan dày"},
+{id:"sleeves",name:"Tay áo",icon:"↗",description:"Ống tay áo và chi tiết tay áo rời"},
+{id:"pants",name:"Quần",icon:"♧",description:"Quần dài, quần ngắn và quần kiểu khác"},
+{id:"skirts",name:"Váy",icon:"▽",description:"Váy ngắn, váy dài và chân váy"},
+{id:"socks",name:"Vớ",icon:"◒",description:"Vớ ngắn, vớ dài và leg warmers"},
+{id:"footwear",name:"Giày dép",icon:"⌑",description:"Giày, bốt và dép"},
+{id:"accessories",name:"Phụ kiện",icon:"✧",description:"Kính, nơ, mũ và phụ kiện"}
 ];
 const items=Object.fromEntries(categories.map(c=>[c.id,[]]));
 let activeCategory="body";
@@ -296,7 +304,7 @@ function loadItem(item,categoryOverride=activeCategory){
   if(version!==loadVersions[categoryId])return;
   const model=gltf.scene,box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),maxDimension=Math.max(size.x,size.y,size.z);
   if(!Number.isFinite(maxDimension)||maxDimension<=0){toast("Mô hình GLB không có kích thước hợp lệ.");return;}
-  const targetSizes={hair:1.55,eyes:.48,"extra-eyes-1":.34,"extra-eyes-2":.34,eyebrows:.34,noses:.16,mouths:.30,body:1.8,clothes:1.28,accessories:.48,footwear:.48};const targetSize=targetSizes[categoryId]||1.0;const scale=targetSize/maxDimension;model.scale.setScalar(scale);
+  const targetSizes={hair:1.55,eyes:.48,"extra-eyes-1":.34,"extra-eyes-2":.34,eyebrows:.34,noses:.16,mouths:.30,body:1.8,"underwear-tops":1.15,"underwear-bottoms":1.15,innerwear:1.28,outerwear:1.28,jackets:1.28,sleeves:1.0,pants:1.28,skirts:1.28,socks:.95,accessories:.48,footwear:.48};const targetSize=targetSizes[categoryId]||1.0;const scale=targetSize/maxDimension;model.scale.setScalar(scale);
   model.position.set(-center.x*scale,1.15-center.y*scale,-center.z*scale);
   model.userData.basePosition=model.position.clone();
   model.userData.baseScale=model.scale.clone();
