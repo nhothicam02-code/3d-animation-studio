@@ -137,13 +137,13 @@ function loadItem(item,categoryOverride=activeCategory){
   model.userData.basePosition=model.position.clone();
   const offset=getItemPosition(item);model.position.add(new THREE.Vector3(offset.x,offset.y,offset.z));
   if(loadedModels[categoryId])character.remove(loadedModels[categoryId]);
-  loadedModels[categoryId]=model;character.add(model);renderItems();
+  loadedModels[categoryId]=model;character.add(model);renderItems();captureCharacterThumbnail();renderCharacterList();
   toast("Đã cập nhật "+categories.find(c=>c.id===categoryId).name+": "+item.name);
  },undefined,error=>{console.error(error);if(version===loadVersions[categoryId])toast("Không thể mở mô hình GLB này.");});
 }
 $("#add-item").onclick=()=>$("#file-input").click();
-$("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".glb")){toast("Vui lòng chọn tệp .glb");e.target.value="";return;}const item={name:file.name.replace(/\.glb$/i,""),url:URL.createObjectURL(file),file};items[activeCategory].push(item);renderItems();loadItem(item);toast("Đã thêm item vào danh mục "+categories.find(c=>c.id===activeCategory).name+" (phiên hiện tại)");e.target.value="";};
+$("#file-input").onchange=e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".glb")){toast("Vui lòng chọn tệp .glb");e.target.value="";return;}const item={id:"asset-"+crypto.randomUUID(),name:file.name.replace(/\\.glb$/i,""),url:URL.createObjectURL(file),file,positionByCharacter:{}};items[activeCategory].push(item);renderItems();loadItem(item);toast("Đã thêm item vào danh mục "+categories.find(c=>c.id===activeCategory).name+" (phiên hiện tại)");e.target.value="";};
 $("#item-search").oninput=renderItems;
 $("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};makeCharacter();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
-renderTabs();renderItems();renderCharacterList();
+renderTabs();renderItems();captureCharacterThumbnail();renderCharacterList();
