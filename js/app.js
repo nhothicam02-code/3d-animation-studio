@@ -18,6 +18,7 @@ const categories=[
 ];
 const items=Object.fromEntries(categories.map(c=>[c.id,[]]));
 let activeCategory="eyes";
+let activeCharacterId="character-1"; // Each item keeps independent XYZ offsets for each character.
 const selectedItems=Object.fromEntries(categories.map(c=>[c.id,null]));
 const loadedModels=Object.fromEntries(categories.map(c=>[c.id,null]));
 const loadVersions=Object.fromEntries(categories.map(c=>[c.id,0]));
@@ -45,27 +46,45 @@ makeCharacter();
 const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};new ResizeObserver(resize).observe(canvas);resize();
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
 function renderTabs(){const nav=$("#category-tabs");nav.innerHTML="";categories.forEach(c=>{const b=document.createElement("button");b.className="category-tab"+(c.id===activeCategory?" active":"");b.innerHTML='<span class="tab-icon"></span>';b.querySelector(".tab-icon").textContent=c.icon;b.append(document.createTextNode(c.name));b.onclick=()=>selectCategory(c.id);nav.append(b);});}
-function renderItems(){const c=categories.find(x=>x.id===activeCategory),grid=$("#item-grid"),q=$("#item-search").value.trim().toLowerCase();$("#active-category-title").textContent=c.name;$("#category-description").textContent=c.description;const filtered=items[activeCategory].filter(i=>i.name.toLowerCase().includes(q));grid.innerHTML="";filtered.forEach(item=>{const b=document.createElement("button");b.className="item-card"+(item===selectedItems[activeCategory]?" active":"");const preview=document.createElement("div");preview.className="item-preview";preview.textContent="◇";const name=document.createElement("span");name.className="item-name";name.textContent=item.name;const kind=document.createElement("span");kind.className="item-kind";kind.textContent="GLB MODEL";b.append(preview,name,kind);b.onclick=()=>loadItem(item);grid.append(b);});$("#empty-hint").classList.toggle("show",filtered.length===0);$("#item-total").textContent=items[activeCategory].length+" item";$("#item-count").textContent=categories.reduce((n,c)=>n+items[c.id].length,0)+" item đã thêm";}
+function renderItems(){const c=categories.find(x=>x.id===activeCategory),grid=$("#item-grid"),q=$("#item-search").value.trim().toLowerCase();$("#active-category-title").textContent=c.name;$("#category-description").textContent=c.description;const filtered=items[activeCategory].filter(i=>i.name.toLowerCase().includes(q));grid.innerHTML="";filtered.forEach(item=>{const b=document.createElement("button");b.className="item-card"+(item===selectedItems[activeCategory]?" active":"");const preview=document.createElement("div");preview.className="item-preview";preview.textContent="◇";const name=document.createElement("span");name.className="item-name";name.textContent=item.name;const kind=document.createElement("span");kind.className="item-kind";kind.textContent="GLB MODEL";b.append(preview,name,kind);b.onclick=()=>loadItem(item);grid.append(b);});$("#empty-hint").classList.toggle("show",filtered.length===0);$("#item-total").textContent=items[activeCategory].length+" item";$("#item-count").textContent=categories.reduce((n,c)=>n+items[c.id].length,0)+" item đã thêm";renderTransformPanel();}
 function selectCategory(id){activeCategory=id;renderTabs();renderItems();}
+function getItemPosition(item,characterId=activeCharacterId){
+ if(!item.positionByCharacter)item.positionByCharacter={};
+ if(!item.positionByCharacter[characterId])item.positionByCharacter[characterId]={x:0,y:0,z:0};
+ return item.positionByCharacter[characterId];
+}
+function applyItemPosition(item){
+ const model=loadedModels[activeCategory];
+ if(!model||selectedItems[activeCategory]!==item)return;
+ const offset=getItemPosition(item),base=model.userData.basePosition;
+ model.position.set(base.x+offset.x,base.y+offset.y,base.z+offset.z);
+}
+function renderTransformPanel(){
+ const panel=$("#transform-panel"),item=selectedItems[activeCategory];
+ panel.hidden=!item;if(!item)return;
+ $("#transform-item-name").textContent=item.name;
+ const pos=getItemPosition(item);
+ ["x","y","z"].forEach(axis=>{$("#position-"+axis).value=pos[axis];$("#position-"+axis+"-value").textContent=Number(pos[axis]).toFixed(2);});
+}
+function updateItemAxis(axis,value){
+ const item=selectedItems[activeCategory];if(!item)return;
+ const n=Number(value);getItemPosition(item)[axis]=n;
+ $("#position-"+axis+"-value").textContent=n.toFixed(2);applyItemPosition(item);
+}
+["x","y","z"].forEach(axis=>$("#position-"+axis).addEventListener("input",e=>updateItemAxis(axis,e.target.value)));
+$("#reset-item-position").onclick=()=>{const item=selectedItems[activeCategory];if(!item)return;item.positionByCharacter[activeCharacterId]={x:0,y:0,z:0};applyItemPosition(item);renderTransformPanel();};
 function loadItem(item){
- const categoryId=activeCategory;
- selectedItems[categoryId]=item;
- const version=++loadVersions[categoryId];
- const loader=new GLTFLoader();
- loader.load(item.url,gltf=>{
+ const categoryId=activeCategory;selectedItems[categoryId]=item;const version=++loadVersions[categoryId];renderItems();
+ new GLTFLoader().load(item.url,gltf=>{
   if(version!==loadVersions[categoryId])return;
-  const model=gltf.scene;
-  const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-  const maxDimension=Math.max(size.x,size.y,size.z);
+  const model=gltf.scene,box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),maxDimension=Math.max(size.x,size.y,size.z);
   if(!Number.isFinite(maxDimension)||maxDimension<=0){toast("Mô hình GLB không có kích thước hợp lệ.");return;}
-  const scale=1.8/maxDimension;
-  model.scale.setScalar(scale);
+  const scale=1.8/maxDimension;model.scale.setScalar(scale);
   model.position.set(-center.x*scale,1.15-center.y*scale,-center.z*scale);
-  const previous=loadedModels[categoryId];
-  if(previous)character.remove(previous);
-  loadedModels[categoryId]=model;
-  character.add(model);
-  renderItems();
+  model.userData.basePosition=model.position.clone();
+  const offset=getItemPosition(item);model.position.add(new THREE.Vector3(offset.x,offset.y,offset.z));
+  if(loadedModels[categoryId])character.remove(loadedModels[categoryId]);
+  loadedModels[categoryId]=model;character.add(model);renderItems();
   toast("Đã cập nhật "+categories.find(c=>c.id===categoryId).name+": "+item.name);
  },undefined,error=>{console.error(error);if(version===loadVersions[categoryId])toast("Không thể mở mô hình GLB này.");});
 }
