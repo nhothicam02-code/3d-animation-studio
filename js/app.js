@@ -5,15 +5,15 @@ import { GLTFExporter } from "https://cdn.jsdelivr.net/npm/three@0.170.0/example
 import {setGitHubToken,hasGitHubToken,verifyToken,putText,putBinary,readJson,listCharacterProfiles,deleteGitHubFile} from "./github-sync.js";
 
 const categories=[
-{id:"hair",name:"Tóc",icon:"♧",description:"Tóc mái, tóc trước và tóc sau"},
-{id:"eyes",name:"Mắt đôi",icon:"◎",description:"Mô hình gồm cả hai mắt"},
+{id:"body",name:"Cơ thể nền",icon:"♙",description:"Một Full Body Mesh duy nhất · chỉnh bằng Shape Keys"},
+{id:"eyes",name:"Mắt đôi",icon:"◎",description:"Mắt trang trí / mắt thay thế"},
 {id:"extra-eyes-1",name:"Mắt bổ sung 1",icon:"◉",description:"Một mắt độc lập, có vị trí riêng"},
 {id:"extra-eyes-2",name:"Mắt bổ sung 2",icon:"◉",description:"Một mắt độc lập, có vị trí riêng"},
-{id:"eyebrows",name:"Lông mày",icon:"⌒",description:"Hình dáng lông mày"},
-{id:"noses",name:"Mũi",icon:"⌁",description:"Các kiểu mũi nhân vật"},
+{id:"eyebrows",name:"Lông mày",icon:"⌒",description:"Lông mày thay thế"},
+{id:"noses",name:"Mũi",icon:"⌁",description:"Mũi thay thế"},
 {id:"mouths",name:"Miệng",icon:"⌣",description:"Miệng và biểu cảm"},
-{id:"body",name:"Cơ thể nền",icon:"♙",description:"Một Full Body Mesh duy nhất · chỉnh bằng Shape Keys"},
-{id:"clothes",name:"Trang phục",icon:"◇",description:"Áo, váy và quần áo"},
+{id:"hair",name:"Tóc",icon:"♧",description:"Tóc mái, tóc trước và tóc sau"},
+{id:"clothes",name:"Trang phục",icon:"◇",description:"Áo, quần, váy và trang phục"},
 {id:"accessories",name:"Phụ kiện",icon:"✧",description:"Kính, nơ, mũ và phụ kiện"},
 {id:"footwear",name:"Giày dép",icon:"⌑",description:"Giày, bốt và dép"}
 ];
