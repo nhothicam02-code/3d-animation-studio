@@ -5,7 +5,6 @@ import { GLTFExporter } from "https://cdn.jsdelivr.net/npm/three@0.170.0/example
 import {setGitHubToken,hasGitHubToken,verifyToken,putText,putBinary,readJson,listCharacterProfiles,deleteGitHubFile} from "./github-sync.js";
 
 const categories=[
-{id:"faces",name:"Khuôn mặt",icon:"◉",description:"Hình dạng đầu và khuôn mặt"},
 {id:"hair",name:"Tóc",icon:"♧",description:"Tóc mái, tóc trước và tóc sau"},
 {id:"eyes",name:"Mắt đôi",icon:"◎",description:"Mô hình gồm cả hai mắt"},
 {id:"extra-eyes-1",name:"Mắt bổ sung 1",icon:"◉",description:"Một mắt độc lập, có vị trí riêng"},
@@ -13,15 +12,13 @@ const categories=[
 {id:"eyebrows",name:"Lông mày",icon:"⌒",description:"Hình dáng lông mày"},
 {id:"noses",name:"Mũi",icon:"⌁",description:"Các kiểu mũi nhân vật"},
 {id:"mouths",name:"Miệng",icon:"⌣",description:"Miệng và biểu cảm"},
-{id:"body",name:"Cơ thể",icon:"♙",description:"Thân và hình dáng cơ thể"},
-{id:"arms",name:"Tay",icon:"↗",description:"Cánh tay và bàn tay"},
-{id:"legs",name:"Chân",icon:"↟",description:"Chân và bàn chân"},
+{id:"body",name:"Cơ thể nền",icon:"♙",description:"Một Full Body Mesh duy nhất · chỉnh bằng Shape Keys"},
 {id:"clothes",name:"Trang phục",icon:"◇",description:"Áo, váy và quần áo"},
 {id:"accessories",name:"Phụ kiện",icon:"✧",description:"Kính, nơ, mũ và phụ kiện"},
 {id:"footwear",name:"Giày dép",icon:"⌑",description:"Giày, bốt và dép"}
 ];
 const items=Object.fromEntries(categories.map(c=>[c.id,[]]));
-let activeCategory="eyes";
+let activeCategory="body";
 let activeCharacterId="character-1"; // Each item keeps independent XYZ offsets for each character.
 const characters=[{id:activeCharacterId,name:"Nhân vật 1",parts:{},thumbnail:null}];
 let activeCharacter=characters[0];
@@ -35,17 +32,17 @@ const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamp
 scene.add(new THREE.HemisphereLight(0xffffff,0xc9bddb,2));const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);const fill=new THREE.DirectionalLight(0xd7c7ff,1.2);fill.position.set(-4,2,-3);scene.add(fill);
 const floor=new THREE.Mesh(new THREE.CircleGeometry(2.2,64),new THREE.MeshBasicMaterial({color:0xded8e8}));floor.rotation.x=-Math.PI/2;floor.position.y=-.03;scene.add(floor);
 const character=new THREE.Group();scene.add(character);
-function alignCharacterToGround(){
- // Calculate from a neutral root position so repeated calls never accumulate offsets.
- const previousY=character.position.y;
- character.position.y=0;
- character.updateMatrixWorld(true);
- const bounds=new THREE.Box3().setFromObject(character);
- if(bounds.isEmpty()){character.position.y=previousY;return;}
- const targetY=floor.position.y-bounds.min.y;
- character.position.y=Number.isFinite(targetY)?targetY:previousY;
- character.updateMatrixWorld(true);
-}
+const characterContent=new THREE.Group();character.add(characterContent);
+function alignCharacterToGround(){const root=character.position.clone();character.position.set(0,0,0);characterContent.position.y=0;character.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(characterContent);character.position.copy(root);if(b.isEmpty()){characterContent.position.y=0;character.updateMatrixWorld(true);return;}const y=floor.position.y-b.min.y;characterContent.position.y=Number.isFinite(y)?y:0;character.updateMatrixWorld(true);}
+function getCharacterTransform(record=activeCharacter){if(!record.transform)record.transform={x:0,y:0,z:0};return record.transform;}
+function renderCharacterTransform(){if(!activeCharacter)return;const t=getCharacterTransform();["x","y","z"].forEach(a=>{const e=$("#character-position-"+a);if(e)e.value=t[a]??0;});}
+function applyCharacterTransform(){const t=getCharacterTransform();character.position.set(Number(t.x)||0,Number(t.y)||0,Number(t.z)||0);renderCharacterTransform();}
+function updateCharacterTransform(axis,value){if(value===""||!Number.isFinite(Number(value)))return;getCharacterTransform()[axis]=Number(value);character.position[axis]=Number(value);}
+function getCharacterShapeKeys(record=activeCharacter){if(!record.shapeKeys)record.shapeKeys={};return record.shapeKeys;}
+function applyShapeKey(name,value){const body=loadedModels.body;if(!body)return;body.traverse(n=>{if(!n.isMesh||!n.morphTargetDictionary||!n.morphTargetInfluences)return;const i=n.morphTargetDictionary[name];if(i!==undefined)n.morphTargetInfluences[i]=value;});}
+function renderShapeKeyPanel(){const panel=$("#body-shape-panel"),list=$("#body-shape-list"),body=loadedModels.body;if(!panel||!list)return;list.innerHTML="";if(!body){panel.hidden=true;return;}const keys=new Set();body.traverse(n=>{if(n.isMesh&&n.morphTargetDictionary)Object.keys(n.morphTargetDictionary).forEach(k=>keys.add(k));});panel.hidden=false;if(!keys.size){list.innerHTML='<p class="shape-key-empty">Mô hình chưa có Shape Keys. Hãy tạo Shape Keys trong Blender rồi export GLB có morph targets.</p>';return;}const saved=getCharacterShapeKeys();[...keys].sort().forEach(name=>{const row=document.createElement("div");row.className="shape-key-row";const top=document.createElement("div");top.className="shape-key-top";const label=document.createElement("label");label.textContent=name.replace(/[_-]+/g," ");const out=document.createElement("output");out.textContent=(Number(saved[name])||0).toFixed(2);const slider=document.createElement("input");slider.type="range";slider.min="-1";slider.max="1";slider.step="0.01";slider.value=Number(saved[name])||0;slider.addEventListener("input",()=>{const v=Number(slider.value);saved[name]=v;out.textContent=v.toFixed(2);applyShapeKey(name,v);});top.append(label,out);row.append(top,slider);list.append(row);applyShapeKey(name,Number(saved[name])||0);});}
+$("#reset-body-shapes").onclick=()=>{if(activeCharacter)activeCharacter.shapeKeys={};renderShapeKeyPanel();};
+["x","y","z"].forEach(a=>$("#character-position-"+a).addEventListener("change",e=>updateCharacterTransform(a,e.target.value)));
 alignCharacterToGround();
 const resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};new ResizeObserver(resize).observe(canvas);resize();
 function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();$("#loading").style.display="none";
@@ -54,12 +51,11 @@ function renderItems(){const c=categories.find(x=>x.id===activeCategory),grid=$(
 function selectCategory(id){activeCategory=id;renderTabs();renderItems();}
 function saveActiveCharacterParts(){
  if(!activeCharacter)return;
- categories.forEach(c=>{activeCharacter.parts[c.id]=selectedItems[c.id]||null;});
-}
+ categories.forEach(c=>{activeCharacter.parts[c.id]=selectedItems[c.id]||null;});activeCharacter.transform={...getCharacterTransform()};
 function clearActiveCharacterModels(){
  categories.forEach(c=>{
   loadVersions[c.id]++;
-  if(loadedModels[c.id])character.remove(loadedModels[c.id]);
+  if(loadedModels[c.id])characterContent.remove(loadedModels[c.id]);
   loadedModels[c.id]=null;selectedItems[c.id]=null;
  });
 }
@@ -100,7 +96,7 @@ $("#save-github").onclick=()=>{const value=$("#github-token").value.trim();if(!v
 $("#test-github").onclick=async()=>{const value=$("#github-token").value.trim();if(value)setGitHubToken(value);const status=$("#github-status");status.textContent="Đang kiểm tra...";try{status.textContent="Kết nối thành công: "+await verifyToken();toast("GitHub đã kết nối.");}catch(error){status.textContent="Lỗi: "+error.message;toast("Không kết nối được GitHub.");}};
 
 
-$("#load-github-characters").onclick=async()=>{const status=$("#github-status");status.textContent="Đang tải hồ sơ...";try{await loadManifestAssets();const profiles=await listCharacterProfiles();if(!profiles.length){status.textContent="Chưa có hồ sơ trên GitHub.";return;}characters.splice(0,characters.length,...profiles.map(p=>{for(const category of categories){for(const asset of items[category.id]){const position=p.positions?.[asset.id];if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[p.id]=position;}const scale=p.scales?.[asset.id];if(scale){asset.scaleByCharacter=asset.scaleByCharacter||{};asset.scaleByCharacter[p.id]=scale;}const rotation=p.rotations?.[asset.id];if(rotation){asset.rotationByCharacter=asset.rotationByCharacter||{};asset.rotationByCharacter[p.id]=rotation;}const color=p.colors?.[asset.id];if(color){asset.colorByCharacter=asset.colorByCharacter||{};asset.colorByCharacter[p.id]=color;}}}return{id:p.id,name:p.name,parts:Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===p.parts?.[c.id])||null])),thumbnail:p.thumbnail||null};}));activeCharacter=characters[0];activeCharacterId=activeCharacter.id;clearActiveCharacterModels();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();renderItems();status.textContent="Đã tải "+profiles.length+" hồ sơ từ GitHub.";toast("Đã tải hồ sơ nhân vật.");}catch(error){status.textContent="Lỗi tải hồ sơ: "+error.message;}};
+$("#load-github-characters").onclick=async()=>{const status=$("#github-status");status.textContent="Đang tải hồ sơ...";try{await loadManifestAssets();const profiles=await listCharacterProfiles();if(!profiles.length){status.textContent="Chưa có hồ sơ trên GitHub.";return;}characters.splice(0,characters.length,...profiles.map(p=>{for(const category of categories){for(const asset of items[category.id]){const position=p.positions?.[asset.id];if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[p.id]=position;}const scale=p.scales?.[asset.id];if(scale){asset.scaleByCharacter=asset.scaleByCharacter||{};asset.scaleByCharacter[p.id]=scale;}const rotation=p.rotations?.[asset.id];if(rotation){asset.rotationByCharacter=asset.rotationByCharacter||{};asset.rotationByCharacter[p.id]=rotation;}const color=p.colors?.[asset.id];if(color){asset.colorByCharacter=asset.colorByCharacter||{};asset.colorByCharacter[p.id]=color;}}}return{id:p.id,name:p.name,parts:Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===p.parts?.[c.id])||null])),thumbnail:p.thumbnail||null,transform:p.transform||{x:0,y:0,z:0},shapeKeys:p.shapeKeys||{}};}));activeCharacter=characters[0];activeCharacterId=activeCharacter.id;clearActiveCharacterModels();applyCharacterTransform();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();renderItems();status.textContent="Đã tải "+profiles.length+" hồ sơ từ GitHub.";toast("Đã tải hồ sơ nhân vật.");}catch(error){status.textContent="Lỗi tải hồ sơ: "+error.message;}};
 
 function updateGitHubProgress(percent,title,detail,count=""){
  const panel=$("#github-save-progress");if(!panel)return;
@@ -131,11 +127,11 @@ async function saveCharacterProfiles(){
   updateGitHubProgress(82,"Đang cập nhật thư viện","Đang lưu asset-manifest.json",(completed+1)+"/"+total+" tác vụ");
   await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update uploaded asset library");completed++;
   for(const record of characters){
-   const profile={schemaVersion:1,id:record.id,name:record.name,thumbnail:record.thumbnail||null,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter?.[record.id]||{x:1,y:1,z:1}]))),rotations:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.rotationByCharacter?.[record.id]||{x:0,y:0,z:0}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter?.[record.id]||null]))),updatedAt:new Date().toISOString()};
+   const profile={schemaVersion:2,id:record.id,name:record.name,thumbnail:record.thumbnail||null,transform:record.transform||{x:0,y:0,z:0},shapeKeys:record.shapeKeys||{},parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter?.[record.id]||{x:0,y:0,z:0}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter?.[record.id]||{x:1,y:1,z:1}]))),rotations:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.rotationByCharacter?.[record.id]||{x:0,y:0,z:0}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter?.[record.id]||null]))),updatedAt:new Date().toISOString()};
    updateGitHubProgress(82+18*(completed/Math.max(total,1)),"Đang lưu hồ sơ nhân vật",record.name,(completed+1)+"/"+total+" tác vụ");
    await putText("characters/"+record.id+".json",JSON.stringify(profile,null,2),"Save character "+record.name);completed++;
   }
-  const data={version:1,savedAt:new Date().toISOString(),activeCharacterId,characters:characters.map(record=>({id:record.id,name:record.name,thumbnail:record.thumbnail,parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter||{}]))),rotations:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.rotationByCharacter||{}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter||{}])))}))};
+  const data={version:1,savedAt:new Date().toISOString(),activeCharacterId,characters:characters.map(record=>({id:record.id,name:record.name,thumbnail:record.thumbnail,transform:record.transform||{x:0,y:0,z:0},shapeKeys:record.shapeKeys||{},parts:Object.fromEntries(categories.map(c=>[c.id,record.parts?.[c.id]?.id||null])),positions:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.positionByCharacter||{}]))),scales:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.scaleByCharacter||{}]))),rotations:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.rotationByCharacter||{}]))),colors:Object.fromEntries(categories.flatMap(c=>items[c.id].map(item=>[item.id,item.colorByCharacter||{}])))}))};
   localStorage.setItem("character-studio-profiles",JSON.stringify(data));
   updateGitHubProgress(100,"Đã lưu thành công","Toàn bộ mô hình và hồ sơ đã được đồng bộ lên GitHub",completed+"/"+total+" tác vụ");
   toast("Đã lưu nhân vật và toàn bộ item lên GitHub thành công.");
@@ -185,7 +181,7 @@ function activateCharacter(id){
  if(activeCharacter&&activeCharacterId!==id){saveActiveCharacterParts();captureCharacterThumbnail();}
  clearActiveCharacterModels();
  activeCharacter=target;activeCharacterId=target.id;
- alignCharacterToGround();
+ applyCharacterTransform();alignCharacterToGround();
  categories.forEach(c=>{
   const item=activeCharacter.parts?.[c.id];
   if(item)loadItem(item,c.id);
@@ -196,8 +192,8 @@ $("#add-character").onclick=()=>{
  const proposed="Nhân vật "+(characters.length+1);
  showNameDialog("Tạo nhân vật mới",proposed,clean=>{
  saveActiveCharacterParts();captureCharacterThumbnail();clearActiveCharacterModels();
- const record={id:"char-"+crypto.randomUUID(),name:clean,parts:{},thumbnail:null};
- characters.push(record);activeCharacter=record;activeCharacterId=record.id;
+ const record={id:"char-"+crypto.randomUUID(),name:clean,parts:{},thumbnail:null,transform:{x:0,y:0,z:0},shapeKeys:{}};
+ characters.push(record);activeCharacter=record;activeCharacterId=record.id;applyCharacterTransform();
  alignCharacterToGround();renderCharacterList();renderItems();toast("Đã tạo "+clean);
 });
 };
@@ -257,8 +253,8 @@ function renderTransformPanel(){
 }
 function updateItemAxis(axis,value){
  const item=selectedItems[activeCategory];if(!item)return;
- const n=Number(value);getItemPosition(item)[axis]=n;
- $("#position-"+axis+"-value").textContent=n.toFixed(2);applyItemPosition(item);
+ const n=Number(value);if(!Number.isFinite(n))return;getItemPosition(item)[axis]=n;
+ $("#position-"+axis+"-value").textContent=n.toFixed(3);applyItemPosition(item);
 }
 function updateItemScale(axis,value){
  const item=selectedItems[activeCategory];if(!item)return;
@@ -277,7 +273,7 @@ function updateItemColor(value){
  item.colorByCharacter=item.colorByCharacter||{};item.colorByCharacter[activeCharacterId]=value.toLowerCase();
  $("#item-color").value=value;$("#item-color-hex").value=value.toUpperCase();applyItemColor(item);
 }
-["x","y","z"].forEach(axis=>$("#position-"+axis).addEventListener("input",e=>updateItemAxis(axis,e.target.value)));
+["x","y","z"].forEach(axis=>$("#position-"+axis).addEventListener("change",e=>updateItemAxis(axis,e.target.value)));
 ["x","y","z"].forEach(axis=>$("#scale-"+axis).addEventListener("input",e=>updateItemScale(axis,e.target.value)));
 ["x","y","z"].forEach(axis=>$("#rotation-"+axis).addEventListener("input",e=>updateItemRotation(axis,e.target.value)));
 $("#item-color").addEventListener("input",e=>updateItemColor(e.target.value));
@@ -292,13 +288,13 @@ $("#reset-item-position").onclick=()=>{
 };
 function loadItem(item,categoryOverride=activeCategory){
  const categoryId=categoryOverride;selectedItems[categoryId]=item;const version=++loadVersions[categoryId];
- if(item.isNone||item.id==="none-"+categoryId){if(loadedModels[categoryId])character.remove(loadedModels[categoryId]);loadedModels[categoryId]=null;if(activeCharacter)activeCharacter.parts[categoryId]=item;renderItems();alignCharacterToGround();captureCharacterThumbnail();renderCharacterList();toast("Đã bỏ qua danh mục "+categories.find(c=>c.id===categoryId).name+".");return;}
+ if(item.isNone||item.id==="none-"+categoryId){if(loadedModels[categoryId])characterContent.remove(loadedModels[categoryId]);loadedModels[categoryId]=null;if(activeCharacter)activeCharacter.parts[categoryId]=item;if(categoryId==="body")renderShapeKeyPanel();renderItems();alignCharacterToGround();captureCharacterThumbnail();renderCharacterList();toast("Đã bỏ qua danh mục "+categories.find(c=>c.id===categoryId).name+".");return;}
  renderItems();
  new GLTFLoader().load(item.url,gltf=>{
   if(version!==loadVersions[categoryId])return;
   const model=gltf.scene,box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),maxDimension=Math.max(size.x,size.y,size.z);
   if(!Number.isFinite(maxDimension)||maxDimension<=0){toast("Mô hình GLB không có kích thước hợp lệ.");return;}
-  const targetSizes={faces:1.45,hair:1.55,eyes:.48,"extra-eyes-1":.34,"extra-eyes-2":.34,eyebrows:.34,noses:.16,mouths:.30,body:1.35,arms:.82,legs:.72,clothes:1.28,accessories:.48,footwear:.48};const targetSize=targetSizes[categoryId]||1.0;const scale=targetSize/maxDimension;model.scale.setScalar(scale);
+  const targetSizes={hair:1.55,eyes:.48,"extra-eyes-1":.34,"extra-eyes-2":.34,eyebrows:.34,noses:.16,mouths:.30,body:1.8,clothes:1.28,accessories:.48,footwear:.48};const targetSize=targetSizes[categoryId]||1.0;const scale=targetSize/maxDimension;model.scale.setScalar(scale);
   model.position.set(-center.x*scale,1.15-center.y*scale,-center.z*scale);
   model.userData.basePosition=model.position.clone();
   model.userData.baseScale=model.scale.clone();
@@ -307,8 +303,8 @@ function loadItem(item,categoryOverride=activeCategory){
   const savedScale=getItemScale(item);model.scale.set(model.userData.baseScale.x*savedScale.x,model.userData.baseScale.y*savedScale.y,model.userData.baseScale.z*savedScale.z);
   const savedRotation=getItemRotation(item);model.rotation.set(THREE.MathUtils.degToRad(savedRotation.x),THREE.MathUtils.degToRad(savedRotation.y),THREE.MathUtils.degToRad(savedRotation.z),"XYZ");
   const savedColor=getItemColor(item);if(savedColor){model.traverse(child=>{if(child.isMesh&&child.material){const mats=Array.isArray(child.material)?child.material:[child.material];mats.forEach(m=>{if(m.color)m.color.set(savedColor);});}});}
-  if(loadedModels[categoryId])character.remove(loadedModels[categoryId]);
-  loadedModels[categoryId]=model;character.add(model);alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();
+  if(loadedModels[categoryId])characterContent.remove(loadedModels[categoryId]);
+  loadedModels[categoryId]=model;characterContent.add(model);alignCharacterToGround();if(categoryId==="body")renderShapeKeyPanel();renderItems();captureCharacterThumbnail();renderCharacterList();
   toast("Đã cập nhật "+categories.find(c=>c.id===categoryId).name+": "+item.name);
  },undefined,error=>{console.error(error);if(version===loadVersions[categoryId])toast("Không thể mở mô hình GLB này.");});
 }
@@ -374,17 +370,17 @@ $("#asset-dialog-form").addEventListener("submit",async e=>{e.preventDefault();i
  await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Update asset metadata "+managedAsset.id);managedAsset.name=newName;managedAsset.description=entry.description;if(pendingGLB&&selectedItems[activeCategory]===managedAsset)loadItem(managedAsset,activeCategory);renderItems();closeAssetManager();toast("Đã cập nhật item và đồng bộ GitHub.");
  }catch(error){console.error("Asset update failed",error);toast("Không lưu được item: "+error.message);}finally{saveButton.disabled=false;saveButton.textContent="Lưu thay đổi";}});
 $("#asset-delete").onclick=async()=>{const item=managedAsset;if(!item)return;if(!hasGitHubToken()){toast("Hãy kết nối GitHub trong Settings trước khi xóa.");return;}if(!confirm("Xóa vĩnh viễn item “"+item.name+"” khỏi thư viện GitHub?"))return;const button=$("#asset-delete");button.disabled=true;button.textContent="Đang xóa...";
- try{const profiles=await listCharacterProfiles();const usedLocally=characters.some(c=>Object.values(c.parts||{}).some(part=>part?.id===item.id))||Object.values(selectedItems).some(part=>part?.id===item.id);const usedRemotely=profiles.some(p=>Object.values(p.parts||{}).some(id=>id===item.id));if(usedLocally||usedRemotely)throw new Error("Item đang được ít nhất một nhân vật sử dụng. Hãy thay item đó trong các nhân vật rồi lưu trước khi xóa.");const manifest=await readAssetManifest(),entry=manifest.data.assets.find(a=>a.id===item.id);if(!entry)throw new Error("Không tìm thấy item trong manifest.");if(entry.path)await deleteGitHubFile(entry.path,"Delete asset "+item.id);if(entry.thumbnail&&entry.thumbnail.startsWith("assets/thumbnails/")){try{await deleteGitHubFile(entry.thumbnail,"Delete thumbnail "+item.id);}catch(error){console.warn("Không xóa được thumbnail cũ",error);}}manifest.data.assets=manifest.data.assets.filter(a=>a.id!==item.id);await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Remove asset from manifest");const category=categories.find(c=>c.id===entry.category);if(category)items[category.id]=items[category.id].filter(a=>a.id!==item.id);if(selectedItems[activeCategory]===item){selectedItems[activeCategory]=null;if(loadedModels[activeCategory])character.remove(loadedModels[activeCategory]);loadedModels[activeCategory]=null;saveActiveCharacterParts();alignCharacterToGround();}renderItems();closeAssetManager();toast("Đã xóa item khỏi thư viện GitHub.");
+ try{const profiles=await listCharacterProfiles();const usedLocally=characters.some(c=>Object.values(c.parts||{}).some(part=>part?.id===item.id))||Object.values(selectedItems).some(part=>part?.id===item.id);const usedRemotely=profiles.some(p=>Object.values(p.parts||{}).some(id=>id===item.id));if(usedLocally||usedRemotely)throw new Error("Item đang được ít nhất một nhân vật sử dụng. Hãy thay item đó trong các nhân vật rồi lưu trước khi xóa.");const manifest=await readAssetManifest(),entry=manifest.data.assets.find(a=>a.id===item.id);if(!entry)throw new Error("Không tìm thấy item trong manifest.");if(entry.path)await deleteGitHubFile(entry.path,"Delete asset "+item.id);if(entry.thumbnail&&entry.thumbnail.startsWith("assets/thumbnails/")){try{await deleteGitHubFile(entry.thumbnail,"Delete thumbnail "+item.id);}catch(error){console.warn("Không xóa được thumbnail cũ",error);}}manifest.data.assets=manifest.data.assets.filter(a=>a.id!==item.id);await putText("data/asset-manifest.json",JSON.stringify(manifest.data,null,2),"Remove asset from manifest");const category=categories.find(c=>c.id===entry.category);if(category)items[category.id]=items[category.id].filter(a=>a.id!==item.id);if(selectedItems[activeCategory]===item){selectedItems[activeCategory]=null;if(loadedModels[activeCategory])characterContent.remove(loadedModels[activeCategory]);loadedModels[activeCategory]=null;saveActiveCharacterParts();alignCharacterToGround();}renderItems();closeAssetManager();toast("Đã xóa item khỏi thư viện GitHub.");
  }catch(error){console.error("Asset delete failed",error);toast("Không thể xóa item: "+error.message);}finally{button.disabled=false;button.textContent="Xóa item";}};
 
 $("#item-search").oninput=renderItems;
-$("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};alignCharacterToGround();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
+$("#reset-character").onclick=()=>{clearActiveCharacterModels();activeCharacter.parts={};activeCharacter.shapeKeys={};activeCharacter.transform={x:0,y:0,z:0};applyCharacterTransform();alignCharacterToGround();renderShapeKeyPanel();renderItems();captureCharacterThumbnail();renderCharacterList();camera.position.set(0,1.4,5.6);controls.target.set(0,1.15,0);controls.update();toast("Đã đặt lại nhân vật đang chọn.");};
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2400);}
 function restoreCharacterProfiles(){
  try{
   const raw=localStorage.getItem("character-studio-profiles");if(!raw)return;
   const data=JSON.parse(raw);if(!Array.isArray(data.characters)||!data.characters.length)return;
-  characters.splice(0,characters.length,...data.characters.map(record=>({id:String(record.id),name:String(record.name||"Nhân vật"),parts:{},thumbnail:record.thumbnail||null})));
+  characters.splice(0,characters.length,...data.characters.map(record=>({id:String(record.id),name:String(record.name||"Nhân vật"),parts:{},thumbnail:record.thumbnail||null,transform:record.transform||{x:0,y:0,z:0},shapeKeys:record.shapeKeys||{}})));
   activeCharacterId=characters.some(c=>c.id===data.activeCharacterId)?data.activeCharacterId:characters[0].id;
   activeCharacter=characters.find(c=>c.id===activeCharacterId)||characters[0];
  }catch(error){console.warn("Không thể khôi phục hồ sơ nhân vật",error);}
@@ -415,7 +411,7 @@ async function loadManifestAssets(){
     for(const savedRecord of saved.characters){
      const record=characters.find(c=>c.id===savedRecord.id);
      if(!record)continue;
-     record.name=savedRecord.name||record.name;record.thumbnail=savedRecord.thumbnail||record.thumbnail;
+     record.name=savedRecord.name||record.name;record.thumbnail=savedRecord.thumbnail||record.thumbnail;record.transform=savedRecord.transform||record.transform||{x:0,y:0,z:0};record.shapeKeys=savedRecord.shapeKeys||record.shapeKeys||{};
      record.parts=Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===savedRecord.parts?.[c.id])||null]));
      for(const category of categories){
       for(const asset of items[category.id]){
@@ -425,7 +421,7 @@ async function loadManifestAssets(){
      }
     }
     const restored=characters.find(c=>c.id===saved.activeCharacterId);
-    if(restored){clearActiveCharacterModels();activeCharacter=restored;activeCharacterId=restored.id;alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();}
+    if(restored){clearActiveCharacterModels();activeCharacter=restored;activeCharacterId=restored.id;applyCharacterTransform();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();}
    }
   }catch(error){console.warn("Không thể khôi phục các bộ phận đã lưu",error);}
   renderItems();toast("Đã nạp "+(manifest.assets||[]).length+" mô hình từ thư viện GitHub.");
