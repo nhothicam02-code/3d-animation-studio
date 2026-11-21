@@ -1,6 +1,7 @@
 import { CharacterStore } from "./character-store.js";
 import { CharacterViewport } from "./viewport.js";
 import { AssetLibrary } from "./asset-library.js";
+import { createGLBThumbnail } from "./thumbnail.js";
 
 const $ = (selector) => document.querySelector(selector);
 const store = new CharacterStore();
@@ -354,22 +355,98 @@ $("#test-token").addEventListener("click", () => {
     : "Bạn chưa nhập key hoặc token.";
 });
 $("#service-token").addEventListener("input", () => { $("#token-feedback").textContent = ""; });
-$("#load-glb").addEventListener("click", async () => {
-  const path = $("#asset-url").value.trim();
-  if (!path) return toast("Nhập đường dẫn GLB trước.");
-  const asset = {
-    id: "custom_" + Date.now(),
-    name: $("#asset-name").value.trim() || "GLB tùy chỉnh",
-    category: $("#asset-category").value,
-    path,
-    format: "glb"
-  };
+const GITHUB_OWNER = "nhothicam02-code";
+const GITHUB_REPO = "3d-animation-studio";
+const GITHUB_BRANCH = "main";
+const GITHUB_API = "https://api.github.com";
+const slugify = (value) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+  .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 48);
+
+function githubHeaders(token) {
+  return { Authorization: "Bearer " + token, Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28" };
+}
+async function githubContents(path, token) {
+  const response = await fetch(GITHUB_API + "/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/" + path,
+    { headers: githubHeaders(token) });
+  if (!response.ok) throw new Error("GitHub không đọc được " + path + " (HTTP " + response.status + ").");
+  return response.json();
+}
+function toBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunk));
+  }
+  return btoa(binary);
+}
+async function putGitHubFile(path, content, token, message, existingSha) {
+  const body = { message, content: typeof content === "string" ? content : toBase64(await content.arrayBuffer()), branch: GITHUB_BRANCH };
+  if (existingSha) body.sha = existingSha;
+  const response = await fetch(GITHUB_API + "/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/" + path, {
+    method: "PUT", headers: { ...githubHeaders(token), "Content-Type": "application/json" }, body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    throw new Error("Không ghi được " + path + " (HTTP " + response.status + "): " + (detail.message || "Lỗi GitHub API"));
+  }
+  return response.json();
+}
+async function readManifestForWrite(token) {
+  const response = await githubContents("data/asset-manifest.json", token);
+  const bytes = Uint8Array.from(atob(response.content.replace(/\\s/g, "")), (char) => char.charCodeAt(0));
+  return { manifest: JSON.parse(new TextDecoder().decode(bytes)), sha: response.sha };
+}
+
+$("#asset-file").addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  $("#asset-file-name").textContent = file ? file.name + " · " + (file.size / 1048576).toFixed(1) + " MB" : "Chưa chọn tệp";
+  if (file && !$("#asset-name").value.trim()) $("#asset-name").value = file.name.replace(/\\.glb$/i, "").replace(/[_-]+/g, " ");
+});
+
+$("#save-asset-github").addEventListener("click", async () => {
+  const file = $("#asset-file").files?.[0];
+  const name = $("#asset-name").value.trim();
+  const category = $("#asset-category").value;
+  const token = $("#service-token").value.trim();
+  if (!file || !/\\.glb$/i.test(file.name)) return toast("Hãy chọn một file .glb hợp lệ.");
+  if (!name) return toast("Hãy nhập tên mô hình.");
+  if (!token) return toast("Hãy nhập GitHub token trong Cài đặt.");
+  if (file.size > 50 * 1024 * 1024) return toast("File vượt quá giới hạn 50 MB cho trình tải trên web.");
+  const id = category + "_" + (slugify(name) || "model");
+  if (allAssets.some((asset) => asset.id === id)) return toast("ID này đã tồn tại. Hãy đổi tên mô hình.");
+  const button = $("#save-asset-github");
+  button.disabled = true;
+  button.textContent = "Đang xử lý...";
   try {
-    await viewport.loadGLB(asset);
-    $("#asset-feedback").textContent = "Đã tải thành công: " + asset.name + " (phiên này).";
-    toast("Đã tải mô hình vào viewport.");
+    $("#asset-feedback").textContent = "Đang tạo ảnh thumbnail 3D...";
+    const thumbnailBlob = await createGLBThumbnail(file);
+    const modelPath = "assets/" + category + "/" + id + ".glb";
+    const thumbnailPath = "thumbnails/" + category + "/" + id + ".webp";
+    $("#asset-feedback").textContent = "Đang tải mô hình GLB lên GitHub...";
+    await putGitHubFile(modelPath, file, token, "Add 3D asset " + id);
+    $("#asset-feedback").textContent = "Đang tải thumbnail và cập nhật manifest...";
+    await putGitHubFile(thumbnailPath, thumbnailBlob, token, "Add thumbnail " + id);
+    const { manifest, sha } = await readManifestForWrite(token);
+    manifest.assets ||= [];
+    if (manifest.assets.some((asset) => asset.id === id)) throw new Error("Asset ID đã tồn tại trong manifest.");
+    manifest.assets.push({ id, name, category, path: modelPath, thumbnail: thumbnailPath, format: "glb" });
+    await putGitHubFile("data/asset-manifest.json", JSON.stringify(manifest, null, 2) + "\\n",
+      token, "Register 3D asset " + id, sha);
+    assetLibrary.manifest = null;
+    assetLibrary.pending = null;
+    await renderAssets();
+    $("#asset-feedback").textContent = "Đã lưu thành công " + name + " lên GitHub và đăng ký trong manifest.";
+    $("#asset-name").value = "";
+    $("#asset-file").value = "";
+    $("#asset-file-name").textContent = "Chưa chọn tệp";
+    toast("Đã thêm mô hình vào thư viện!");
   } catch (error) {
-    $("#asset-feedback").textContent = "Không tải được: " + error.message;
-    toast("Lỗi tải GLB.");
+    $("#asset-feedback").textContent = "Chưa hoàn tất: " + error.message + " Nếu file đã upload nhưng manifest chưa cập nhật, kiểm tra thư mục assets/thumbnails trên GitHub trước khi thử lại.";
+    toast("Không thể hoàn tất lưu mô hình.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Lưu lên GitHub";
   }
 });
