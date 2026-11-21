@@ -1,0 +1,11 @@
+const OWNER="nhothicam02-code",REPO="3d-animation-studio",BRANCH="main";
+let token="";
+export function setGitHubToken(value){token=String(value||"").trim();}
+export function hasGitHubToken(){return Boolean(token);}
+function authHeaders(extra={}){if(!token)throw new Error("Chưa nhập GitHub Token trong Settings.");return{Authorization:"Bearer "+token,"X-GitHub-Api-Version":"2022-11-28",...extra};}
+async function request(path,options={}){const response=await fetch("https://api.github.com"+path,{...options,headers:authHeaders(options.headers||{})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||("GitHub API "+response.status));return data;}
+export async function verifyToken(){const repo=await request("/repos/"+OWNER+"/"+REPO);return repo.full_name;}
+function encodeText(value){return btoa(unescape(encodeURIComponent(value)));}
+export async function putText(path,value,message){let sha;try{sha=(await request("/repos/"+OWNER+"/"+REPO+"/contents/"+path+"?ref="+BRANCH)).sha;}catch(error){if(!String(error.message).includes("Not Found"))throw error;}const body={message,content:encodeText(value),branch:BRANCH};if(sha)body.sha=sha;return request("/repos/"+OWNER+"/"+REPO+"/contents/"+path,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});}
+export async function putBinary(path,file,message){if(file.size>20*1024*1024)throw new Error("GLB tối đa 20 MB mỗi tệp.");const bytes=new Uint8Array(await file.arrayBuffer());let binary="";for(let i=0;i<bytes.length;i+=32768)binary+=String.fromCharCode(...bytes.subarray(i,i+32768));let sha;try{sha=(await request("/repos/"+OWNER+"/"+REPO+"/contents/"+path+"?ref="+BRANCH)).sha;}catch(error){if(!String(error.message).includes("Not Found"))throw error;}const body={message,content:btoa(binary),branch:BRANCH};if(sha)body.sha=sha;return request("/repos/"+OWNER+"/"+REPO+"/contents/"+path,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});}
+export async function readJson(path){const data=await request("/repos/"+OWNER+"/"+REPO+"/contents/"+path+"?ref="+BRANCH);return{sha:data.sha,data:JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,"")))))};}
