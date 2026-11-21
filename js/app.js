@@ -245,6 +245,26 @@ async function loadManifestAssets(){
    const path=asset.path||("assets/"+asset.category+"/"+asset.id+".glb");
    items[asset.category].push({id:asset.id,name:asset.name||asset.id,path,url:new URL(path,document.baseURI).href,thumbnail:asset.thumbnail||null,isNone:asset.id==="none-"+asset.category||asset.type==="none",positionByCharacter:{}});
   }
+  // Restore saved local character parts only after the manifest assets are available.
+  try{
+   const saved=JSON.parse(localStorage.getItem("character-studio-profiles")||"null");
+   if(saved&&Array.isArray(saved.characters)&&saved.characters.length){
+    for(const savedRecord of saved.characters){
+     const record=characters.find(c=>c.id===savedRecord.id);
+     if(!record)continue;
+     record.name=savedRecord.name||record.name;record.thumbnail=savedRecord.thumbnail||record.thumbnail;
+     record.parts=Object.fromEntries(categories.map(c=>[c.id,items[c.id].find(a=>a.id===savedRecord.parts?.[c.id])||null]));
+     for(const category of categories){
+      for(const asset of items[category.id]){
+       const position=savedRecord.positions?.[asset.id]?.[record.id]||savedRecord.positions?.[asset.id];
+       if(position){asset.positionByCharacter=asset.positionByCharacter||{};asset.positionByCharacter[record.id]=position;}
+      }
+     }
+    }
+    const restored=characters.find(c=>c.id===saved.activeCharacterId);
+    if(restored){clearActiveCharacterModels();activeCharacter=restored;activeCharacterId=restored.id;makeCharacter();alignCharacterToGround();categories.forEach(c=>{const asset=activeCharacter.parts[c.id];if(asset)loadItem(asset,c.id);});renderCharacterList();}
+   }
+  }catch(error){console.warn("Không thể khôi phục các bộ phận đã lưu",error);}
   renderItems();toast("Đã nạp "+(manifest.assets||[]).length+" mô hình từ thư viện GitHub.");
  }catch(error){console.warn("Không nạp được asset manifest",error);}
 }
