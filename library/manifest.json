@@ -17,5 +17,22 @@
       "updatedAt": "2026-11-22T05:49:32.112Z"
     }
   },
-  "animations": []
+  "animations": [
+    {
+      "id": "i-bo-mwrip8n1",
+      "name": "Đi bộ",
+      "category": "Action",
+      "duration": 0.9666666388511658,
+      "loop": true,
+      "speed": 1,
+      "tracks": 53,
+      "keyframes": 1590,
+      "source": "Walking.fbx",
+      "createdAt": "2026-11-22T07:30:42.342Z",
+      "dataPath": "library/animations/i-bo-mwrip8n1.json",
+      "thumbnailPath": "library/thumbnails/animations/i-bo-mwrip8n1.png",
+      "thumbnail": "./library/thumbnails/animations/i-bo-mwrip8n1.png",
+      "rigSignature": []
+    }
+  ]
 }
