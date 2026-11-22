@@ -10,21 +10,21 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head><body>
 <header><div class="brand"><span>3DiS</span> / LIBRARY STUDIO</div><div class="head-actions"><span id="gitState" class="pill">GitHub chưa kết nối</span><button class="quiet optional" id="openLab">Motion Lab cũ</button><button id="settingsBtn">⚙ Cài đặt</button></div></header>
-<nav><button class="tab active" data-view="home">Tổng quan</button><a class="tab nav-link" href="./motion-lab.html">Motion Lab</a><a class="tab nav-link" href="./custom.html">Custom</a><button class="tab" data-view="animations">Animation</button><a class="tab nav-link" href="./studio.html">Studio</a></nav>
+<nav><button class="tab active" data-view="home">Tổng quan</button><button class="tab" data-view="characters">Nhân vật</button><button class="tab" data-view="animations">Animation</button><a class="tab nav-link" href="./studio.html">Studio</a></nav>
 <main>
 <section id="home" class="view active">
  <div class="hero"><div><h1>Thư viện 3DiS</h1><p>Quản lý nhân vật và chuyển động tập trung. Import một lần, tái sử dụng nhiều lần.</p></div><button class="primary" id="addClipTop">＋ Thêm clip</button></div>
  <div class="grid overview-stats">
   <div class="panel"><small>DỰ ÁN PHIM</small><h1 id="countProjects">—</h1><span class="muted">Dự án đã lưu trong Studio</span></div>
-  <div class="panel"><small>NHÂN VẬT</small><h1 id="countCharacters">—</h1><span class="muted">Model nguồn trong thư viện</span></div>
+  <div class="panel"><small>NHÂN VẬT</small><h1 id="countCharacters">—</h1><span class="muted">Model FBX trong repository</span></div>
   <div class="panel"><small>ANIMATION CLIPS</small><h1 id="countClips">—</h1><span class="muted">Clip trong thư viện GitHub</span></div>
   <div class="panel"><small>TRẠNG THÁI LƯU TRỮ</small><h1 id="storageState" style="font-size:18px">Chưa kết nối</h1><span class="muted">GitHub Contents API</span></div>
  </div>
  <div class="hero" style="margin-top:26px"><div><h2>Dự án gần đây</h2><p>Các dự án phim bạn đã tạo trong Studio trên trình duyệt này.</p></div><a class="quiet overview-link" href="./studio.html">Mở Studio →</a></div><div class="grid" id="homeProjects"></div>
- <div class="hero" style="margin-top:26px"><div><h2>Thiết kế nhân vật</h2><p>Tạo nhân vật, gắn trang phục và phụ kiện, lưu hồ sơ riêng lên GitHub.</p></div><a class="overview-link" href="./custom.html">Mở Character Custom →</a></div><div id="homeCharacters" hidden></div>
+ <div class="hero" style="margin-top:26px"><div><h2>Nhân vật gần đây</h2><p>Thumbnail được tạo tự động từ model 3D.</p></div><button class="quiet" data-goto="characters">Xem tất cả →</button></div><div class="grid" id="homeCharacters"></div>
  <div class="hero" style="margin-top:26px"><div><h2>Animation mới nhất</h2><p>Clip được nhóm theo danh mục, có thể phân trang khi thư viện lớn.</p></div><button class="quiet" data-goto="animations">Xem tất cả →</button></div><div class="grid" id="homeAnimations"></div>
 </section>
-<section id="characters" class="view" hidden>
+<section id="characters" class="view">
  <div class="hero"><div><h1>Nhân vật</h1><p>Danh sách model FBX được tìm thấy trong repository.</p></div><button id="refreshModels">↻ Quét lại GitHub</button></div>
  <div class="toolbar"><input id="characterSearch" placeholder="Tìm nhân vật..."><span class="muted" id="characterCount"></span></div><div class="grid" id="characterGrid"></div><div class="pager" id="characterPager"></div>
 </section>
