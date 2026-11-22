@@ -57,7 +57,7 @@ input[type=range]{accent-color:var(--accent)}
 </div>
 <div class="controls"><button id="playBtn" class="primary">▶ Phát</button><button id="pauseBtn">Ⅱ Tạm dừng</button><button id="stopBtn">■ Dừng</button></div>
 <div class="timeline"><div id="timeText"><span>THỜI GIAN</span><span id="clock">0.00 s</span></div><input id="scrub" type="range" min="0" max="5" step=".01" value="0"><div class="field" style="margin-bottom:0"><label>Tốc độ: <b id="speedLabel">1.0×</b></label><input id="speed" type="range" min=".25" max="2" step=".25" value="1"></div></div>
-<h3>Chuyển động cơ thể bổ sung (15 vòng lặp)</h3><div class="actions" id="poses"></div><h3>Timeline keyframe</h3><div class="info" id="keyInfo">Đang chuẩn bị keyframe…</div><button id="exportActions" style="width:100%;margin-top:8px">↓ Tải thư viện keyframe JSON</button><h3>Thông tin model</h3><div class="info" id="modelInfo">Đang phân tích cấu trúc xương…</div>
+<h3>15 vòng lặp cử chỉ cơ thể</h3><div class="actions" id="poses"></div><h3>Timeline keyframe</h3><div class="info" id="keyInfo">Đang chuẩn bị keyframe…</div><button id="exportActions" style="width:100%;margin-top:8px">↓ Tải thư viện keyframe JSON</button><h3>Thông tin model</h3><div class="info" id="modelInfo">Đang phân tích cấu trúc xương…</div>
 <h3>Xương tìm thấy</h3><div id="boneList">Đang chờ FBXLoader…</div>
 <div class="info">Hành động được dựng từ keyframe theo hệ trục của nhân vật (tự dò hướng trái / phải / trước), nội suy spline mượt giữa các tư thế. Bàn chân tự giữ chạm đất, đầu và tay tự cân bằng theo thân, hông tự hạ khi gối gập. File FBX gốc không bị thay đổi. Chất lượng khớp vẫn phụ thuộc cấu trúc rig của model.</div>
 </aside>
@@ -222,8 +222,9 @@ const mir=r=>mirrorFrame(F(0,r),0).r;
 const addJ=(r,id,d)=>{const o={...r},b=o[id]||[0,0,0];o[id]=[b[0]+d[0],b[1]+d[1],b[2]+d[2]];return o};
 const breathOf=r=>addJ(addJ(addJ(r,'spine1',[-.6,0,0]),'spine2',[-1.2,0,0]),'head',[-.4,0,0]);
 const breathOpposite=r=>{let o={...r};for(const id of ['spine1','spine2','head']){const a=o[id]||[0,0,0];o[id]=[a[0]+(id==='spine1'?.35:id==='spine2'?.7:.2),a[1],a[2]]}return o};
+const poseSway=(r,side)=>{let o={...r};for(const [id,d] of Object.entries({hips:[0,side*2,side*1.2],spine:[0,-side*1.5,-side],spine1:[0,-side,-side*.7],spine2:[0,-side*.6,-side*.4],head:[0,side*1.5,side*.8],lArm:[0,0,-side*1.2],rArm:[0,0,side*1.2]})){const a=o[id]||[0,0,0];o[id]=[a[0]+d[0],a[1]+d[1],a[2]+d[2]]}return o};
 const poseAction=(r,root)=>({duration:4,loop:true,stab:.1,plantY:true,frames:[
- F(0,r,root),F(1,breathOf(r),root),F(2,r,root),F(3,breathOpposite(r),root)
+ F(0,r,root),F(.8,breathOf(r),root),F(1.6,poseSway(r,1),root),F(2.4,breathOpposite(r),root),F(3.2,poseSway(r,-1),root)
 ]});
 const P02={lArm:[-22,0,-12],lFore:[-125,-30,0],rArm:[3,0,-14],rFore:[-8,0,0],head:[3,-6,-5],lUp:[0,0,-2],rUp:[0,0,2],lFoot:[0,0,2],rFoot:[0,0,-2],hips:[0,0,-1.5]};
 const POSES=[
@@ -253,9 +254,19 @@ function withFingerKeys(frame,actionName){
   jump:[0,3,2,0],bow:[3,8,6,3],dance:[0,4,2,0],look:[2,7,5,2]
  };
  const curl=presets[actionName]||[3,8,6,3];
- for(const side of ['l','r'])for(const digit of ['Thumb','Index','Middle','Ring','Pinky'])for(let segment=1;segment<=4;segment++){
-  const id=side+digit+segment;
-  if(!r[id]){const v=curl[Math.min(segment-1,3)];r[id]=[digit==='Thumb'?v*.7:v,0,0]}
+ const digits=['Thumb','Index','Middle','Ring','Pinky'];
+ for(const side of ['l','r'])for(let di=0;di<digits.length;di++)for(let segment=1;segment<=4;segment++){
+  const digit=digits[di],id=side+digit+segment;
+  if(!r[id]){
+   const wave=actionName==='wave'&&side==='r'?Math.sin((frame.t||0)*Math.PI*4+di*.42)*4:0;
+   const v=curl[Math.min(segment-1,3)]+wave;
+   r[id]=[digit==='Thumb'?v*.7:v,0,0];
+  }
+ }
+ for(const side of ['l','r']){
+  const foot=frame.r?.[side+'Foot']?.[0]||0;
+  if(!r[side+'Toe'])r[side+'Toe']=[-foot*.32,0,0];
+  if(!r[side+'ToeEnd'])r[side+'ToeEnd']=[-foot*.16,0,0];
  }
  return {...frame,r};
 }
