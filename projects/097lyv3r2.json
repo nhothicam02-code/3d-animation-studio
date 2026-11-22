@@ -2,7 +2,7 @@
  "id": "097lyv3r2",
  "name": "a",
  "created": 1795364455358,
- "updated": 1795364467198,
+ "updated": 1795366972080,
  "scenes": [
   {
    "id": "hobmvu3r2",
@@ -15,8 +15,8 @@
      "id": "e029qo91g",
      "file": "Sitting Laughing.fbx",
      "name": "Sitting Laughing",
-     "x": 0,
-     "z": 0,
+     "x": 1.05,
+     "z": -0.25,
      "rot": 0,
      "scale": 1,
      "opacity": 1,
@@ -27,7 +27,7 @@
      "sy": 1,
      "sz": 1,
      "lock": true,
-     "fixed": true,
+     "fixed": false,
      "clips": [
       {
        "id": "d227kacvy",
@@ -36,7 +36,31 @@
        "dur": 4.47,
        "loop": true
       }
-     ]
+     ],
+     "kf": {
+      "pos": [
+       {
+        "id": "zhrr7ato7",
+        "t": 0.63333,
+        "v": [
+         0,
+         0,
+         0
+        ],
+        "e": "ease"
+       },
+       {
+        "id": "ooe4691o0",
+        "t": 2.26667,
+        "v": [
+         1.05,
+         0,
+         -0.25
+        ],
+        "e": "ease"
+       }
+      ]
+     }
     }
    ],
    "tracks": [],
@@ -46,7 +70,8 @@
    "bgfit": "cover",
    "bgz": 100,
    "bgx": 0,
-   "bgy": 0
+   "bgy": 0,
+   "props": []
   }
  ],
  "fmt": {
