@@ -81,8 +81,14 @@ const MEDIA = [
   {id: 'sfx', label: 'Âm thanh hiệu ứng', icon: '🔊', kind: 'audio', accept: 'audio/*'}
 ];
 const WEAR = K.SLOTS.map(s => ({...s, kind: 'model', accept: '.glb,.fbx,.obj'}));
+const ENV = [
+  {id: 'env-ground', label: 'Đất & mặt nền', icon: '🟫'}, {id: 'env-table', label: 'Bàn', icon: '🪑'}, {id: 'env-chair', label: 'Ghế', icon: '💺'},
+  {id: 'env-tree', label: 'Cây', icon: '🌳'}, {id: 'env-room', label: 'Phòng học & nội thất', icon: '🏫'}, {id: 'env-cloud', label: 'Mây', icon: '☁️'},
+  {id: 'env-mountain', label: 'Núi', icon: '⛰️'}, {id: 'env-rock', label: 'Đá', icon: '🪨'}, {id: 'env-building', label: 'Nhà & công trình', icon: '🏠'},
+  {id: 'env-prop', label: 'Đồ vật khác', icon: '📦'}
+].map(c => ({...c, kind: 'model', accept: '.glb,.fbx,.obj', env: true}));
 const CHAR_CAT = {id: 'character', label: 'Nhân vật', icon: '🧍', kind: 'character'};
-const CATS = [...MEDIA, ...WEAR], catOf = id => id === CHAR_CAT.id ? CHAR_CAT : CATS.find(c => c.id === id);
+const CATS = [...MEDIA, ...ENV, ...WEAR], catOf = id => id === CHAR_CAT.id ? CHAR_CAT : CATS.find(c => c.id === id);
 const S = {items: [], chars: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: []};
 const allItems = () => S.items.concat(S.chars);
 if (S.cat && !catOf(S.cat)) S.cat = '';
@@ -92,6 +98,7 @@ function renderCats() {
   const n = id => allItems().filter(x => x.category === id).length;
   const btn = (id, label, icon, count) => '<button class="cat' + (S.cat === id ? ' active' : '') + '" data-cat="' + id + '"><span>' + icon + ' ' + esc(label) + '</span><b>' + count + '</b></button>';
   $('cats').innerHTML = btn('', 'Tất cả', '📚', allItems().length) + '<div class="cg">Nhân vật</div>' + btn(CHAR_CAT.id, CHAR_CAT.label + ' (gốc + Custom)', CHAR_CAT.icon, n(CHAR_CAT.id)) + '<div class="cg">Nền &amp; âm thanh</div>' + MEDIA.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
+    '<div class="cg">Bối cảnh 3D</div>' + ENV.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
     '<div class="cg">Trang phục &amp; phụ kiện</div>' + WEAR.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('');
 }
 function view() {
@@ -179,7 +186,7 @@ async function openDetail(id) {
   const media = {image: '<img id="dMedia" class="dmedia" alt="">', video: '<video id="dMedia" class="dmedia" controls playsinline loop></video>',
     audio: '<img id="dThumb" class="dmedia" style="max-height:200px" alt=""><audio id="dMedia" controls style="width:100%"></audio>', model: '<div class="stage3d" id="dStage"></div>'}[it.kind] || '';
   $('dBody').innerHTML = media + '<div class="meta">' + esc(c.icon + ' ' + c.label) + ' · ' + esc(it.ext.toUpperCase()) + ' · ' + fmtSize(it.size || 0) + (it.duration ? ' · ' + Number(it.duration).toFixed(1) + 's' : '') + ' · ' + new Date(it.createdAt || Date.now()).toLocaleDateString('vi-VN') + '</div><div class="meta">' + esc(it.path) + '</div>' +
-    '<div class="row"><a href="' + esc(K.repoRaw(it.path)) + '" target="_blank" rel="noopener"><button type="button">Mở file gốc ↗</button></a>' + (it.kind === 'model' ? '<a href="./custom.html"><button type="button">✦ Dùng trong Custom</button></a>' : '') + '<button class="danger" id="dDel" style="margin-left:auto">Gỡ khỏi thư viện</button></div>';
+    '<div class="row"><a href="' + esc(K.repoRaw(it.path)) + '" target="_blank" rel="noopener"><button type="button">Mở file gốc ↗</button></a>' + (it.kind === 'model' && !c.env ? '<a href="./custom.html"><button type="button">✦ Dùng trong Custom</button></a>' : '') + '<button class="danger" id="dDel" style="margin-left:auto">Gỡ khỏi thư viện</button></div>';
   $('detail').classList.add('open');
   $('dDel').onclick = () => removeItem(id);
   const m = $('dMedia'); if (m) { if (fr) m.src = fr.blob; else K.setSrc(m, it.path, () => {}); }
@@ -271,7 +278,7 @@ async function makeThumb(c, file) {
 /* ---------------- Thêm item + đồng bộ GitHub ---------------- */
 function fillUpCat() {
   const opt = c => '<option value="' + c.id + '">' + c.icon + ' ' + esc(c.label) + '</option>';
-  $('upCat').innerHTML = '<optgroup label="Nền &amp; âm thanh">' + MEDIA.map(opt).join('') + '</optgroup><optgroup label="Trang phục &amp; phụ kiện (mô hình .glb/.fbx/.obj)">' + WEAR.map(opt).join('') + '</optgroup>';
+  $('upCat').innerHTML = '<optgroup label="Nền &amp; âm thanh">' + MEDIA.map(opt).join('') + '</optgroup><optgroup label="Bối cảnh 3D (mô hình .glb/.fbx/.obj)">' + ENV.map(opt).join('') + '</optgroup><optgroup label="Trang phục &amp; phụ kiện (mô hình .glb/.fbx/.obj)">' + WEAR.map(opt).join('') + '</optgroup>';
 }
 $('upCat').onchange = () => { $('upFile').accept = catOf($('upCat').value).accept; };
 $('upFile').onchange = () => { $('nameRow').classList.toggle('hide', $('upFile').files.length > 1); };

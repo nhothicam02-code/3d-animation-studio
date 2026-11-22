@@ -18,7 +18,7 @@ label{display:block;color:var(--muted);font-size:11px;margin:10px 0 4px}.r{displ
 .sh{position:absolute;right:-8px;bottom:-8px;width:14px;height:14px;background:#fff;border:2px solid var(--ac);border-radius:3px;cursor:nwse-resize;pointer-events:auto}.rh{position:absolute;left:50%;top:-32px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--ac);border:2px solid #fff;cursor:grab;pointer-events:auto}.o2.sel .rh:after,#cbox .rh:after{content:"";position:absolute;left:5px;top:12px;width:2px;height:16px;background:var(--ac)}
 #cbox{position:absolute;border:2px dashed var(--ac);pointer-events:none}#cbox .rh{display:none}#ovl{perspective:900px}#bgl{position:absolute;inset:0;overflow:hidden}#bgl video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transform-origin:center}#bgl .bgi{position:absolute;inset:0;background-repeat:no-repeat;background-position:center;transform-origin:center}#gt{position:absolute;right:8px;top:8px;display:flex;gap:4px;z-index:5}#gt button{padding:4px 11px;font-size:15px}#gt .on{background:var(--ac);color:#171322}
 #flab{position:absolute;left:8px;top:6px;font-size:11px;color:#fffa;background:#0008;padding:2px 7px;border-radius:6px;pointer-events:none}#say{position:absolute;left:8px;bottom:6px;font-size:11px;color:var(--muted);background:#000a;padding:3px 8px;border-radius:6px}
-aside{grid-row:1;grid-column:2;background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:10px}.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}.tabs button{padding:7px 0;font-size:10px}.tabs .on{background:var(--ac);color:#171322}
+aside{grid-row:1;grid-column:2;background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:10px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.tabs button{padding:7px 0;font-size:11px}.tabs .on{background:var(--ac);color:#171322}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.cd{position:relative;padding:6px;text-align:left;font-weight:500;background:var(--p2);border:1px solid var(--line);border-radius:8px;cursor:pointer}.cd:hover{border-color:var(--ac)}.cd img,.cd video{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px;background:#303241;display:block}.cd b{display:block;margin-top:5px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cd .ic{aspect-ratio:16/10;display:grid;place-items:center;font-size:26px;background:#303241;border-radius:6px}.cd .x{position:absolute;right:8px;top:8px;padding:0 6px}.hint{color:var(--muted);font-size:11px;line-height:1.5;margin-top:8px}
 .li{display:flex;gap:6px;align-items:center;padding:6px 8px;margin-top:6px;border:1px solid var(--line);border-radius:8px;cursor:pointer}.li.on{border-color:var(--ac);background:#2a2740}.li span{flex:1}
 #tlw{grid-column:1/-1;grid-row:2;display:flex;flex-direction:column;background:var(--panel);border-top:1px solid var(--line);min-height:0}#tb{display:flex;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}#sc{display:flex;gap:4px;overflow-x:auto;flex:1}#sc button{flex:none;font-weight:500}#sc .on{border-color:var(--ac);background:#2a2740}#tm{font-size:12px;color:var(--muted);min-width:78px}
@@ -65,14 +65,14 @@ return {clip:new THREE.AnimationClip(source.name,source.duration,tracks),mapped,
 const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3),fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'),r2=v=>Math.round(v*100)/100;
 const FONTS=['Be Vietnam Pro','Roboto','Montserrat','Playfair Display','Pacifico','Lobster','Dancing Script','Oswald','Arial','Georgia','Courier New','Impact'],V2=['txt','dlg','img','vid'],ICON={clip:'🎞',txt:'T',dlg:'💬',img:'🖼',vid:'🎬',aud:'🎵',tts:'🗣',bg:'■'};
 let projects=[];try{projects=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{}
-let P=null,si=0,sel=null,tab='src',pps=60,t=0,playing=false,allMode=false,busy=false,manifest={characters:{},animations:[]},cq='',media=[];const murl={},spoken={};
+let P=null,si=0,sel=null,tab='src',pps=60,t=0,playing=false,allMode=false,busy=false,manifest={characters:{},animations:[]},cq='',media=[];const murl={},spoken={};let envLib=[],lmodels=[];
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(projects))}catch(e){say('Không lưu được: '+e.message)}},touch=()=>{P.updated=Date.now();persist();commit()};let tmr;const touchSoon=()=>{P.updated=Date.now();clearTimeout(tmr);tmr=setTimeout(()=>{persist();commit()},300)};
 const sc=()=>P.scenes[si],snap=v=>Math.max(0,Math.round(v*P.fmt.fps)/P.fmt.fps),say=m=>{$('say').textContent=m||'';$('say').hidden=!m},dl=(n,o)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));a.download=n;a.click()};
-const mkScene=n=>({id:uid(),name:'Cảnh '+n,duration:8,bg:'#171923',cam:null,chars:[],tracks:[]});
+const mkScene=n=>({id:uid(),name:'Cảnh '+n,duration:8,bg:'#171923',cam:null,chars:[],props:[],tracks:[]});
 const ASP={'16:9':16/9,'9:16':9/16,'1:1':1,'4:3':4/3,'3:4':3/4,'21:9':21/9,'4:5':4/5},POSY={top:12,mid:50,bot:82};
 function setFmt(f){const a=ASP[f.aspect]||16/9,e=v=>Math.round(v/2)*2;f.w=a>=1?e(f.res*a):f.res;f.h=a>=1?f.res:e(f.res/a);return f}
-function ensure(p){p.fmt=setFmt(p.fmt||{aspect:'16:9',res:1080,fps:30});for(const s of p.scenes){s.chars=s.chars||[];if(!s.tracks){s.tracks=[];for(const[k,ty]of[['dialogues','dlg'],['texts','txt'],['audio','aud'],['bgs','bg']]){const l=s[k]||[];if(l.length)s.tracks.push({id:uid(),items:l.map(x=>({...x,type:ty,x:50,y:ty==='dlg'?88:POSY[x.pos]||50}))});delete s[k]}}
- s.chars.forEach(c=>{c.id=c.id||uid();c.opacity??=1;c.y??=0;c.rx??=0;c.rz??=0;c.sx??=c.scale||1;c.sy??=c.scale||1;c.sz??=c.scale||1;c.lock??=true;c.fixed??=true;c.clips=c.clips||[];c.clips.forEach(x=>x.id=x.id||uid())});s.tracks.forEach(tr=>{tr.id=tr.id||uid();tr.items.forEach(x=>{x.id=x.id||uid();if(V2.includes(x.type)){x.x??=50;x.y??=x.type==='dlg'?88:50;x.rot??=0;x.opacity??=1;x.rx??=0;x.ry??=0;x.zi??=0;x.sx??=1;x.sy??=1;x.lock??=true}})});s.bg=s.bg||'#171923';s.bgt=s.bgt||'color';s.bg2=s.bg2||'#5b3fa8';s.bga??=135;s.bgfit??='cover';s.bgz??=100;s.bgx??=0;s.bgy??=0}return p}
+function ensure(p){p.fmt=setFmt(p.fmt||{aspect:'16:9',res:1080,fps:30});for(const s of p.scenes){s.chars=s.chars||[];s.props=s.props||[];if(!s.tracks){s.tracks=[];for(const[k,ty]of[['dialogues','dlg'],['texts','txt'],['audio','aud'],['bgs','bg']]){const l=s[k]||[];if(l.length)s.tracks.push({id:uid(),items:l.map(x=>({...x,type:ty,x:50,y:ty==='dlg'?88:POSY[x.pos]||50}))});delete s[k]}}
+ s.chars.forEach(c=>{c.id=c.id||uid();c.opacity??=1;c.y??=0;c.rx??=0;c.rz??=0;c.sx??=c.scale||1;c.sy??=c.scale||1;c.sz??=c.scale||1;c.lock??=true;c.fixed??=true;c.clips=c.clips||[];c.clips.forEach(x=>x.id=x.id||uid())});s.tracks.forEach(tr=>{tr.id=tr.id||uid();tr.items.forEach(x=>{x.id=x.id||uid();if(V2.includes(x.type)){x.x??=50;x.y??=x.type==='dlg'?88:50;x.rot??=0;x.opacity??=1;x.rx??=0;x.ry??=0;x.zi??=0;x.sx??=1;x.sy??=1;x.lock??=true}})});s.props.forEach(c=>{c.id=c.id||uid();c.name=c.name||'Mô hình';c.opacity??=1;c.x??=0;c.y??=0;c.z??=0;c.rx??=0;c.rot??=0;c.rz??=0;c.sx??=1;c.sy??=1;c.sz??=1;c.lock??=true;c.fixed??=false});s.bg=s.bg||'#171923';s.bgt=s.bgt||'color';s.bg2=s.bg2||'#5b3fa8';s.bga??=135;s.bgfit??='cover';s.bgz??=100;s.bgx??=0;s.bgy??=0}return p}
 
 /* ---------- Kho nguồn (IndexedDB) ---------- */
 const DB=new Promise(r=>{try{const q=indexedDB.open('3dis-media',1);q.onupgradeneeded=()=>q.result.createObjectStore('m',{keyPath:'id'});q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)}catch{r(null)}});
@@ -84,14 +84,14 @@ const srcOf=it=>it.media?murl[it.media]:it.url;
 const LRAW=()=>'https://raw.githubusercontent.com/'+(localStorage.getItem('3dis.github.repo')||'nhothicam02-code/3d-animation-studio')+'/main/';
 async function loadLib(force){let idx=null,base='./';const ep=q=>q.split('/').map(encodeURIComponent).join('/');
  for(const b of force?[LRAW(),'./']:['./',LRAW()]){try{const r=await fetch(b+'library/assets.json?v='+Date.now(),{cache:'no-store'});if(r.ok){const j=await r.json();if(j&&Array.isArray(j.items)){idx=j;base=b;break}}}catch{}}
- if(!idx)return -1;
+ if(!idx)return -1;envLib=[];
  for(let i=media.length-1;i>=0;i--)if(media[i].lib){delete murl[media[i].id];media.splice(i,1)}
  const T={image:'img',video:'vid',audio:'aud'};let n=0;
- for(const x of idx.items){const ty=T[x.kind];if(!ty||!x.path)continue;const id='lib:'+x.id;if(media.some(m=>m.id===id))continue;
+ for(const x of idx.items){if(x.kind==='model'&&x.path&&/^env-/.test(x.category||'')){const tp0=x.thumbPath||String(x.thumbnail||'').replace(/^\.\//,'');envLib.push({id:x.id,name:x.name,cat:x.category,path:x.path,ext:String(x.ext||x.path.split('.').pop()).toLowerCase(),thumb:tp0?base+ep(tp0):''});continue}const ty=T[x.kind];if(!ty||!x.path)continue;const id='lib:'+x.id;if(media.some(m=>m.id===id))continue;
   const tp=x.thumbPath||String(x.thumbnail||'').replace(/^\.\//,'');
   media.push({id,name:x.name,type:ty,lib:1,cat:x.category,dur:x.duration||0,thumb:tp?base+ep(tp):''});murl[id]=base+ep(x.path);n++}
  return n}
-const LIBCAT=[['','Tất cả'],['bgimage','Ảnh nền'],['bgvideo','Video nền'],['bgmusic','Nhạc nền'],['sfx','Âm thanh hiệu ứng']],LS={src:{c:'',q:'',p:0},bg:{c:'',q:'',p:0}},LPAGE=6;
+const LIBCAT=[['','Tất cả'],['bgimage','Ảnh nền'],['bgvideo','Video nền'],['bgmusic','Nhạc nền'],['sfx','Âm thanh hiệu ứng']],LS={src:{c:'',q:'',p:0},bg:{c:'',q:'',p:0},env:{c:'',q:'',p:0}},LPAGE=6;
 const lfold=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').toLowerCase();
 const lcard=(m,sel,drag)=>'<div class="cd"'+(drag?' draggable="true" data-mid="'+m.id+'" data-use="'+m.id+'"':' data-bgm="'+m.id+'"')+(sel?' style="border-color:var(--ac);background:#2a2740"':'')+'>'+(m.thumb?'<img alt="" loading="lazy" src="'+esc(m.thumb)+'" onerror="this.style.display=\'none\'">':'<div class="ic">'+(m.type==='aud'?'🎵':'🖼')+'</div>')+'<b>'+esc(m.name)+'</b></div>';
 function libHtml(ctx,types,selId){
@@ -157,7 +157,7 @@ function initThree(){if(renderer)return;renderer=new THREE.WebGLRenderer({antial
 function layout(){if(!P||!renderer)return;const st=$('stage'),W=st.clientWidth-28,H=st.clientHeight-28,f=P.fmt,ar=f.w/f.h;if(W<60||H<60)return;let w=W,h=w/ar;if(h>H){h=H;w=h*ar}const fr=$('frame');fr.style.width=w+'px';fr.style.height=h+'px';fr.style.setProperty('--k',h/f.h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);camera.aspect=ar;camera.updateProjectionMatrix();$('flab').textContent=f.w+'×'+f.h+' · '+f.aspect+' · '+f.fps+'fps'}
 function autoCam(){const s=sc(),xs=s.chars.map(c=>c.x),a=Math.min(...xs,0),b=Math.max(...xs,0),cx=(a+b)/2,th=Math.tan(camera.fov*Math.PI/360),d=Math.max(1/th,((b-a)/2+.9)/(th*camera.aspect))*1.2;camera.position.set(cx,1.3,d);controls.target.set(cx,.9,0);controls.update()}
 const getF=f=>fbx[f]||(fbx[f]=loader.loadAsync('./characters/'+encodeURIComponent(f)).catch(()=>loader.loadAsync('./'+encodeURIComponent(f))));
-function place(ch){const r=R[ch.id];if(!r)return;const D=Math.PI/180;r.g.scale.set(r.fit*(+(ch.sx??ch.scale)||1),r.fit*(+(ch.sy??ch.scale)||1),r.fit*(+(ch.sz??ch.scale)||1));r.g.position.set(+ch.x||0,+ch.y||0,+ch.z||0);r.g.rotation.order='YXZ';r.g.rotation.set((+ch.rx||0)*D,(+ch.rot||0)*D,(+ch.rz||0)*D);const op=ch.opacity??1;for(const m of r.mats){m.transparent=op<1;m.opacity=op}}
+function place(ch){const r=R[ch.id];if(!r)return;const D=Math.PI/180;r.g.scale.set(r.fit*(+(ch.sx??ch.scale)||1),r.fit*(+(ch.sy??ch.scale)||1),r.fit*(+(ch.sz??ch.scale)||1));r.g.position.set(+ch.x||0,+ch.y||0,+ch.z||0);r.g.rotation.order='YXZ';r.g.rotation.set((+ch.rx||0)*D,(+ch.rot||0)*D,(+ch.rz||0)*D);const op=ch.opacity??1;for(const m of r.mats){m.transparent=op<1||!!m.userData.t0;m.opacity=op*(m.userData.o0??1)}}
 /* ---------- Nhân vật Custom: dựng lại đồ đã lưu ở trang Custom lên model gốc ---------- */
 let custom=[];const CC={},IB={};
 const getCustom=e=>CC[e.id]||(CC[e.id]=K.readJSON(e.dataPath).then(d=>{if(!d||!Array.isArray(d.items))throw Error('không đọc được dữ liệu '+e.dataPath);return d}).catch(x=>{delete CC[e.id];throw x}));
@@ -189,8 +189,8 @@ async function addRt(ch,my){const o=skClone(await getF(ch.file));if(my!==tok)ret
  if(w){g.add(w);fit=1.7/1.8}
  else{const bx=new THREE.Box3().setFromObject(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());o.position.set(-c.x,-bx.min.y,-c.z);g.add(o);fit=1.7/Math.max(sz.y,.001)}
  tscene.add(g);R[ch.id]={g,o,w,ver,mats,fit,mx:new THREE.AnimationMixer(o),cur:'~',clips:{}};place(ch)}
-async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;say(s.chars.length?'Đang tải nhân vật…':'Thêm nhân vật ở tab “Nhân vật”.');
- await Promise.all(s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')})));if(my!==tok)return;busy=false;if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&s.chars.length)say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
+async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;say(s.chars.length||s.props.length?'Đang tải cảnh…':'Thêm nhân vật ở tab “Nhân vật”, mô hình ở tab “Bối cảnh”.');
+ await Promise.all([...s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')})),...s.props.map(pr=>addProp(pr,my).catch(e=>{err=1;say('Lỗi mô hình “'+pr.name+'”: '+e.message)}))]);if(my!==tok)return;busy=false;if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&(s.chars.length||s.props.length))say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
 async function getClip(r,id){if(id in r.clips)return r.clips[id];const e=manifest.animations.find(x=>x.id===id);r.clips[id]=null;if(!e)return null;try{const d=jc[id]||(jc[id]=await(await fetch('./'+e.dataPath)).json()),s0=r.g.scale.clone(),q0=r.g.quaternion.clone(),w0=r.w&&{p:r.w.position.clone(),q:r.w.quaternion.clone(),s:r.w.scale.clone()};r.g.scale.setScalar(1);r.g.quaternion.identity();if(r.w){r.w.position.set(0,0,0);r.w.quaternion.identity();r.w.scale.setScalar(1)}r.g.updateMatrixWorld(true);let m;try{m=mapClip(THREE.AnimationClip.parse(d.clip),r.o)}finally{r.g.scale.copy(s0);r.g.quaternion.copy(q0);if(w0){r.w.position.copy(w0.p);r.w.quaternion.copy(w0.q);r.w.scale.copy(w0.s)}r.g.updateMatrixWorld(true)}r.clips[id]=m.clip.tracks.length?m.clip:null}catch{}return r.clips[id]}
 async function apply(){if(!P)return;const s=sc(),tt=Math.floor(t*P.fmt.fps+1e-6)/P.fmt.fps;
  for(const ch of s.chars){const r=R[ch.id];if(!r)continue;const top=ch.clips.filter(c=>c.clip&&c.start<=tt+1e-6).sort((a,b)=>b.start-a.start)[0],key=top?top.id+top.clip:'';
@@ -219,7 +219,7 @@ function buildGiz(){gzG=new THREE.Group();gzG.visible=false;const M=i=>new THREE
  for(let i=0;i<3;i++){const sh=()=>new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1,8).translate(0,.5,0),M(i)),a=new THREE.Group(),b=new THREE.Group();a.userData.ax=i;b.userData.ax=i;a.add(sh(),new THREE.Mesh(new THREE.ConeGeometry(.12,.3,12).translate(0,1.15,0),M(i)));b.add(sh(),new THREE.Mesh(new THREE.BoxGeometry(.2,.2,.2).translate(0,1.1,0),M(i)));mv.add(ori(a,i));sl.add(ori(b,i));
   const rg=new THREE.Mesh(new THREE.TorusGeometry(1,.05,8,72),M(i));rg.userData.ax=i;if(i===0)rg.rotation.y=Math.PI/2;if(i===1)rg.rotation.x=Math.PI/2;rt.add(rg)}
  gzG.add(mv,rt,sl);gzG.traverse(o=>{if(o.isMesh)o.renderOrder=999});tscene.add(gzG)}
-const isFixed=id=>{const c=P&&sc()&&sc().chars.find(c=>c.id===id);return !!(c&&c.fixed)};
+const isFixed=id=>{const s=P&&sc(),c=s&&(s.chars.find(c=>c.id===id)||s.props.find(c=>c.id===id));return !!(c&&c.fixed)};
 function updGiz(){const r=sel&&P&&R[sel.id];if(!r||isFixed(sel.id)){gzG.visible=false;return}gzG.visible=true;gzG.position.copy(r.g.position);gzG.children.forEach((g,i)=>g.visible=i===TI[tool]);gzG.scale.setScalar(Math.max(.05,camera.position.distanceTo(gzG.position)*.16));gzG.updateMatrixWorld(true)}
 function gizHit(e){if(!sel||!R[sel.id]||!gzG.visible||isFixed(sel.id))return null;ndc(e);const h=ray.intersectObjects(gzG.children[TI[tool]].children,true)[0];if(!h)return null;let o=h.object;while(o&&o.userData.ax===undefined)o=o.parent;return o?o.userData.ax:null}
 function axS(e,P0,d){ndc(e);const O=ray.ray.origin,D=ray.ray.direction,w=P0.clone().sub(O),b=d.dot(D),den=1-b*b;return den<1e-4?null:(b*D.dot(w)-d.dot(w))/den}
@@ -253,18 +253,18 @@ function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.
 $('bPlay').onclick=()=>play(false);$('bAll').onclick=()=>{if(si){si=0;renderAll();loadScene().then(()=>play(true))}else play(true)};$('bPause').onclick=pause;
 
 /* ---------- Chọn / kéo / xoay trong khung ---------- */
-function loc(){if(!sel||!P)return null;const s=sc();let l=s.chars.find(c=>c.id===sel.id);if(l)return{it:l,list:s.chars};for(const c of s.chars){l=c.clips.find(x=>x.id===sel.id);if(l)return{it:l,list:c.clips,ch:c}}for(const tr of s.tracks){l=tr.items.find(x=>x.id===sel.id);if(l)return{it:l,list:tr.items,tr}}return null}
-const cur=()=>{const l=loc();return l&&l.it},stype=()=>{const l=loc();return l?(l.ch?'clip':l.tr?l.it.type:'char'):null},chOf=()=>{const l=loc();return l?(l.ch||(l.tr?null:l.it)):null};
+function loc(){if(!sel||!P)return null;const s=sc();let l=s.chars.find(c=>c.id===sel.id);if(l)return{it:l,list:s.chars};l=s.props.find(c=>c.id===sel.id);if(l)return{it:l,list:s.props,prop:1};for(const c of s.chars){l=c.clips.find(x=>x.id===sel.id);if(l)return{it:l,list:c.clips,ch:c}}for(const tr of s.tracks){l=tr.items.find(x=>x.id===sel.id);if(l)return{it:l,list:tr.items,tr}}return null}
+const cur=()=>{const l=loc();return l&&l.it},stype=()=>{const l=loc();return l?(l.ch?'clip':l.tr?l.it.type:l.prop?'prop':'char'):null},chOf=()=>{const l=loc();return l?(l.ch||(l.tr||l.prop?null:l.it)):null};
 function setSel(id,tb){sel=id?{id}:null;if(tb)tab=tb;renderTabs();renderPanel();renderTL();renderOv()}
 function sync(){const it=cur();if(!it)return;document.querySelectorAll('#panel [data-k]').forEach(i=>{const v=it[i.dataset.k];if(i.type==='checkbox')i.checked=!!v;else if(document.activeElement!==i)i.value=typeof v==='number'?r2(v):v??''});document.querySelectorAll('#panel [data-v]').forEach(b=>b.textContent=r2(+(it[b.dataset.v]??1)))}
 let vd=null;const ray=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),pt=new THREE.Vector3();
 function ndc(e){const b=renderer.domElement.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,-((e.clientY-b.top)/b.height)*2+1),camera)}
-function pick(e){ndc(e);let best=null,bd=1e9;for(const ch of sc().chars){const r=R[ch.id];if(!r)continue;const bx=new THREE.Box3().setFromObject(r.g).expandByScalar(.05);if(ray.ray.intersectsBox(bx)){const d=camera.position.distanceTo(bx.getCenter(pt));if(d<bd){bd=d;best=ch}}}return best}
+function pick(e){ndc(e);let best=null,bd=1e9;for(const ch of sc().chars){const r=R[ch.id];if(!r)continue;const bx=new THREE.Box3().setFromObject(r.g).expandByScalar(.05);if(ray.ray.intersectsBox(bx)){const d=camera.position.distanceTo(bx.getCenter(pt));if(d<bd){bd=d;best=ch}}}for(const pr of sc().props){const r=R[pr.id];if(!r)continue;const h=ray.intersectObject(r.g,true)[0];if(h&&h.distance<bd){bd=h.distance;best=pr}}return best}
 $('frame').addEventListener('pointerdown',e=>{const h=e.target.closest('.rh'),sh=e.target.closest('.sh'),o=e.target.closest('.o2');let hit=false;
  if(sh){const it=cur();if(it){const b=sh.parentElement.getBoundingClientRect(),c=[b.left+b.width/2,b.top+b.height/2];vd={m:'sz',it,w:it.w,s:it.size||40,c,d0:Math.hypot(e.clientX-c[0],e.clientY-c[1])};hit=true}}
  else if(h){const it=cur();if(it){if(h.parentElement.id==='cbox')vd={m:'rc',it,x:e.clientX,r:it.rot||0};else{const b=h.parentElement.getBoundingClientRect();vd={m:'r2',it,c:[b.left+b.width/2,b.top+b.height/2]}}hit=true}}
  else if(o){setSel(o.dataset.id,'props');const it=cur();if(it){vd={m:'m2',it,x:e.clientX,y:e.clientY,ox:it.x,oy:it.y};hit=true}}
- else if(e.target===renderer.domElement){const gh=gizHit(e);if(gh!==null){vd=gizStart(e,gh);hit=true}else{const ch=pick(e);if(ch){setSel(ch.id,'props');if(ch.fixed){vd=null}else{ndc(e);ray.ray.intersectPlane(plane,pt);vd={m:'mc',it:ch,ox:ch.x-pt.x,oz:ch.z-pt.z};hit=true}}else vd={m:'bg',x:e.clientX,y:e.clientY}}}
+ else if(e.target===renderer.domElement){const gh=gizHit(e);if(gh!==null){vd=gizStart(e,gh);hit=true}else{const ch=pick(e);if(ch){setSel(ch.id,isProp(ch.id)?'env':'props');if(ch.fixed){vd=null}else{ndc(e);ray.ray.intersectPlane(plane,pt);vd={m:'mc',it:ch,ox:ch.x-pt.x,oz:ch.z-pt.z};hit=true}}else vd={m:'bg',x:e.clientX,y:e.clientY}}}
  if(hit){e.stopPropagation();e.preventDefault()}},true);
 addEventListener('pointermove',e=>{if(!vd||vd.m==='bg')return;const fr=$('frame').getBoundingClientRect(),it=vd.it;
  if(vd.m==='m2'){it.x=r2(vd.ox+(e.clientX-vd.x)/fr.width*100);it.y=r2(vd.oy+(e.clientY-vd.y)/fr.height*100);renderOv()}
@@ -300,7 +300,12 @@ $('tl').onclick=e=>{const c=e.target.closest('[data-char]'),rm=e.target.closest(
  if(e.target.closest('[data-addtr]')){s.tracks.push({id:uid(),items:[]});touch();renderTL()}};
 $('zoom').oninput=e=>{pps=+e.target.value;renderTL()};
 /* kéo thả file / thẻ nguồn vào khung hoặc timeline */
-async function dropAt(e,onFrame){e.preventDefault();const fs=[...e.dataTransfer.files],mid=e.dataTransfer.getData('text/mid');const recs=fs.length?await importFiles(fs):[media.find(m=>m.id===mid)].filter(Boolean),ln=e.target.closest&&e.target.closest('.lane'),fr=$('frame').getBoundingClientRect(),o={};let tid;
+async function dropAt(e,onFrame){e.preventDefault();
+ const pid=e.dataTransfer.getData('text/prop'),mf=[...e.dataTransfer.files].filter(isModelFile);
+ if(pid||mf.length){let pos=null;if(onFrame){ndc(e);if(ray.ray.intersectPlane(plane,pt))pos={x:r2(pt.x),z:r2(pt.z)}}
+  if(pid){if(onFrame)addPropDef(pid,pos);return}
+  const rs=await importModels(mf);if(onFrame)rs.forEach((r,i)=>addPropDef('loc:'+r.id,pos&&{x:r2(pos.x+i*1.2),z:pos.z}));return}
+const fs=[...e.dataTransfer.files],mid=e.dataTransfer.getData('text/mid');const recs=fs.length?await importFiles(fs):[media.find(m=>m.id===mid)].filter(Boolean),ln=e.target.closest&&e.target.closest('.lane'),fr=$('frame').getBoundingClientRect(),o={};let tid;
  if(onFrame){o.x=Math.min(100,Math.max(0,r2((e.clientX-fr.left)/fr.width*100)));o.y=Math.min(100,Math.max(0,r2((e.clientY-fr.top)/fr.height*100)))}else if(ln){o.start=snap((e.clientX-ln.getBoundingClientRect().left)/pps);tid=ln.dataset.track}
  for(const r of recs)addMediaItem(r,o,tid)}
 for(const[id,f]of[['stage',1],['tl',0]]){$(id).ondragover=e=>e.preventDefault();$(id).ondrop=e=>dropAt(e,f)}
@@ -323,8 +328,68 @@ function bgUI(s){const ty=s.bgt||'color';let h='<label>Nền cảnh</label><sele
  if(ty==='grad')h+='<div class="r"><div><label>Màu 1</label><input type="color" data-sc="bg" value="'+s.bg+'"></div><div><label>Màu 2</label><input type="color" data-sc="bg2" value="'+(s.bg2||'#000000')+'"></div><div><label>Góc (độ)</label><input type="number" step="any" data-sc="bga" value="'+(s.bga??135)+'"></div></div><div class="grid">'+GP.map(g=>{const[a,b]=g.split(',');return '<button class="cd" data-gp="'+g+'" style="height:30px;background:linear-gradient(135deg,'+a+','+b+')"></button>'}).join('')+'</div>';
  if(ty==='img'||ty==='vid'){const l=media.filter(m=>m.type===ty&&!m.lib);h+='<input type="file" id="fbg" accept="'+(ty==='img'?'image/*':'video/*')+'" hidden><button id="bgimp" class="pri" style="width:100%;margin-top:8px">+ Nhập '+(ty==='img'?'ảnh':'video')+' từ máy…</button><div class="grid">'+l.map(m=>'<div class="cd" data-bgm="'+m.id+'"'+(m.id===s.bgm?' style="border-color:var(--ac);background:#2a2740"':'')+'>'+(ty==='img'?'<img alt="" src="'+murl[m.id]+'">':'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>')+'<b>'+esc(m.name)+'</b></div>').join('')+'</div>'+(l.length?'':'<div class="hint">Chưa có file nào, hãy nhập file ở trên.</div>')+'<label>Thư viện GitHub</label>'+libHtml('bg',[ty],s.bgm)+'<label>Cách vừa khung</label><select data-sc="bgfit">'+[['cover','Phủ kín (cắt phần thừa)'],['contain','Vừa khung (giữ nguyên tỉ lệ)'],['fill','Kéo giãn đầy khung']].map(x=>'<option value="'+x[0]+'"'+(x[0]===(s.bgfit||'cover')?' selected':'')+'>'+x[1]+'</option>').join('')+'</select><div class="r"><div><label>Thu phóng (%)</label><input type="number" step="any" min="10" max="500" data-sc="bgz" value="'+(s.bgz??100)+'"></div><div><label>Lệch X (%)</label><input type="number" step="any" data-sc="bgx" value="'+(s.bgx||0)+'"></div><div><label>Lệch Y (%)</label><input type="number" step="any" data-sc="bgy" value="'+(s.bgy||0)+'"></div></div><div class="r"><button data-bgreset="1">Đặt lại kích thước nền</button></div>'}
  return h}
+
+/* ---------- Bối cảnh: mô hình 3D đặt vào cảnh (kéo / xoay / đổi cỡ bằng gizmo) ---------- */
+const ENVCAT=[['','Tất cả'],['env-ground','Đất & mặt nền'],['env-table','Bàn'],['env-chair','Ghế'],['env-tree','Cây'],['env-room','Phòng học & nội thất'],['env-cloud','Mây'],['env-mountain','Núi'],['env-rock','Đá'],['env-building','Nhà & công trình'],['env-prop','Đồ vật khác']];
+const ENVSIZE={'env-ground':12,'env-mountain':8,'env-cloud':3,'env-tree':3,'env-building':5,'env-room':6,'env-table':1.2,'env-chair':.9,'env-rock':.8,'env-prop':1},PM={};
+const isModelFile=f=>/\.(glb|fbx|obj)$/i.test(f.name),isProp=id=>!!(P&&sc().props.some(p=>p.id===id));
+function getPropModel(p){
+ const key=p.src==='loc'?'loc:'+p.ref:p.path;
+ return PM[key]||(PM[key]=(async()=>{let buf;
+  if(p.src==='loc'){const r=lmodels.find(x=>x.id===p.ref);if(!r)throw Error('mô hình nhập từ máy không còn trong trình duyệt này');buf=await r.blob.arrayBuffer()}
+  else{if(!p.path)throw Error('thiếu đường dẫn file');buf=await getItemBytes(p.path)}
+  return parseItem((p.ext||String(p.path).split('.').pop()).toLowerCase(),buf)})().catch(x=>{delete PM[key];throw x}))}
+async function addProp(p,my){
+ const base=await getPropModel(p);if(my!==tok)return;
+ const o=skClone(base),mats=[],rm=[];
+ o.traverse(n=>{if(n.isLight||n.isCamera){rm.push(n);return}if(n.isSkinnedMesh)n.frustumCulled=false;if(n.material){n.material=Array.isArray(n.material)?n.material.map(m=>m.clone()):n.material.clone();for(const m of[].concat(n.material)){m.userData.t0=m.transparent;m.userData.o0=m.opacity;mats.push(m)}}});
+ rm.forEach(n=>n.parent&&n.parent.remove(n));
+ const bx=new THREE.Box3().setFromObject(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3()),mx=Math.max(sz.x,sz.y,sz.z);
+ if(!isFinite(mx)||mx<=0)throw Error('mô hình trống hoặc không đọc được hình khối');
+ o.position.set(-c.x,-bx.min.y,-c.z);                        // đáy chạm y=0, tâm ở giữa
+ const g=new THREE.Group();g.add(o);tscene.add(g);
+ R[p.id]={g,o,mats,fit:(ENVSIZE[p.cat]||1.5)/mx,prop:1};place(p)}
+function addPropDef(ref,pos){
+ const s=sc(),k=ref.slice(0,3),id=ref.slice(4),m=k==='lib'?envLib.find(x=>x.id===id):lmodels.find(x=>x.id===id);if(!m)return;
+ const n=s.props.length,cat=m.cat||'',gr=cat==='env-ground',
+  p={id:uid(),name:m.name.replace(/\.(glb|fbx|obj)$/i,''),src:k,ref:id,cat,path:m.path||'',ext:m.ext,
+   x:pos?pos.x:gr?0:((n%5)-2)*1.2,y:gr?-.02:0,z:pos?pos.z:gr?0:-1.5-Math.floor(n/5)*1.2,
+   rx:0,rot:0,rz:0,sx:1,sy:1,sz:1,lock:true,fixed:false,opacity:1};
+ s.props.push(p);sel={id:p.id};tab='env';touch();renderTabs();renderPanel();renderTL();renderOv();
+ addProp(p,tok).catch(x=>say('Lỗi mô hình “'+p.name+'”: '+x.message))}
+async function importModels(fs){const out=[];
+ for(const f of fs){if(!isModelFile(f)){say('Bỏ qua '+f.name+': chỉ nhận .glb / .fbx / .obj');continue}
+  const rec={id:uid(),name:f.name,type:'mdl',ext:f.name.split('.').pop().toLowerCase(),blob:f};await idb('readwrite',st=>st.put(rec));lmodels.push(rec);out.push(rec)}
+ if(out.length)say('Đã nhập '+out.length+' mô hình — bấm thẻ hoặc kéo vào khung để đặt vào cảnh.');
+ if(tab==='env'&&P)renderPanel();return out}
+const ecard=m=>'<div class="cd" draggable="true" data-addp="lib:'+esc(m.id)+'" title="'+esc(m.name)+'">'+(m.thumb?'<img alt="" loading="lazy" src="'+esc(m.thumb)+'" onerror="this.style.display=\'none\'">':'<div class="ic">📦</div>')+'<b>'+esc(m.name)+'</b></div>';
+function envHtml(){
+ const st=LS.env,k=lfold(st.q).trim(),l=envLib.filter(m=>(!st.c||m.cat===st.c)&&(!k||lfold(m.name).includes(k))),n=Math.max(1,Math.ceil(l.length/LPAGE));
+ st.p=Math.min(Math.max(st.p,0),n-1);
+ return '<div class="r"><input type="text" data-lq="env" placeholder="Tìm mô hình…" value="'+esc(st.q)+'" autocomplete="off"><select data-lcat="env">'+ENVCAT.map(c=>'<option value="'+c[0]+'"'+(c[0]===st.c?' selected':'')+'>'+esc(c[1])+'</option>').join('')+'</select></div>'
+  +'<div class="grid">'+l.slice(st.p*LPAGE,(st.p+1)*LPAGE).map(ecard).join('')+'</div>'
+  +(l.length?'':'<div class="hint">'+(envLib.length?'Không có mô hình nào khớp.':'Thư viện chưa có mô hình bối cảnh. Tải lên ở <a href="./library.html" target="_blank">Kho tài nguyên</a> (nhóm “Bối cảnh 3D”) rồi bấm “↻ Làm mới thư viện”, hoặc nhập thẳng từ máy ở trên.')+'</div>')
+  +'<div class="r"><button data-lpg="env:-1"'+(st.p<=0?' disabled':'')+'>‹</button><span style="flex:1;text-align:center">'+(st.p+1)+' / '+n+' · '+l.length+' mô hình</span><button data-lpg="env:1"'+(st.p>=n-1?' disabled':'')+'>›</button></div>'}
+function envPanel(s){
+ const it=cur(),isP=it&&stype()==='prop';
+ let h='<div class="hint">Bấm một mô hình để đặt vào cảnh “'+esc(s.name)+'”, hoặc kéo thẻ thả thẳng vào khung (vật rơi đúng chỗ thả trên mặt đất). Bấm vào vật trong khung để chọn; kéo thân vật để dời; dùng tay cầm 3 trục để dời ✥ / xoay ⟳ / đổi cỡ ⤢ (phím G / R / S, giữ Shift để xoay theo bước 15°).</div>';
+ if(isP)h+='<label>Đang chọn: '+esc(it.name)+'</label>'+SCH.prop.map(([k,l,y])=>field(k,l,y,it[k])).join('')+'<div class="r" style="margin-top:8px"><button data-pre="rot">Đặt lại xoay</button><button data-pre="scl">Đặt lại cỡ</button><button data-pre="gnd">Đặt xuống đất</button></div>';
+ h+='<label>Trong cảnh ('+s.props.length+')</label>'+(s.props.map(p=>'<div class="li'+onc(p.id)+'" data-psel="'+p.id+'"><span>📦 '+esc(p.name)+'</span><button data-plock="'+p.id+'" title="'+(p.fixed?'Đang khóa — bấm để mở khóa kéo thả':'Bấm để khóa, không kéo nhầm')+'">'+(p.fixed?'🔒':'🔓')+'</button><button data-pdup="'+p.id+'" title="Nhân bản">⧉</button><button class="del" data-prm="'+p.id+'" title="Xóa">✕</button></div>').join('')||'<div class="hint">Chưa có mô hình nào.</div>');
+ h+='<label>Mô hình của bạn</label><input type="file" id="fm" accept=".glb,.fbx,.obj" multiple hidden><button id="fmb" class="pri" style="width:100%">+ Nhập mô hình từ máy (.glb .fbx .obj)…</button><div class="grid">'+lmodels.map(m=>'<div class="cd" draggable="true" data-addp="loc:'+m.id+'" title="'+esc(m.name)+'"><div class="ic">📦</div><b>'+esc(m.name)+'</b><button class="del x" data-delmdl="'+m.id+'">✕</button></div>').join('')+'</div><div class="hint">Mô hình nhập từ máy chỉ lưu trong trình duyệt này; nếu muốn dùng lâu dài và trên máy khác, hãy tải lên Kho tài nguyên.</div>';
+ return h+'<label>Thư viện GitHub</label>'+envHtml()}
+function envClick(el,s){
+ const q=a=>el.closest('['+a+']');let b;
+ if(b=q('data-delmdl')){const id=b.dataset.delmdl;idb('readwrite',st=>st.delete(id));lmodels=lmodels.filter(m=>m.id!==id);delete PM['loc:'+id];if(s.props.some(p=>p.src==='loc'&&p.ref===id))say('Mô hình này vẫn đang dùng trong cảnh, nhưng sẽ không tải lại được khi mở lại dự án.');renderPanel();return true}
+ if(b=q('data-plock')){const p=s.props.find(x=>x.id===b.dataset.plock);if(p){p.fixed=!p.fixed;touch();renderPanel()}return true}
+ if(b=q('data-pdup')){const p=s.props.find(x=>x.id===b.dataset.pdup);if(p){const c={...JSON.parse(JSON.stringify(p)),id:uid(),x:r2(p.x+.6),z:r2(p.z+.6),fixed:false};s.props.push(c);sel={id:c.id};touch();renderPanel();renderOv();addProp(c,tok).catch(x=>say('Lỗi mô hình “'+c.name+'”: '+x.message))}return true}
+ if(b=q('data-prm')){const id=b.dataset.prm,i=s.props.findIndex(x=>x.id===id);if(i>=0){if(R[id]){tscene.remove(R[id].g);delete R[id]}s.props.splice(i,1);if(sel&&sel.id===id)sel=null;touch();renderPanel();renderOv()}return true}
+ if(b=q('data-psel')){sel={id:b.dataset.psel};renderPanel();renderTL();renderOv();return true}
+ if(b=q('data-pre')){const it=cur();if(it&&stype()==='prop'){const w=b.dataset.pre;if(w==='rot')it.rx=it.rot=it.rz=0;if(w==='scl')it.sx=it.sy=it.sz=1;if(w==='gnd')it.y=0;place(it);touch();renderPanel()}return true}
+ if(b=q('data-addp')){addPropDef(b.dataset.addp);return true}
+ return false}
+
 /* ---------- Panel ---------- */
-const TABS=[['src','Nguồn'],['chars','Nhân vật'],['clip','Clip'],['props','Thuộc tính'],['scene','Cảnh'],['film','Phim']];
+const TABS=[['src','Nguồn'],['chars','Nhân vật'],['env','Bối cảnh'],['clip','Clip'],['props','Thuộc tính'],['scene','Cảnh'],['film','Phim']];
 function customCard(c){const th=String(c.thumbnail||'').replace(/^\.\//,''),ep=th.split('/').map(encodeURIComponent).join('/'),tip=esc(c.name+' · '+(c.items||0)+' món đồ · gốc: '+(c.base||''));
  return '<button class="cd" data-addc="'+esc(c.id)+'" title="'+tip+'">'+(th?'<img alt="" src="./'+esc(ep)+'" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\''+esc(LRAW()+ep)+'\'}else this.style.visibility=\'hidden\'">':'<div class="ic">✦</div>')+'<b>✦ '+esc(c.name)+'</b></button>'}
 function renderAll(){renderStrip();renderTabs();renderPanel();renderTL();$('pn').textContent=P.name}
@@ -334,6 +399,7 @@ function renderTabs(){$('tabs').innerHTML=TABS.map(x=>'<button data-t="'+x[0]+'"
 $('tabs').onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;renderTabs();renderPanel()}};
 const TM=[['start','Bắt đầu (s)','n'],['dur','Độ dài (s)','n']],XF=[['x','Vị trí X (%)','n'],['y','Vị trí Y (%)','n'],['zi','Z-index (lớp)','n'],['rx','Xoay X (độ)','n'],['ry','Xoay Y (độ)','n'],['rot','Xoay Z (độ)','n'],['lock','Khóa tỉ lệ','b'],['sx','Scale X','n'],['sy','Scale Y','n'],['opacity','Độ mờ','r']];
 const SCH={clip:[['clip','Clip','clip'],...TM,['loop','Lặp trong khoảng này','b']],txt:[['text','Nội dung','ta'],['voice','Giọng đọc (khi chuyển audio)','voice'],['font','Kiểu chữ','font'],['size','Cỡ chữ','n'],['bold','Đậm','b'],['italic','Nghiêng','b'],['color','Màu chữ','c'],...XF,...TM],dlg:[['who','Người nói','t'],['text','Lời thoại','ta'],['voice','Giọng đọc (khi chuyển audio)','voice'],['font','Kiểu chữ','font'],['size','Cỡ chữ','n'],['bold','Đậm','b'],['italic','Nghiêng','b'],['color','Màu chữ','c'],...XF,...TM],img:[['w','Độ rộng (% khung)','n'],...XF,...TM],vid:[['w','Độ rộng (% khung)','n'],['vol','Âm lượng','r'],...XF,...TM],aud:[['vol','Âm lượng','r'],...TM],tts:[['text','Nội dung đọc','ta'],['voice','Giọng','voice'],['rate','Tốc độ','r2'],['pitch','Cao độ','r2'],['vol','Âm lượng','r'],...TM],bg:[['color','Màu nền','c'],...TM],char:[['name','Tên','t'],['fixed','🔒 Khóa kéo thả (không di chuyển / xoay / đổi cỡ bằng chuột)','b'],['x','Vị trí X (m)','n'],['y','Vị trí Y (m)','n'],['z','Vị trí Z (m)','n'],['rx','Xoay X (độ)','n'],['rot','Xoay Y (độ)','n'],['rz','Xoay Z (độ)','n'],['lock','Khóa tỉ lệ','b'],['sx','Scale X','n'],['sy','Scale Y','n'],['sz','Scale Z','n'],['opacity','Độ mờ','r']]};
+SCH.prop=SCH.char;
 const opts=(a,v)=>a.map(x=>'<option'+(x===v?' selected':'')+'>'+esc(x)+'</option>').join('');
 function field(k,l,ty,v){const a='data-k="'+k+'" ',g=x=>'<label>'+l+'</label>'+x;if(ty==='ta')return g('<textarea '+a+'>'+esc(v)+'</textarea>');if(ty==='b')return '<label><input type="checkbox" '+a+(v?'checked':'')+'> '+l+'</label>';
  if(ty==='clip')return g('<select '+a+'><option value="">— chọn —</option>'+manifest.animations.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===v?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select>');
@@ -343,15 +409,18 @@ function field(k,l,ty,v){const a='data-k="'+k+'" ',g=x=>'<label>'+l+'</label>'+x
 function renderPanel(){const s=sc();let h='';
  if(tab==='src'){h='<div class="r"><button data-q="txt">+ Văn bản</button><button data-q="dlg">+ Phụ đề</button><button data-q="tts">+ Giọng đọc</button><button data-q="bg">+ Nền màu</button></div><label>Tệp của bạn</label><input type="file" id="fi" multiple accept="image/*,video/*,audio/*" hidden><button id="fib" class="pri" style="width:100%">+ Nhập file từ máy…</button><div class="hint">Kéo file từ máy thả vào đây, hoặc kéo thẻ vào khung video / timeline. Bấm thẻ để thêm tại đường đỏ. Mỗi lần thả sẽ tạo một track mới (thả đúng vào track có sẵn để dùng chung).</div><div class="grid">'+media.filter(m=>!m.lib).map(m=>'<div class="cd" draggable="true" data-mid="'+m.id+'" data-use="'+m.id+'">'+(m.type==='img'?'<img alt="" src="'+murl[m.id]+'">':m.type==='vid'?'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>':'<div class="ic">🎵</div>')+'<b>'+esc(m.name)+'</b><button class="del x" data-delm="'+m.id+'">✕</button></div>').join('')+'</div><label>Thư viện GitHub (ảnh, video, nhạc nền, âm thanh hiệu ứng)</label>'+libHtml('src',['img','vid','aud'])}
  if(tab==='chars'){h='<div class="hint">Bấm nhân vật để thêm vào cảnh “'+esc(s.name)+'”. Vừa tạo/lưu nhân vật mới? Bấm “↻ Làm mới thư viện” ở thanh trên.</div><label>✦ Nhân vật Custom ('+custom.length+')</label><div class="grid">'+(custom.map(customCard).join('')||'<div class="hint">Chưa có nhân vật nào lưu ở trang Custom.</div>')+'</div><label>Nhân vật gốc (FBX)</label><div class="grid">'+Object.entries(manifest.characters).map(([f,c])=>'<button class="cd" data-add="'+esc(f)+'"><img alt="" src="'+esc(c.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(f.replace(/\.fbx$/i,''))+'</b></button>').join('')+'</div><label>Trong cảnh</label>'+(s.chars.map(c=>'<div class="li'+onc(c.id)+'" data-sel="'+c.id+'"><span>'+(c.custom?'✦':'🧍')+' '+esc(c.name)+'</span><button class="del" data-rm="'+c.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có nhân vật.</div>')}
+ if(tab==='env')h=envPanel(s);
  if(tab==='clip'){const ch=chOf();if(!ch)h='<div class="hint">Chọn một nhân vật (bấm tên ở timeline hoặc click vào nhân vật trong khung) để thêm clip.</div>';else{const k=cq.toLowerCase();h='<b>Clip cho '+esc(ch.name)+'</b><div class="hint">Bấm clip để thêm vào timeline tại đường đỏ.</div><input id="cq" type="text" placeholder="Tìm clip…" value="'+esc(cq)+'" style="margin-top:6px"><div class="grid">'+manifest.animations.filter(a=>!k||a.name.toLowerCase().includes(k)).map(a=>'<button class="cd" data-clip="'+esc(a.id)+'"><img alt="" src="'+esc(a.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(a.name)+' · '+(+a.duration).toFixed(1)+'s</b></button>').join('')+'</div>'}}
  if(tab==='props'){const it=cur(),ty=stype();h=it?SCH[ty].map(([k,l,y])=>field(k,l,y,it[k])).join('')+(ty==='txt'||ty==='dlg'?'<div class="r" style="margin-top:12px"><button class="pri" data-act="t2a">🔊 Chuyển thành audio</button><button data-act="test">▶ Nghe thử</button></div>':'')+(ty==='tts'?'<div class="r" style="margin-top:12px"><button class="pri" data-act="test">▶ Nghe thử</button><button data-act="est">Ước lượng độ dài</button></div>':'')+'<button class="del" style="margin-top:12px;width:100%" data-act="del">Xóa mục này (Delete)</button>':'<div class="hint">Bấm một đối tượng trong khung video hoặc một khối trên timeline. Kéo đối tượng để dời, kéo chấm tím để xoay (giữ Shift để xoay theo bước 15°), kéo ô vuông góc dưới phải để phóng to/thu nhỏ. Giá trị chỉnh ở đây cập nhật ngay.</div>'}
  if(tab==='scene'){h='<label>Tên cảnh</label><input type="text" data-sc="name" value="'+esc(s.name)+'"><div class="r"><div><label>Thời lượng (s)</label><input type="number" min="1" data-sc="duration" value="'+s.duration+'"></div></div>'+bgUI(s)+'<label>Camera của cảnh này</label><div class="r"><button id="camS" class="pri">Lưu góc nhìn</button><button id="camA">Tự động</button></div><div class="hint">'+(s.cam?'Đã lưu góc camera riêng.':'Đang dùng camera tự động.')+' Kéo vào vùng trống trong khung để xoay camera, cuộn để zoom, rồi bấm “Lưu góc nhìn”.</div><label>Quản lý cảnh</label><div class="r"><button data-m="up">‹ Lên</button><button data-m="down">Xuống ›</button><button data-m="dup">Nhân bản</button><button class="del" data-m="del">Xóa</button></div>'}
  if(tab==='film'){const f=P.fmt;h='<label>Tên dự án</label><input type="text" data-pj="name" value="'+esc(P.name)+'"><label>Tỉ lệ khung hình</label><select data-f="aspect">'+opts(Object.keys(ASP),f.aspect)+'</select><label>Độ phân giải (cạnh ngắn, px)</label><select data-f="res">'+opts([480,720,1080,1440,2160].map(String),String(f.res))+'</select><label>FPS</label><select data-f="fps">'+opts([12,24,25,30,60].map(String),String(f.fps))+'</select><div class="hint">Khung tím là giới hạn hình ảnh khi xuất: '+f.w+'×'+f.h+'.</div><div class="r" style="margin-top:12px"><button id="snap" class="pri">📷 Chụp khung 3D (PNG)</button><button id="exp">Xuất JSON</button></div><div class="hint">File nguồn lưu trong trình duyệt này (IndexedDB), không nằm trong file JSON và không đồng bộ lên GitHub.</div>'}
  $('panel').innerHTML=h}
-$('panel').addEventListener('dragstart',e=>{const c=e.target.closest('[data-mid]');if(c)e.dataTransfer.setData('text/mid',c.dataset.mid)});
-$('panel').ondragover=e=>e.preventDefault();$('panel').ondrop=e=>{e.preventDefault();if(e.dataTransfer.files.length)importFiles([...e.dataTransfer.files])};
+$('panel').addEventListener('dragstart',e=>{const c=e.target.closest('[data-mid]');if(c)e.dataTransfer.setData('text/mid',c.dataset.mid);const pc=e.target.closest('[data-addp]');if(pc)e.dataTransfer.setData('text/prop',pc.dataset.addp)});
+$('panel').ondragover=e=>e.preventDefault();$('panel').ondrop=e=>{e.preventDefault();const fs=[...e.dataTransfer.files],ms=fs.filter(isModelFile);if(ms.length)importModels(ms);const rest=fs.filter(f=>!isModelFile(f));if(rest.length)importFiles(rest)};
 $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
  if(el.id==='fib')return $('fi').click();
+ if(el.id==='fmb')return $('fm').click();
+ if(envClick(el,s))return;
  if(el.id==='bgimp')return $('fbg').click();
  const gp=el.closest('[data-gp]');if(gp){[s.bg,s.bg2]=gp.dataset.gp.split(',');touch();renderPanel();apply();return}
  if(el.closest('[data-bgreset]')){s.bgfit='cover';s.bgz=100;s.bgx=0;s.bgy=0;touch();renderPanel();apply();return}
@@ -372,7 +441,7 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
  if(el.id==='camS'){s.cam={p:camera.position.toArray(),t:controls.target.toArray()};touch();renderPanel()}
  if(el.id==='camA'){s.cam=null;autoCam();touch();renderPanel()}
  if(d.m){const m=d.m;if(m==='del'){if(P.scenes.length<2)return alert('Cần ít nhất 1 cảnh.');if(!confirm('Xóa cảnh này?'))return;P.scenes.splice(si,1);si=Math.max(0,si-1)}
-  if(m==='dup'){const q=JSON.parse(JSON.stringify(s));q.id=uid();q.name+=' (bản sao)';q.chars.forEach(c=>{c.id=uid();c.clips.forEach(x=>x.id=uid())});q.tracks.forEach(tr=>{tr.id=uid();tr.items.forEach(x=>x.id=uid())});P.scenes.splice(si+1,0,q);si++}
+  if(m==='dup'){const q=JSON.parse(JSON.stringify(s));q.id=uid();q.name+=' (bản sao)';q.chars.forEach(c=>{c.id=uid();c.clips.forEach(x=>x.id=uid())});(q.props||[]).forEach(c=>c.id=uid());q.tracks.forEach(tr=>{tr.id=uid();tr.items.forEach(x=>x.id=uid())});P.scenes.splice(si+1,0,q);si++}
   if(m==='up'&&si>0){[P.scenes[si-1],P.scenes[si]]=[P.scenes[si],P.scenes[si-1]];si--}
   if(m==='down'&&si<P.scenes.length-1){[P.scenes[si+1],P.scenes[si]]=[P.scenes[si],P.scenes[si+1]];si++}
   touch();sel=null;renderAll();loadScene()}
@@ -381,12 +450,13 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
 /* chỉnh thông số realtime */
 $('panel').oninput=e=>{const el=e.target,d=el.dataset,s=sc();
  if(el.id==='fi'){importFiles([...el.files]);el.value='';return}
+ if(el.id==='fm'){importModels([...el.files]);el.value='';return}
  if(el.id==='fbg'){importFiles([...el.files]).then(r=>{const m=r.find(x=>x.type===s.bgt);if(m){s.bgm=m.id;touch();renderPanel();apply()}});el.value='';return}
  if(el.id==='cq'){cq=el.value;const p=el.selectionStart;renderPanel();const n=$('cq');n.focus();n.setSelectionRange(p,p);return}
  if(d.lq){LS[d.lq].q=el.value;LS[d.lq].p=0;const p=el.selectionStart;renderPanel();const n=document.querySelector('[data-lq="'+d.lq+'"]');if(n){n.focus();n.setSelectionRange(p,p)}return}
  if(d.lcat){LS[d.lcat].c=el.value;LS[d.lcat].p=0;renderPanel();return}
  if(el.type==='number'&&el.value==='')return;const v=el.type==='checkbox'?el.checked:el.type==='number'||el.type==='range'?+el.value:el.value;
- if(d.k){const it=cur(),ty=stype();if(!it)return;if(['sx','sy','sz'].includes(d.k)&&it.lock&&it[d.k]>0&&v>0){const k=v/it[d.k];for(const a of['sx','sy','sz'])if(a!==d.k&&it[a]!==undefined)it[a]=Math.round(it[a]*k*1000)/1000}it[d.k]=v;if(ty==='clip'&&d.k==='clip'){const a=manifest.animations.find(x=>x.id===v);if(a)it.dur=r2(a.duration);const l=loc();if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~'}if(ty==='char')place(it);
+ if(d.k){const it=cur(),ty=stype();if(!it)return;if(['sx','sy','sz'].includes(d.k)&&it.lock&&it[d.k]>0&&v>0){const k=v/it[d.k];for(const a of['sx','sy','sz'])if(a!==d.k&&it[a]!==undefined)it[a]=Math.round(it[a]*k*1000)/1000}it[d.k]=v;if(ty==='clip'&&d.k==='clip'){const a=manifest.animations.find(x=>x.id===v);if(a)it.dur=r2(a.duration);const l=loc();if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~'}if(ty==='char'||ty==='prop')place(it);
   if((it.start||0)+(it.dur||0)>s.duration)s.duration=Math.ceil((it.start||0)+it.dur);if(['start','dur','text','name','color','clip','who'].includes(d.k))renderTL();if(ty==='char'&&d.k==='name')renderTL();renderOv();apply();touchSoon();sync()}
  if(d.sc){s[d.sc]=v;if(d.sc==='name')renderStrip();if(['duration','bg','bg2','bga','bgt','bgfit','bgz','bgx','bgy'].includes(d.sc)){renderTL();apply()}if(d.sc==='bgt')renderPanel();touchSoon()}
  if(d.pj){P[d.pj]=v;if(d.pj==='name')$('pn').textContent=v;touchSoon()}
@@ -411,6 +481,6 @@ async function refreshLib(){
  }catch(e){say('Không làm mới được: '+e.message)}
  finally{b.disabled=false;b.textContent='↻ Làm mới thư viện'}}
 $('bRefresh').onclick=refreshLib;
-(async()=>{media=(await idb('readonly',s=>s.getAll()))||[];media.forEach(m=>murl[m.id]=URL.createObjectURL(m.blob));
+(async()=>{const allRec=(await idb('readonly',s=>s.getAll()))||[];lmodels=allRec.filter(m=>m.type==='mdl');media=allRec.filter(m=>m.type!=='mdl');media.forEach(m=>murl[m.id]=URL.createObjectURL(m.blob));
  for(const u of['./library/manifest.json','https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/library/manifest.json']){try{const r=await fetch(u+'?v='+Date.now());if(r.ok){manifest=await r.json();manifest.animations=manifest.animations||[];manifest.characters=manifest.characters||{};break}}catch{}}try{const ci=await K.readJSON('characters/custom/index.json',null);if(ci&&Array.isArray(ci.characters))custom=sortCustom(ci.characters)}catch{}await loadLib();route();loadFromGit(true)})();
 </script></body></html>
