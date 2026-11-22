@@ -190,7 +190,7 @@ function applyPose(time){
   const track=clip.tracks.get(bone.uuid);if(!track)continue;
   bone.quaternion.copy(track[lo]).slerp(track[hi],eased);
  }
- const root=getBone('root');
+ const root=getBone('root')||getBone('hips');
  if(root){const y0=f0.rootY||0,y1=f1.rootY||0;root.position.y=(root.userData.baseY||0)+THREE.MathUtils.lerp(y0,y1,eased);}
  model.updateMatrixWorld(true);
 }
