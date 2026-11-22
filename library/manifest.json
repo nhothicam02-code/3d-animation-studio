@@ -4,35 +4,18 @@
     "20260926223349_4ec5f5b9.fbx": {
       "model": "20260926223349_4ec5f5b9.fbx",
       "thumbnail": "./library/thumbnails/characters/20260926223349-4ec5f5b9-fbx.png",
-      "updatedAt": "2026-11-22T05:45:47.612Z"
+      "updatedAt": "2026-11-22T05:47:55.735Z"
     },
     "Sitting Laughing.fbx": {
       "model": "Sitting Laughing.fbx",
       "thumbnail": "./library/thumbnails/characters/sitting-laughing-fbx.png",
-      "updatedAt": "2026-11-22T05:45:09.591Z"
+      "updatedAt": "2026-11-22T05:47:57.671Z"
     },
     "Walking.fbx": {
       "model": "Walking.fbx",
       "thumbnail": "./library/thumbnails/characters/walking-fbx.png",
-      "updatedAt": "2026-11-22T05:45:11.907Z"
+      "updatedAt": "2026-11-22T05:47:59.619Z"
     }
   },
-  "animations": [
-    {
-      "id": "mixamo-com-mwrf03yu",
-      "name": "mixamo.com",
-      "category": "Locomotion",
-      "duration": 0.9666666388511658,
-      "loop": true,
-      "speed": 1,
-      "tracks": 53,
-      "keyframes": 1590,
-      "source": "Walking.fbx",
-      "createdAt": "2026-11-22T05:47:11.000Z",
-      "dataPath": "library/animations/mixamo-com-mwrf03yu.json",
-      "thumbnailPath": "library/thumbnails/animations/mixamo-com-mwrf03yu.png",
-      "thumbnail": "./library/thumbnails/animations/mixamo-com-mwrf03yu.png",
-      "rigSignature": []
-    }
-  ]
+  "animations": []
 }
