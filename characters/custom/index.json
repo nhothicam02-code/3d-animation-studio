@@ -1,1 +1,14 @@
-{"version":1,"characters":[]}
+{
+  "version": 1,
+  "characters": [
+    {
+      "id": "aa-mwrxq55p",
+      "name": "aa",
+      "base": "20260926223349_4ec5f5b9.fbx",
+      "items": 2,
+      "dataPath": "characters/custom/aa-mwrxq55p.json",
+      "thumbnail": "./characters/custom/thumbs/aa-mwrxq55p.png",
+      "updatedAt": "2026-11-22T14:31:18.686Z"
+    }
+  ]
+}
