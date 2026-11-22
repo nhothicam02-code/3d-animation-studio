@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3DiS — Custom nhân vật</title>
+<style>
+:root{color-scheme:dark;--bg:#101116;--panel:#191b24;--panel2:#222531;--line:#303442;--text:#f4f5f8;--muted:#9da3b4;--accent:#9a83ff;--green:#66d6a3;--red:#ff8585;--gold:#ffd166}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:13px Inter,system-ui,Segoe UI,sans-serif}
+button,input,select{font:inherit}button{border:1px solid var(--line);border-radius:9px;padding:8px 11px;background:var(--panel2);color:var(--text);cursor:pointer;font-weight:650}button:hover{border-color:var(--accent)}button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--accent);border-color:var(--accent);color:#171322}.quiet{background:transparent}.danger{color:var(--red)}
+input,select{width:100%;min-width:0;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 9px;outline:none}input:focus,select:focus{border-color:var(--accent)}
+input[type=color]{padding:2px;height:34px;cursor:pointer}input[type=range]{padding:0;accent-color:var(--accent)}input[type=checkbox]{width:auto}
+label{display:block;color:var(--muted);font-size:11px;margin:0 0 4px}.muted{color:var(--muted)}small{color:var(--muted)}
+header{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:#14151c}
+.brand{font-weight:850;font-size:17px;letter-spacing:.3px}.brand span{color:var(--accent)}a{color:#c2b5ff;text-decoration:none}.head-actions{display:flex;gap:12px;align-items:center}
+.pill{display:inline-flex;padding:4px 8px;border:1px solid #3b6b59;border-radius:20px;color:var(--green);font-size:10px}.pill.off{border-color:#6b3b3b;color:var(--red)}
+main{height:calc(100vh - 62px);min-height:620px;display:grid;grid-template-columns:310px minmax(0,1fr) 340px}
+aside{background:var(--panel);overflow:auto;padding:14px}aside.left{border-right:1px solid var(--line)}aside.right{border-left:1px solid var(--line)}
+h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase;color:#c9cdda}h2:first-child{margin-top:0}
+.row{display:flex;gap:7px;align-items:center}.row>*{flex:1}.row>button{flex:none}.field{margin-bottom:10px}
+.center{display:grid;grid-template-rows:minmax(0,1fr) auto;min-width:0}
+#stage{position:relative;background:radial-gradient(ellipse at 50% 42%,#2b2d3b,#171923 62%,#101119);overflow:hidden;min-height:300px}#viewport{position:absolute;inset:0}canvas{display:block;width:100%;height:100%}
+.tag{position:absolute;left:12px;top:12px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#171923cc;font-size:11px;max-width:60%}
+.spinbar{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:10px;align-items:center;padding:9px 12px;background:#171923e6;border:1px solid var(--line);border-radius:11px}
+.spinbar .num{width:78px;flex:none}.spinbar label{margin:0;white-space:nowrap;display:flex;gap:5px;align-items:center}
+.animbar{border-top:1px solid var(--line);background:var(--panel);padding:10px 14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.animbar select{flex:1;min-width:170px;max-width:340px}.animbar label{margin:0;display:flex;gap:5px;align-items:center;white-space:nowrap}.animbar select.sp{flex:none;width:80px;min-width:0}
+.status{margin-top:9px;padding:9px 10px;border-radius:8px;background:#151720;color:var(--muted);font-size:12px;line-height:1.5;border:1px solid var(--line)}.status.good{color:var(--green)}.status.bad{color:var(--red)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{padding:6px 9px;border-radius:20px;font-size:12px;font-weight:600}.chip.active{background:var(--accent);border-color:var(--accent);color:#171322}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.preset{display:flex;align-items:center;gap:8px;text-align:left;padding:8px;font-weight:600;font-size:12px}.preset i{width:16px;height:16px;border-radius:5px;flex:none;border:1px solid #ffffff40}
+.empty{padding:14px;border:1px dashed #444a5c;border-radius:10px;color:var(--muted);text-align:center;font-size:12px;grid-column:1/-1}
+.grp{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;overflow:hidden;background:var(--panel2)}.grp.sel{border-color:var(--accent)}
+.grow{display:flex;align-items:center;gap:6px;padding:8px 9px;cursor:pointer}.grow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.grow button,.prow button{padding:3px 7px;font-size:12px;border-radius:7px}
+.prow{display:flex;align-items:center;gap:6px;padding:6px 9px 6px 22px;border-top:1px solid #2a2e3b;cursor:pointer;font-size:12px;color:#d7dae5}.prow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prow.sel{background:#2d2750;color:#fff}.prow .warn{color:var(--gold)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.grid3 input{padding:7px 6px}.axis{font-size:10px;color:var(--muted);text-align:center;margin-bottom:3px}
+.note{font-size:11px;color:var(--muted);line-height:1.5;margin:6px 0 10px}.hide{display:none!important}
+.editor.off{opacity:.45;pointer-events:none}
+@media(max-width:1000px){main{grid-template-columns:1fr;height:auto}#stage{height:62vh}aside.left,aside.right{border:0;border-top:1px solid var(--line)}.center{order:-1}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head><body>
+<header><div class="brand"><span>3DiS</span> / CUSTOM NHÂN VẬT</div>
+ <div class="head-actions"><span id="gitState" class="pill off">GitHub chưa kết nối</span><a href="./motion-lab.html">Motion Lab</a><a href="./index.html">← Thư viện</a></div></header>
+<main>
+<aside class="left">
+ <h2>Nhân vật</h2>
+ <div class="field"><label>Nhân vật gốc (characters/*.fbx)</label><select id="baseSel"></select></div>
+ <div class="field"><label>Nhân vật đã lưu</label><div class="row"><select id="savedSel"><option value="">— chưa chọn —</option></select><button id="loadSaved">Tải</button><button id="delSaved" class="danger" title="Gỡ khỏi danh sách (file vẫn giữ trên GitHub)">✕</button></div></div>
+ <div class="field"><label>Tên nhân vật</label><input id="charName" placeholder="Ví dụ: Mina - đồ mùa đông" maxlength="60"></div>
+ <div class="row"><button class="primary" id="saveBtn" style="flex:1">☁ Lưu &amp; đồng bộ GitHub</button></div>
+ <div class="row" style="margin-top:7px"><button id="newBtn" style="flex:1">＋ Mới</button><button id="dlBtn" style="flex:1">⬇ Tải JSON</button></div>
+ <div class="status" id="saveStatus">Chưa lưu.</div>
+
+ <h2>Thêm đồ</h2>
+ <div class="chips" id="slotChips"></div>
+ <div class="presets" id="presetList"></div>
+ <div class="note">Đồ dựng sẵn là hình khối tự co theo độ dài xương của nhân vật. Muốn đồ chi tiết hơn, nhập mô hình riêng bên dưới.</div>
+ <label>Nhập mô hình riêng (.glb, .fbx, .obj) vào mục đang chọn</label>
+ <input type="file" id="importFile" accept=".glb,.fbx,.obj">
+ <div class="status" id="importStatus">Mô hình nhập sẽ gắn cứng vào một xương. Đơn vị: mét (file cm được tự giảm 0.01).</div>
+</aside>
+
+<section class="center">
+ <div id="stage"><div id="viewport"></div><div class="tag" id="stageTag">Đang khởi tạo…</div>
+  <div class="spinbar"><label for="spin">Xoay 360°</label><input type="range" id="spin" min="0" max="360" step="0.1" value="0"><input class="num" type="number" id="spinNum" min="0" max="360" step="0.1" value="0"><label><input type="checkbox" id="auto"> Tự xoay</label><label><input type="checkbox" id="showBody" checked> Thân</label><button id="camReset" title="Đưa camera về chính diện">⌖</button></div></div>
+ <div class="animbar"><b>Xem trước hoạt ảnh</b><select id="clipSel"><option value="">— T-pose (đứng yên) —</option></select><button id="playBtn" class="primary">▶ Phát</button><button id="pauseBtn">Ⅱ</button><button id="stopBtn">■ Dừng</button><label><input type="checkbox" id="loop" checked> Lặp</label><select class="sp" id="speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><span id="animStatus" class="muted"></span></div>
+</section>
+
+<aside class="right">
+ <h2>Đồ đã mặc</h2><div id="outfit"></div>
+ <h2>Chỉnh mảnh đã chọn</h2>
+ <div class="editor off" id="editor">
+  <div class="field"><label>Mảnh đang chọn</label><input id="edLabel" disabled></div>
+  <div class="field"><label>Gắn vào xương (đồ sẽ di chuyển theo xương này)</label><select id="edBone"></select></div>
+  <label>Vị trí lệch so với mặc định — mét (X ngang · Y lên · Z phía trước)</label>
+  <div class="grid3"><div><div class="axis">X</div><input type="number" id="px" step="0.005" value="0"></div><div><div class="axis">Y</div><input type="number" id="py" step="0.005" value="0"></div><div><div class="axis">Z</div><input type="number" id="pz" step="0.005" value="0"></div></div>
+  <label style="margin-top:10px">Xoay — độ, số thập phân được (quanh tâm mảnh)</label>
+  <div class="grid3"><div><div class="axis">X</div><input type="number" id="rx" step="0.5" value="0"></div><div><div class="axis">Y</div><input type="number" id="ry" step="0.5" value="0"></div><div><div class="axis">Z</div><input type="number" id="rz" step="0.5" value="0"></div></div>
+  <div class="row" style="margin-top:10px"><div><label>Tỉ lệ</label><input type="number" id="sc" step="0.01" min="0.01" value="1"></div><div><label>Màu chính</label><input type="color" id="col1"></div><div><label>Màu phụ</label><input type="color" id="col2"></div></div>
+  <div class="row" style="margin-top:10px"><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="vP" checked> Hiện mảnh</label><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="vG" checked> Hiện cả bộ</label></div>
+  <div class="row" style="margin-top:10px"><button id="resetP" style="flex:1">↺ Đặt lại</button><button id="delP" class="danger" style="flex:1">Xóa mảnh</button><button id="delG" class="danger" style="flex:1">Xóa cả bộ</button></div>
+  <div class="note">Mẹo: bấm trực tiếp vào món đồ trên màn hình để chọn nhanh. Màu áp dụng cho cả bộ.</div>
+ </div>
+</aside>
+</main>
+
+<script type="module">
+import * as THREE from 'three';
+import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {mapClip} from './js/retarget.js';
+import * as K from './js/character-kit.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const say = (el, msg, type = '') => { el.textContent = msg; el.className = 'status ' + type; };
+const tag = (msg, bad) => { const t = $('stageTag'); t.textContent = msg; t.style.color = bad ? 'var(--red)' : ''; };
+const D2R = Math.PI / 180;
+const DEFAULT_BONE = {hat: 'head', scarf: 'neck', jacket: 'spine2', outer: 'spine2', under: 'spine2', sleeves: 'lArm', gloves: 'lHand', brief: 'hips', shorts: 'hips', pants: 'hips', skirt: 'hips', socks: 'lFoot', shoes: 'lFoot', acc: 'head', ear: 'head'};
+
+const S = {base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false};
+let renderer, scene, camera, controls, spinG, selBox, loadSeq = 0;
+const clock = new THREE.Clock();
+const params = new URLSearchParams(location.search);
+
+/* ---------------- Cảnh 3D ---------------- */
+function setupScene() {
+  const el = $('viewport');
+  renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  el.appendChild(renderer.domElement);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(35, 1, 0.05, 100);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x666070, 1.9));
+  const dl = new THREE.DirectionalLight(0xffffff, 2.2); dl.position.set(3, 6, 5); scene.add(dl);
+  const back = new THREE.DirectionalLight(0x9a83ff, 0.8); back.position.set(-4, 3, -5); scene.add(back);
+  const grid = new THREE.GridHelper(6, 24, 0x4b5068, 0x2b2f40); grid.position.y = 0.001; scene.add(grid);
+  spinG = new THREE.Group(); scene.add(spinG);
+  selBox = new THREE.BoxHelper(new THREE.Object3D(), 0xffd166); selBox.visible = false; scene.add(selBox);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.target.set(0, 0.9, 0);
+  resetCamera();
+  const resize = () => { const w = el.clientWidth || 1, h = el.clientHeight || 1; camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false); };
+  new ResizeObserver(resize).observe(el); resize();
+  // chọn đồ bằng cách bấm vào hình
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
+  renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 4) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const meshes = [];
+    for (const g of S.groups) for (const p of g.pieces) if (p._rt && p._rt.holder.visible) p._rt.content.traverse(o => { if (o.isMesh) meshes.push(o); });
+    const hit = ray.intersectObjects(meshes, false)[0];
+    if (hit) { const uid = hit.object.userData.pieceUid; for (const g of S.groups) { const p = g.pieces.find(x => x.uid === uid); if (p) { select(g.id, p.uid); break; } } }
+  });
+  (function tick() {
+    requestAnimationFrame(tick);
+    const dt = Math.min(clock.getDelta(), 0.06);
+    if (S.mixer && S.playing) S.mixer.update(dt);
+    if ($('auto').checked) { S.spin = (S.spin + dt * 36) % 360; syncSpin(); }
+    spinG.rotation.y = S.spin * D2R;
+    controls.update();
+    if (selBox.visible) selBox.update();
+    renderer.render(scene, camera);
+  })();
+}
+function resetCamera() { camera.position.set(0, 1.15, 4.4); controls.target.set(0, 0.9, 0); controls.update(); }
+function syncSpin() { $('spin').value = S.spin; $('spinNum').value = S.spin.toFixed(1); }
+$('spin').oninput = e => { $('auto').checked = false; S.spin = parseFloat(e.target.value) || 0; syncSpin(); };
+$('spinNum').oninput = e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) { $('auto').checked = false; S.spin = ((v % 360) + 360) % 360; $('spin').value = S.spin; } };
+$('camReset').onclick = resetCamera;
+$('showBody').onchange = () => setBodyVisible($('showBody').checked);
+function setBodyVisible(v) { if (S.model) S.model.traverse(o => { if (o.isSkinnedMesh || (o.isMesh && !o.userData.pieceUid && !isItemMesh(o))) o.visible = v; }); }
+function isItemMesh(o) { let n = o; while (n) { if (n.name && n.name.startsWith('holder_')) return true; n = n.parent; } return false; }
+const dirty = () => { S.dirty = true; };
+window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------------- Nạp nhân vật gốc ---------------- */
+function disposeObj(o) { o.traverse(n => { if (n.geometry) n.geometry.dispose(); if (n.material) for (const m of (Array.isArray(n.material) ? n.material : [n.material])) m.dispose(); }); }
+function clearModel() {
+  stopClip(true);
+  for (const g of S.groups) for (const p of g.pieces) K.unmountPiece(p);
+  if (S.wrap) { spinG.remove(S.wrap); disposeObj(S.wrap); }
+  Object.assign(S, {model: null, wrap: null, rig: null, mixer: null, action: null, restSnap: []});
+}
+async function loadBase(name) {
+  const my = ++loadSeq;
+  tag('Đang tải ' + name + '…');
+  const obj = await new FBXLoader().loadAsync('./characters/' + encodeURIComponent(name));
+  if (my !== loadSeq) { disposeObj(obj); return; }
+  clearModel();
+  obj.traverse(o => { if (o.isSkinnedMesh) o.frustumCulled = false; });
+  const wrap = K.normalizeModel(obj, 1.8);
+  spinG.rotation.y = 0; spinG.add(wrap); spinG.updateMatrixWorld(true);
+  const rig = K.buildRig(obj);              // phải gọi lúc rest pose và spin = 0
+  S.model = obj; S.wrap = wrap; S.rig = rig; S.base = name;
+  obj.traverse(o => { if (o.isBone) S.restSnap.push([o, o.position.clone(), o.quaternion.clone(), o.scale.clone()]); });
+  S.mixer = new THREE.AnimationMixer(obj);
+  $('baseSel').value = name;
+  fillBoneSelect();
+  for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, rig);
+  setBodyVisible($('showBody').checked);
+  tag(name + ' · ' + rig.bones.length + ' xương' + (rig.missing.length ? ' · thiếu: ' + rig.missing.map(k => K.BONE_LABELS[k]).join(', ') : ''));
+  renderOutfit(); fillEditor(); updateSelBox();
+}
+function fillBoneSelect() {
+  const {major, other} = K.boneOptions(S.rig);
+  $('edBone').innerHTML = '<optgroup label="Xương chính">' + major.map(o => '<option value="' + esc(o.value) + '">' + esc(o.label) + '</option>').join('') + '</optgroup>' +
+    (other.length ? '<optgroup label="Xương khác">' + other.map(o => '<option value="' + esc(o.value) + '">' + esc(o.label) + '</option>').join('') + '</optgroup>' : '');
+}
+
+/* ---------------- Danh sách đồ & chọn ---------------- */
+function curSel() { const g = S.groups.find(x => x.id === S.sel?.g); const p = g?.pieces.find(x => x.uid === S.sel?.p); return {g, p}; }
+function select(gid, pid) { S.sel = gid ? {g: gid, p: pid || S.groups.find(x => x.id === gid)?.pieces[0]?.uid} : null; renderOutfit(); fillEditor(); updateSelBox(); }
+function updateSelBox() { const {p} = curSel(); if (p && p._rt) { selBox.setFromObject(p._rt.offset); selBox.visible = true; } else selBox.visible = false; }
+function renderOutfit() {
+  if (!S.groups.length) { $('outfit').innerHTML = '<div class="empty">Chưa có món đồ nào. Chọn mục bên trái rồi bấm một mẫu để thêm.</div>'; return; }
+  $('outfit').innerHTML = S.groups.map(g => {
+    const slot = K.SLOTS.find(s => s.id === g.slot);
+    return '<div class="grp' + (S.sel?.g === g.id ? ' sel' : '') + '"><div class="grow" data-g="' + g.id + '"><span>' + (slot ? slot.icon : '•') + '</span><b title="' + esc(g.name) + '">' + esc(g.name) + '</b>' +
+      '<button data-act="vis" data-g="' + g.id + '" title="Ẩn/hiện">' + (g.visible === false ? '🚫' : '👁') + '</button><button data-act="del" data-g="' + g.id + '" class="danger" title="Xóa">🗑</button></div>' +
+      g.pieces.map(p => '<div class="prow' + (S.sel?.p === p.uid ? ' sel' : '') + '" data-g="' + g.id + '" data-p="' + p.uid + '"><span>' + esc(p.label) + '</span>' + (p._rt ? '' : '<span class="warn" title="Không tìm thấy xương/hình để gắn">⚠</span>') + '</div>').join('') + '</div>';
+  }).join('');
+}
+$('outfit').onclick = e => {
+  const b = e.target.closest('[data-act]');
+  if (b) { const g = S.groups.find(x => x.id === b.dataset.g); if (!g) return;
+    if (b.dataset.act === 'vis') { g.visible = g.visible === false; g.pieces.forEach(p => K.applyPiece(g, p)); dirty(); renderOutfit(); fillEditor(); }
+    else deleteGroup(g.id);
+    return; }
+  const r = e.target.closest('[data-g]'); if (r) select(r.dataset.g, r.dataset.p);
+};
+function deleteGroup(id) {
+  const g = S.groups.find(x => x.id === id); if (!g) return;
+  g.pieces.forEach(K.unmountPiece); S.groups = S.groups.filter(x => x !== g);
+  if (S.sel?.g === id) S.sel = null;
+  dirty(); renderOutfit(); fillEditor(); updateSelBox();
+}
+
+/* ---------------- Bộ chỉnh ---------------- */
+function fillEditor() {
+  const {g, p} = curSel();
+  $('editor').classList.toggle('off', !p);
+  if (!p) { $('edLabel').value = ''; return; }
+  $('edLabel').value = g.name + ' › ' + p.label;
+  $('edBone').value = p.bone;
+  ['px', 'py', 'pz'].forEach((id, i) => $(id).value = +p.pos[i].toFixed(4));
+  ['rx', 'ry', 'rz'].forEach((id, i) => $(id).value = +p.rot[i].toFixed(3));
+  $('sc').value = +p.scale.toFixed(4);
+  $('col1').value = g.color || '#888888'; $('col2').value = g.color2 || g.color || '#888888';
+  const imported = !!p.file; $('col1').disabled = $('col2').disabled = imported;
+  $('vP').checked = p.visible !== false; $('vG').checked = g.visible !== false;
+}
+function bindNum(id, apply) { $(id).oninput = e => { const {g, p} = curSel(); const v = parseFloat(String(e.target.value).replace(',', '.')); if (!p || !Number.isFinite(v)) return; apply(p, v); K.applyPiece(g, p); dirty(); }; }
+['px', 'py', 'pz'].forEach((id, i) => bindNum(id, (p, v) => p.pos[i] = v));
+['rx', 'ry', 'rz'].forEach((id, i) => bindNum(id, (p, v) => p.rot[i] = v));
+bindNum('sc', (p, v) => p.scale = Math.max(v, 0.001));
+$('col1').oninput = e => { const {g} = curSel(); if (!g) return; g.color = e.target.value; g.pieces.forEach(p => K.applyPiece(g, p)); dirty(); };
+$('col2').oninput = e => { const {g} = curSel(); if (!g) return; g.color2 = e.target.value; g.pieces.forEach(p => K.applyPiece(g, p)); dirty(); };
+$('vP').onchange = e => { const {g, p} = curSel(); if (!p) return; p.visible = e.target.checked; K.applyPiece(g, p); dirty(); };
+$('vG').onchange = e => { const {g} = curSel(); if (!g) return; g.visible = e.target.checked; g.pieces.forEach(p => K.applyPiece(g, p)); dirty(); renderOutfit(); };
+$('edBone').onchange = e => { const {g, p} = curSel(); if (!p) return; p.bone = e.target.value; K.mountPiece(g, p, S.rig); dirty(); renderOutfit(); updateSelBox(); };
+$('resetP').onclick = () => { const {g, p} = curSel(); if (!p) return; p.pos = [0, 0, 0]; p.rot = [0, 0, 0]; p.scale = p._autoScale || 1; K.applyPiece(g, p); dirty(); fillEditor(); };
+$('delP').onclick = () => { const {g, p} = curSel(); if (!p) return; K.unmountPiece(p); g.pieces = g.pieces.filter(x => x !== p); if (!g.pieces.length) deleteGroup(g.id); else { select(g.id); dirty(); } };
+$('delG').onclick = () => { const {g} = curSel(); if (g) deleteGroup(g.id); };
+
+/* ---------------- Thêm đồ ---------------- */
+function renderSlots() {
+  $('slotChips').innerHTML = K.SLOTS.map(s => '<button class="chip' + (S.slot === s.id ? ' active' : '') + '" data-slot="' + s.id + '">' + s.icon + ' ' + esc(s.label) + '</button>').join('');
+  const list = K.PRESETS.filter(p => p.slot === S.slot);
+  $('presetList').innerHTML = list.length ? list.map(p => '<button class="preset" data-preset="' + p.id + '"><i style="background:' + p.color + '"></i>' + esc(p.name) + '</button>').join('') : '<div class="empty">Chưa có mẫu cho mục này. Hãy nhập mô hình riêng.</div>';
+}
+$('slotChips').onclick = e => { const b = e.target.closest('[data-slot]'); if (b) { S.slot = b.dataset.slot; renderSlots(); } };
+$('presetList').onclick = e => {
+  const b = e.target.closest('[data-preset]'); if (!b || !S.rig) return;
+  const g = K.groupFromPreset(K.presetById(b.dataset.preset));
+  S.groups.push(g); g.pieces.forEach(p => K.mountPiece(g, p, S.rig));
+  dirty(); select(g.id, g.pieces[0].uid);
+};
+async function parseItem(ext, buf) {
+  if (ext === 'glb') return (await new Promise((res, rej) => new GLTFLoader().parse(buf, '', res, rej))).scene;
+  if (ext === 'fbx') return new FBXLoader().parse(buf, '');
+  if (ext === 'obj') return new OBJLoader().parse(new TextDecoder().decode(buf));
+  throw Error('Định dạng .' + ext + ' chưa được hỗ trợ (dùng .glb, .fbx hoặc .obj).');
+}
+$('importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    if (!S.rig) throw Error('Hãy chờ nhân vật tải xong.');
+    const ext = f.name.split('.').pop().toLowerCase();
+    const buf = await f.arrayBuffer();
+    const fit = K.fitImported(await parseItem(ext, buf));
+    const bone = DEFAULT_BONE[S.slot] || 'hips';
+    const p = {...K.newPiece('file', f.name, S.rig.bone(bone) ? bone : 'hips'), file: {name: f.name, ext}, scale: fit.autoScale};
+    p._obj = fit.obj; p._bytes = new Uint8Array(buf); p._autoScale = fit.autoScale;
+    const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: S.slot, preset: 'import', name: f.name.replace(/\.[^.]+$/, ''), color: '#ffffff', color2: '#ffffff', visible: true, pieces: [p]};
+    S.groups.push(g); K.mountPiece(g, p, S.rig);
+    dirty(); select(g.id, p.uid);
+    say($('importStatus'), 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
+  } catch (err) { say($('importStatus'), 'Không nhập được: ' + err.message, 'bad'); }
+  e.target.value = '';
+};
+
+/* ---------------- Hoạt ảnh ---------------- */
+function retarget(src) {
+  const w = S.wrap, keep = {p: w.position.clone(), r: w.rotation.clone(), s: w.scale.clone(), sp: spinG.rotation.y};
+  spinG.rotation.y = 0; w.position.set(0, 0, 0); w.rotation.set(0, 0, 0); w.scale.setScalar(1); w.updateMatrixWorld(true);
+  try { return mapClip(src, S.model); }
+  finally { w.position.copy(keep.p); w.rotation.copy(keep.r); w.scale.copy(keep.s); spinG.rotation.y = keep.sp; w.updateMatrixWorld(true); }
+}
+function stopClip(silent) {
+  if (S.action) S.action.stop();
+  if (S.mixer) S.mixer.stopAllAction();
+  S.action = null; S.playing = false;
+  for (const [b, p, q, s] of S.restSnap) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
+  if (S.wrap) S.wrap.updateMatrixWorld(true);
+  if (!silent) $('animStatus').textContent = 'Đã dừng (T-pose).';
+}
+async function playClip() {
+  const id = $('clipSel').value;
+  if (!S.mixer) return;
+  if (!id) { stopClip(); return; }
+  if (S.action && S.action._id === id) { S.playing = true; S.action.paused = false; return; }
+  const entry = S.clips.find(c => c.id === id); if (!entry) return;
+  $('animStatus').textContent = 'Đang tải clip…';
+  try {
+    const data = await K.readJSON(entry.dataPath);
+    if (!data || !data.clip) throw Error('không đọc được dữ liệu clip');
+    stopClip(true);
+    const res = retarget(THREE.AnimationClip.parse(data.clip));
+    if (!res.clip.tracks.length) throw Error('không có xương tương thích (0/' + res.total + ' track)');
+    const a = S.mixer.clipAction(res.clip); a._id = id;
+    a.reset(); a.timeScale = parseFloat($('speed').value) || 1;
+    a.setLoop($('loop').checked ? THREE.LoopRepeat : THREE.LoopOnce, $('loop').checked ? Infinity : 1); a.clampWhenFinished = !$('loop').checked;
+    a.play(); S.action = a; S.playing = true; clock.getDelta();
+    $('animStatus').textContent = entry.name + ' · ' + res.mapped + '/' + res.total + ' track';
+  } catch (err) { $('animStatus').textContent = 'Lỗi clip: ' + err.message; }
+}
+$('playBtn').onclick = playClip;
+$('pauseBtn').onclick = () => { S.playing = false; };
+$('stopBtn').onclick = () => stopClip();
+$('clipSel').onchange = () => { if ($('clipSel').value) playClip(); else stopClip(); };
+$('loop').onchange = () => { if (S.action) { S.action.setLoop($('loop').checked ? THREE.LoopRepeat : THREE.LoopOnce, $('loop').checked ? Infinity : 1); S.action.clampWhenFinished = !$('loop').checked; } };
+$('speed').onchange = () => { if (S.action) S.action.timeScale = parseFloat($('speed').value) || 1; };
+
+/* ---------------- Lưu / tải ---------------- */
+const INDEX = 'characters/custom/index.json';
+function buildDoc() {
+  const name = $('charName').value.trim();
+  return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups)};
+}
+function thumbData() {
+  const wasSel = selBox.visible; selBox.visible = false;
+  renderer.render(scene, camera);
+  const src = renderer.domElement, w = 360, h = 270, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d'), ratio = w / h, sw = Math.min(src.width, src.height * ratio), sh = sw / ratio;
+  ctx.fillStyle = '#242633'; ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, w, h);
+  selBox.visible = wasSel;
+  return c.toDataURL('image/png');
+}
+$('saveBtn').onclick = async () => {
+  const name = $('charName').value.trim();
+  if (!name) { say($('saveStatus'), 'Hãy đặt tên nhân vật trước khi lưu.', 'bad'); return; }
+  if (!S.base) { say($('saveStatus'), 'Chưa có nhân vật gốc.', 'bad'); return; }
+  if (!K.auth().token) { say($('saveStatus'), 'Chưa có GitHub token. Nhập ở trang Cài đặt rồi thử lại (hoặc dùng “Tải JSON”).', 'bad'); return; }
+  $('saveBtn').disabled = true;
+  try {
+    const slugName = K.slug(name);
+    if (!S.charId || S.charId.split('-').slice(0, -1).join('-') !== slugName) S.charId = slugName + '-' + Date.now().toString(36);
+    const id = S.charId;
+    // 1) tải các mô hình nhập lên
+    for (const g of S.groups) for (const p of g.pieces) if (p.file && p._bytes) {
+      say($('saveStatus'), 'Đang tải lên ' + p.file.name + '…');
+      const path = 'characters/items/' + id + '-' + K.slug(p.file.name.replace(/\.[^.]+$/, '')) + '-' + p.uid + '.' + p.file.ext;
+      await K.ghPutBytes(path, p._bytes, 'Add custom item ' + p.file.name);
+      p.file.path = path; p._bytes = null;
+    }
+    // 2) thumbnail + dữ liệu nhân vật
+    say($('saveStatus'), 'Đang lưu dữ liệu nhân vật…');
+    const doc = buildDoc(), dataPath = 'characters/custom/' + id + '.json', thumbPath = 'characters/custom/thumbs/' + id + '.png';
+    await K.ghPutDataUrl(thumbPath, thumbData(), 'Add custom character thumbnail ' + name);
+    await K.ghPutText(dataPath, JSON.stringify(doc, null, 2), 'Save custom character ' + name);
+    // 3) cập nhật danh mục
+    const idx = (await K.readJSON(INDEX, {version: 1, characters: []})) || {version: 1, characters: []};
+    if (!Array.isArray(idx.characters)) idx.characters = [];
+    const entry = {id, name, base: S.base, items: S.groups.length, dataPath, thumbnail: './' + thumbPath, updatedAt: doc.updatedAt};
+    idx.characters = [entry, ...idx.characters.filter(x => x.id !== id)];
+    await K.ghPutText(INDEX, JSON.stringify(idx, null, 2), 'Update custom character index');
+    S.saved = idx.characters; S.dirty = false; renderSaved(); $('savedSel').value = id;
+    say($('saveStatus'), 'Đã lưu và đồng bộ GitHub: ' + dataPath, 'good');
+  } catch (err) { say($('saveStatus'), 'Lưu chưa hoàn tất: ' + err.message, 'bad'); }
+  finally { $('saveBtn').disabled = false; }
+};
+$('dlBtn').onclick = () => {
+  const doc = buildDoc(); doc.name = doc.name || 'character';
+  const url = URL.createObjectURL(new Blob([JSON.stringify(doc, null, 2)], {type: 'application/json'})), a = document.createElement('a');
+  a.href = url; a.download = K.slug(doc.name) + '.json'; a.click(); URL.revokeObjectURL(url);
+};
+function renderSaved() {
+  $('savedSel').innerHTML = '<option value="">— chưa chọn —</option>' + S.saved.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + ' (' + esc(c.base) + ')</option>').join('');
+}
+async function loadSaved(id) {
+  const entry = S.saved.find(c => c.id === id); if (!entry) return;
+  say($('saveStatus'), 'Đang tải ' + entry.name + '…');
+  const doc = await K.readJSON(entry.dataPath);
+  if (!doc || !Array.isArray(doc.items)) throw Error('Không đọc được dữ liệu nhân vật.');
+  // dọn đồ cũ
+  S.groups.forEach(g => g.pieces.forEach(K.unmountPiece));
+  S.groups = doc.items; S.sel = null; S.charId = doc.id || id;
+  for (const g of S.groups) for (const p of g.pieces) {
+    p.pos = p.pos || [0, 0, 0]; p.rot = p.rot || [0, 0, 0]; p.scale = p.scale || 1;
+    if (p.file && p.file.path) {
+      try {
+        const r = await fetch('./' + p.file.path.split('/').map(encodeURIComponent).join('/') + '?v=' + Date.now());
+        if (!r.ok) throw Error(r.status);
+        p._obj = K.fitImported(await parseItem(p.file.ext, await r.arrayBuffer())).obj;
+      } catch (err) { console.warn('Không tải được mô hình đồ', p.file.path, err); }
+    }
+  }
+  $('charName').value = doc.name || entry.name;
+  if (doc.base !== S.base) await loadBase(doc.base);
+  else { for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, S.rig); renderOutfit(); fillEditor(); updateSelBox(); }
+  S.dirty = false;
+  say($('saveStatus'), 'Đã tải “' + (doc.name || entry.name) + '”.', 'good');
+}
+$('loadSaved').onclick = () => { const id = $('savedSel').value; if (id) loadSaved(id).catch(e => say($('saveStatus'), e.message, 'bad')); };
+$('delSaved').onclick = async () => {
+  const id = $('savedSel').value; if (!id) return;
+  if (!confirm('Gỡ nhân vật này khỏi danh sách? File dữ liệu trên GitHub vẫn được giữ lại.')) return;
+  try {
+    const idx = (await K.readJSON(INDEX, {version: 1, characters: []})) || {version: 1, characters: []};
+    idx.characters = (idx.characters || []).filter(x => x.id !== id);
+    await K.ghPutText(INDEX, JSON.stringify(idx, null, 2), 'Remove custom character from index');
+    S.saved = idx.characters; renderSaved(); say($('saveStatus'), 'Đã gỡ khỏi danh sách.', 'good');
+  } catch (e) { say($('saveStatus'), 'Không gỡ được: ' + e.message, 'bad'); }
+};
+$('newBtn').onclick = () => {
+  if (S.dirty && !confirm('Bỏ các thay đổi chưa lưu?')) return;
+  S.groups.forEach(g => g.pieces.forEach(K.unmountPiece)); S.groups = []; S.sel = null; S.charId = ''; S.dirty = false;
+  $('charName').value = ''; $('savedSel').value = ''; renderOutfit(); fillEditor(); updateSelBox(); say($('saveStatus'), 'Đã tạo mới.');
+};
+$('baseSel').onchange = () => loadBase($('baseSel').value).catch(e => tag('Lỗi tải nhân vật: ' + e.message, true));
+$('charName').oninput = dirty;
+
+/* ---------------- Khởi động ---------------- */
+async function init() {
+  setupScene(); renderSlots(); renderOutfit();
+  const a = K.auth(); $('gitState').textContent = a.token ? 'GitHub kết nối' : 'GitHub chưa kết nối'; $('gitState').className = 'pill' + (a.token ? '' : ' off');
+  const [models, manifest, idx] = await Promise.all([K.listModels(), K.readJSON('library/manifest.json', {animations: []}), K.readJSON(INDEX, {characters: []})]);
+  S.clips = (manifest && manifest.animations) || []; S.saved = (idx && idx.characters) || [];
+  $('clipSel').innerHTML = '<option value="">— T-pose (đứng yên) —</option>' + S.clips.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + ' · ' + Number(c.duration || 0).toFixed(1) + 's</option>').join('');
+  renderSaved();
+  $('baseSel').innerHTML = models.map(m => '<option value="' + esc(m) + '">' + esc(m) + '</option>').join('');
+  if (!models.length) { tag('Không tìm thấy FBX trong thư mục characters/.', true); return; }
+  const wantChar = params.get('char'), wantModel = params.get('model');
+  if (wantChar && S.saved.some(c => c.id === wantChar)) { $('savedSel').value = wantChar; await loadSaved(wantChar); return; }
+  await loadBase(wantModel && models.includes(wantModel) ? wantModel : models[0]);
+}
+init().catch(e => { console.error(e); tag('Lỗi: ' + e.message, true); });
+</script></body></html>
