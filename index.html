@@ -59,7 +59,7 @@ input[type=range]{accent-color:var(--accent)}
 <div class="timeline"><div id="timeText"><span>THỜI GIAN</span><span id="clock">0.00 s</span></div><input id="scrub" type="range" min="0" max="5" step=".01" value="0"><div class="field" style="margin-bottom:0"><label>Tốc độ: <b id="speedLabel">1.0×</b></label><input id="speed" type="range" min=".25" max="2" step=".25" value="1"></div></div>
 <h3>15 vòng lặp cử chỉ cơ thể</h3><div class="actions" id="poses"></div><h3>Timeline keyframe</h3><div class="info" id="keyInfo">Đang chuẩn bị keyframe…</div><button id="exportActions" style="width:100%;margin-top:8px">↓ Tải thư viện keyframe JSON</button><h3>Thông tin model</h3><div class="info" id="modelInfo">Đang phân tích cấu trúc xương…</div>
 <h3>Xương tìm thấy</h3><div id="boneList">Đang chờ FBXLoader…</div>
-<div class="info">Hành động được dựng từ keyframe theo hệ trục của nhân vật (tự dò hướng trái / phải / trước), nội suy spline mượt giữa các tư thế. Bàn chân tự giữ chạm đất, đầu và tay tự cân bằng theo thân, hông tự hạ khi gối gập. File FBX gốc không bị thay đổi. Chất lượng khớp vẫn phụ thuộc cấu trúc rig của model.</div>
+<div class="info">Hành động được dựng từ keyframe theo hệ trục của nhân vật (tự dò hướng trái / phải / trước), nội suy spline mượt giữa các tư thế. Bàn chân tự giữ chạm đất, đầu và tay tự cân bằng theo thân, hông tự hạ khi gối gập. Cả bộ xương chạy lệch pha nối tiếp (hông → xương sống → vai → tay → ngón, cổ → đầu), bàn chân luôn hướng thẳng và phẳng, cổ cùng đầu chia nhau giữ thăng bằng, vai nâng theo tay; khi đổi hành động các khớp chuyển lần lượt từ hông ra ngoài. File FBX gốc không bị thay đổi. Chất lượng khớp vẫn phụ thuộc cấu trúc rig của model.</div>
 </aside>
 </main>
 <script type="module">
@@ -303,13 +303,13 @@ function finalAngles(v,def){
  const torso=[0,1,2].map(c=>hips[c]+s0[c]+s1[c]+s2[c]);
  const hang=def.armHang??.8,stab=def.stab??0;
  for(const s of ['l','r']){
-  const th=g(s+'Up'),kn=g(s+'Leg'),ft=g(s+'Foot'),arm=g(s+'Arm');
+  const th=g(s+'Up'),kn=g(s+'Leg'),ft=g(s+'Foot'),arm=g(s+'Arm'),sho=g(s+'Sho');
   const thW=th[0];
   th[0]=thW-hips[0];               // đùi giữ góc so với phương đứng, không bị hông kéo theo
   ft[0]=ft[0]-(thW+kn[0]);         // bàn chân giữ góc so với mặt đất
-  arm[0]-=hang*torso[0];           // tay buông theo trọng lực khi thân nghiêng
+  ft[1]-=hips[1]+th[1]+kn[1];ft[2]-=hips[2];arm[2]-=hang*torso[2]*(1-Math.min(1,Math.abs(arm[2])/100));const sg=s==='l'?1:-1,lift=Math.max(0,sg*arm[2]-50);sho[2]+=sg*.14*lift*(1-Math.min(1,Math.abs(sho[2])/6));arm[0]-=hang*torso[0];           // tay buông theo trọng lực khi thân nghiêng
  }
- const hd=g('head');for(let c=0;c<3;c++)hd[c]-=stab*torso[c];   // đầu giữ thăng bằng
+ const hd=g('head'),nk=g('neck');for(let c=0;c<3;c++){const k=stab*torso[c];nk[c]-=.4*k;hd[c]-=.6*k}   // đầu giữ thăng bằng
  return ang;
 }
 
@@ -358,6 +358,8 @@ function setupRig(H){
  const ankleL=new THREE.Vector3(),ankleR=new THREE.Vector3();
  if(lf)lf.getWorldPosition(ankleL);if(rf)rf.getWorldPosition(ankleR);
  rig={side,up,fwd,H,neutral,parentQ,hips,hipsBase:hips?hips.position.clone():new THREE.Vector3(),hipsInv3:new THREE.Matrix3().setFromMatrix4(m),ankleL,ankleR,jb:JOINTS.map(getBone),lf,rf};
+ const depth=b=>{let d=0;for(let p=b;p&&p!==hips&&d<12;p=p.parent)d++;return d};
+ rig.bd=rig.jb.map(b=>b?Math.min(.3,depth(b)*.022):0);
 }
 
 function bakeActions(){
@@ -366,14 +368,19 @@ function bakeActions(){
  const qa=new THREE.Quaternion(),qb=new THREE.Quaternion(),qc=new THREE.Quaternion(),dq=new THREE.Quaternion();
  const La=new THREE.Vector3(),Lb=new THREE.Vector3(),off=new THREE.Vector3();
  const softK=.004*H;
+ const LAG={spine:.01,spine1:.025,spine2:.04,lSho:.04,rSho:.04,lArm:.02,rArm:.02,lFore:.035,rFore:.035,lHand:.06,rHand:.06,neck:.045,head:.075,headTop:.09,lToe:.03,rToe:.03,lToeEnd:.05,rToeEnd:.05};
+ for(const sd of ['l','r'])for(const dg of ['Thumb','Index','Middle','Ring','Pinky'])for(let k=1;k<=4;k++)LAG[sd+dg+k]=.07+k*.02;
+ const lagGroups=new Map();
+ for(const [id,l] of Object.entries(LAG))if(JI[id]!==undefined){if(!lagGroups.has(l))lagGroups.set(l,[]);lagGroups.get(l).push(JI[id])}
  compiled={};
  for(const [name,def] of Object.entries(ACTIONS)){
   const frames=def.frames.slice().sort((a,b)=>a.t-b.t);
   const A={...def,times:frames.map(f=>f.t),vecs:frames.map(f=>frameVec(withFingerKeys(f,name)))};
   const T=def.duration,N=Math.max(2,Math.round(T*30)),count=def.loop?N:N+1;
-  const quats=new Float32Array(count*J*4),offs=new Float32Array(count*3),v=new Float32Array(NCH);
+  const quats=new Float32Array(count*J*4),offs=new Float32Array(count*3),v=new Float32Array(NCH),vl=new Float32Array(NCH),sc=Math.min(1,T/2);
   for(let i=0;i<count;i++){
    evalAction(A,i*T/N,v);
+   for(const [l,ids] of lagGroups){evalAction(A,mod(i*T/N-l*sc,T),vl);for(const j of ids){v[j*3]=vl[j*3];v[j*3+1]=vl[j*3+1];v[j*3+2]=vl[j*3+2]}}
    const ang=finalAngles(v,def);
    for(let j=0;j<J;j++){
     const b=jb[j];if(!b)continue;
@@ -418,7 +425,7 @@ function applyPose(time){
  }
  if(blendFrom&&blendK<1){
   const e=blendK*blendK*(3-2*blendK);
-  for(let j=0;j<J;j++){const b=rig.jb[j];if(!b||!blendFrom[j])continue;b.quaternion.copy(blendFrom[j]).slerp(b.quaternion,e)}
+  for(let j=0;j<J;j++){const b=rig.jb[j];if(!b||!blendFrom[j])continue;const x=Math.min(1,Math.max(0,(blendK-rig.bd[j])/(1-rig.bd[j]))),ej=x*x*(3-2*x);b.quaternion.copy(blendFrom[j]).slerp(b.quaternion,ej)}
   if(rig.hips&&blendHips)rig.hips.position.lerpVectors(blendHips,rig.hips.position,e);
  }
  model.updateMatrixWorld(true);
@@ -533,7 +540,7 @@ loader.load(FBX_URL,obj=>{
  status.textContent='Không thể hiển thị model: '+(err?.message||'Lỗi không xác định');
  document.getElementById('modelInfo').textContent='Lỗi xử lý FBX: '+(err?.message||'Không rõ nguyên nhân');
 });
-function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.08);if(blendK<1)blendK=Math.min(1,blendK+dt/.35);
+function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.08);if(blendK<1)blendK=Math.min(1,blendK+dt/.5);
  if(model&&rig&&(playing||blendK<1)){if(playing){elapsed+=dt*speed;if(elapsed>duration){if(compiled[action]?.loop)elapsed%=duration;else{elapsed=duration;playing=false}}}setPose(elapsed);updateClock()}controls.update();renderer.render(scene,camera)}tick();
 </script>
 </body></html>
