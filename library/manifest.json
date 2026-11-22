@@ -17,5 +17,22 @@
       "updatedAt": "2026-11-22T05:48:23.048Z"
     }
   },
-  "animations": []
+  "animations": [
+    {
+      "id": "mixamo-com-mwrf1ym1",
+      "name": "mixamo.com",
+      "category": "Locomotion",
+      "duration": 0.9666666388511658,
+      "loop": true,
+      "speed": 1,
+      "tracks": 53,
+      "keyframes": 1590,
+      "source": "Walking.fbx",
+      "createdAt": "2026-11-22T05:48:37.371Z",
+      "dataPath": "library/animations/mixamo-com-mwrf1ym1.json",
+      "thumbnailPath": "library/thumbnails/animations/mixamo-com-mwrf1ym1.png",
+      "thumbnail": "./library/thumbnails/animations/mixamo-com-mwrf1ym1.png",
+      "rigSignature": []
+    }
+  ]
 }
