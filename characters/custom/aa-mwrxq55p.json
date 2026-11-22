@@ -1,0 +1,67 @@
+{
+  "format": "3DiS-Character-1.0",
+  "id": "aa-mwrxq55p",
+  "name": "aa",
+  "base": "20260926223349_4ec5f5b9.fbx",
+  "updatedAt": "2026-11-22T14:31:18.686Z",
+  "items": [
+    {
+      "id": "ggqae8gr",
+      "slot": "hat",
+      "preset": "hat-party",
+      "name": "Mũ chóp",
+      "color": "#e84393",
+      "color2": "#ffeaa7",
+      "visible": true,
+      "pieces": [
+        {
+          "uid": "p43jv163",
+          "part": "main",
+          "label": "Mũ",
+          "bone": "head",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ],
+          "scale": 1,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "g4mh7vmb",
+      "slot": "belt",
+      "preset": "belt-sash",
+      "name": "Dải thắt eo (đai)",
+      "color": "#c0392b",
+      "color2": "#7f1d1d",
+      "visible": true,
+      "pieces": [
+        {
+          "uid": "pwgr29sc",
+          "part": "main",
+          "label": "Đai",
+          "bone": "hips",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ],
+          "scale": 1,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}
