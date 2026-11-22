@@ -113,7 +113,7 @@ const JOINTS=['hips','spine','spine1','spine2','neck','head','headTop','lSho','r
 for(const side of ['l','r'])for(const [digit,label] of [['Thumb','thumb'],['Index','index'],['Middle','middle'],['Ring','ring'],['Pinky','pinky']])for(let segment=1;segment<=4;segment++){
  const id=side+digit+segment;
  JOINTS.push(id);
- ALIASES[id]=[side==='l'?'left':'right']+'hand'+label+segment;
+ ALIASES[id]=[(side==='l'?'left':'right')+'hand'+label+segment];
 }
 const J=JOINTS.length,JI=Object.fromEntries(JOINTS.map((j,i)=>[j,i]));
 const ROOT=J*3,NCH=J*3+4;           // kênh: 20 khớp × (pitch,yaw,roll) + root x,y,z + air
@@ -193,7 +193,7 @@ const ACTIONS={
   F(1.30,{hips:[13,0,0],spine:[9,0,0],spine1:[7,0,0],spine2:[5,0,0],lUp:[-56,0,0],rUp:[-56,0,0],lLeg:[92,0,0],rLeg:[92,0,0],lArm:[18,0,10],rArm:[18,0,-10],lFore:[-16,0,0],rFore:[-16,0,0]},[0,-.01,0]),
   F(1.55,{hips:[5,0,0],spine:[3,0,0],spine1:[2,0,0],spine2:[1,0,0],lUp:[-28,0,0],rUp:[-28,0,0],lLeg:[42,0,0],rLeg:[42,0,0],lArm:[-8,0,6],rArm:[-8,0,-6],lFore:[-10,0,0],rFore:[-10,0,0]}),
   F(1.85,{hips:[1,0,0],spine:[0,0,0],spine1:[0,0,0],spine2:[0,0,0],lUp:[-6,0,0],rUp:[-6,0,0],lLeg:[12,0,0],rLeg:[12,0,0],lArm:[-26,0,6],rArm:[-26,0,-6],lFore:[-18,0,0],rFore:[-18,0,0]}),
-  F(2.2,{hips:[1,0,0],spine:[0,0,0],spine1:[0,0,0],spine2:[0,0,0],lUp:[-4,0,0],rUp:[-4,0,0],lLeg:[8,0,0],rLeg:[8,0,0],lArm:[-28,0,8],rArm:[-28,0,-8],lFore:[-18,0,0],rFore:[-18,0,0]})
+  F(2.05,{hips:[1,0,0],spine:[0,0,0],spine1:[0,0,0],spine2:[0,0,0],lUp:[-4,0,0],rUp:[-4,0,0],lLeg:[8,0,0],rLeg:[8,0,0],lArm:[-28,0,8],rArm:[-28,0,-8],lFore:[-18,0,0],rFore:[-18,0,0]})
  ]},
  bow:{duration:4.4,loop:true,stab:.15,plantY:true,plantZ:true,frames:[
   // Cúi chào theo trục gập thân, giữ nhịp thở ở điểm thấp rồi trở về và lặp.
@@ -204,7 +204,7 @@ const ACTIONS={
   F(2.2,bowDeep),
   F(2.85,{hips:[8,0,0],spine:[2,0,0],spine1:[2,0,0],spine2:[1,0,0],neck:[2,0,0],head:[1,0,0],lArm:[-8,0,3],rArm:[-8,0,-3],lFore:[-5,0,0],rFore:[-5,0,0]}),
   F(3.55,{hips:[1,0,0],spine:[.5,0,0],spine1:[.5,0,0],spine2:[.5,0,0],neck:[0,0,0],head:[0,0,0],lArm:[0,0,2],rArm:[0,0,-2]}),
-  F(4.4,{hips:[0,0,0],spine:[0,0,0],spine1:[0,0,0],spine2:[0,0,0],neck:[0,0,0],head:[0,0,0],lArm:[0,0,2],rArm:[0,0,-2]})
+  F(4.0,{hips:[0,0,0],spine:[0,0,0],spine1:[0,0,0],spine2:[0,0,0],neck:[0,0,0],head:[0,0,0],lArm:[0,0,2],rArm:[0,0,-2]})
  ]},
  dance:{duration:2,loop:true,stab:.3,plantY:true,frames:halfCycle([
   F(0,{hips:[0,10,7],spine:[0,-5,-4],spine1:[0,-6,-4],spine2:[0,-6,-3],neck:[0,0,2],head:[0,-4,3],lUp:[-24,0,0],lLeg:[42,0,0],rUp:[-18,0,0],rLeg:[30,0,0],rSho:[0,0,-8],rArm:[-10,0,-128],rFore:[0,0,-6],lArm:[15,0,26],lFore:[-60,0,0]},[.01,0,0]),
