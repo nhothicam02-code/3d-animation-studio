@@ -1,5 +1,21 @@
 {
   "version": 1,
-  "characters": {},
+  "characters": {
+    "20260926223349_4ec5f5b9.fbx": {
+      "model": "20260926223349_4ec5f5b9.fbx",
+      "thumbnail": "./library/thumbnails/characters/20260926223349-4ec5f5b9-fbx.png",
+      "updatedAt": "2026-11-22T08:19:43.014Z"
+    },
+    "Sitting Laughing.fbx": {
+      "model": "Sitting Laughing.fbx",
+      "thumbnail": "./library/thumbnails/characters/sitting-laughing-fbx.png",
+      "updatedAt": "2026-11-22T08:19:45.372Z"
+    },
+    "Walking.fbx": {
+      "model": "Walking.fbx",
+      "thumbnail": "./library/thumbnails/characters/walking-fbx.png",
+      "updatedAt": "2026-11-22T08:19:47.526Z"
+    }
+  },
   "animations": []
 }
