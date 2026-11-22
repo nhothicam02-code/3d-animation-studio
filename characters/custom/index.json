@@ -1,1 +1,14 @@
-{"version":1,"characters":[]}
+{
+  "version": 1,
+  "characters": [
+    {
+      "id": "sa-mwrwz278",
+      "name": "sa",
+      "base": "20260926223349_4ec5f5b9.fbx",
+      "items": 1,
+      "dataPath": "characters/custom/sa-mwrwz278.json",
+      "thumbnail": "./characters/custom/thumbs/sa-mwrwz278.png",
+      "updatedAt": "2026-11-22T14:10:15.141Z"
+    }
+  ]
+}
