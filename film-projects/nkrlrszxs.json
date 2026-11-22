@@ -2,7 +2,7 @@
  "id": "nkrlrszxs",
  "name": "phim",
  "created": 1795343875120,
- "updated": 1795357985161,
+ "updated": 1795364158304,
  "tts": false,
  "scenes": [
   {
@@ -40,8 +40,8 @@
       "dataPath": "characters/custom/aa-mwrxq55p.json",
       "name": "aa"
      },
-     "x": 1.2,
-     "z": 0,
+     "x": 0.46,
+     "z": -1.11,
      "rot": 0,
      "scale": 1,
      "opacity": 1,
@@ -52,7 +52,7 @@
      "sy": 1,
      "sz": 1,
      "lock": true,
-     "fixed": true,
+     "fixed": false,
      "clips": [
       {
        "id": "r6y9k9fbd",
