@@ -30,17 +30,8 @@ aside{grid-row:1;grid-column:2;background:var(--panel);border-left:1px solid var
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;width:min(440px,92vw);padding:16px}dialog::backdrop{background:#000a}dialog h3{margin:0 0 4px}header nav button.on{border-color:#6fd3a0}.chk{display:flex;gap:8px;align-items:center;color:var(--text);font-size:12px}#ghSt{min-height:30px;white-space:pre-wrap}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script></head><body>
-<header><div class="brand"><span>3DiS</span> / FILM STUDIO</div><nav><a href="./index.html">Thư viện</a><a href="./library.html">Kho tài nguyên</a><button id="bRefresh" title="Tải lại danh sách nhân vật, nhân vật Custom, clip và nguồn media từ GitHub mà không cần mở lại trang">↻ Làm mới thư viện</button><button id="bGh" title="Đồng bộ dự án với GitHub (dùng token trong Cài đặt của trang Thư viện)">☁ Đồng bộ</button><button id="bGhCfg" title="Cài đặt đồng bộ nâng cao (repo riêng, thư mục…)">⚙</button></nav></header>
-<dialog id="dGh"><h3>☁ Đồng bộ GitHub</h3>
-<div class="hint">Mỗi dự án được lưu thành một file JSON trong repo. Dữ liệu vẫn nằm ở localStorage; GitHub là bản sao lưu và để dùng chung giữa nhiều máy. Lần đầu, token và repo được lấy từ phần “Cài đặt GitHub” của trang Thư viện nếu bạn đã nhập ở đó.</div>
-<label>Repository (owner/tên)</label><input type="text" id="ghRepo" placeholder="ten-ban/film-projects" autocomplete="off">
-<div class="r"><div><label>Branch</label><input type="text" id="ghBr" placeholder="main"></div><div><label>Thư mục trong repo</label><input type="text" id="ghDir" placeholder="film-projects"></div></div>
-<label>Personal Access Token</label><input type="password" id="ghTok" autocomplete="off" placeholder="github_pat_…">
-<div class="hint">Repo của website là public, nên dự án nên lưu ở một repo <b>private</b> riêng (đổi ô Repository ở trên). Nếu dùng chung repo website, mỗi lần đẩy sẽ làm GitHub Pages build lại. Nên dùng repo <b>private</b> và fine-grained token chỉ cấp cho repo đó với quyền <b>Contents: Read and write</b>. Token được lưu trong localStorage của trình duyệt này.</div>
-<label class="chk"><input type="checkbox" id="ghAuto"> Tự động đẩy lên sau mỗi lần sửa, và kéo về khi mở trang</label>
-<div id="ghSt" class="hint"></div>
-<div class="r" style="margin-top:10px"><button id="ghGo" class="pri">Lưu &amp; đồng bộ ngay</button><button id="ghOff" class="del">Ngắt kết nối</button><button id="ghClose">Đóng</button></div></dialog>
-<section id="vList"><div class="bar"><h1>Dự án phim 3D</h1><div class="r"><button id="bSync" class="pri" title="Đẩy dự án lên GitHub và kéo dự án từ các trình duyệt khác về">☁ Đồng bộ GitHub</button><button id="bNew">+ Dự án mới</button><button id="bImp">Nhập JSON</button><input type="file" id="fImp" accept=".json" hidden></div></div><div class="meta" id="syncSt" style="margin:-6px 0 12px;white-space:pre-wrap"></div><div class="cards" id="list"></div></section>
+<header><div class="brand"><span>3DiS</span> / FILM STUDIO</div><nav><a href="./index.html">Thư viện</a><a href="./library.html">Kho tài nguyên</a><button id="bRefresh" title="Tải lại danh sách nhân vật, nhân vật Custom, clip và nguồn media từ GitHub mà không cần mở lại trang">↻ Làm mới thư viện</button><button id="bGh" class="pri" title="Lưu dự án (JSON) vào thư mục projects/ trên GitHub — dùng token trong Cài đặt của trang Thư viện">☁ Lưu lên GitHub</button></nav></header>
+<section id="vList"><div class="bar"><h1>Dự án phim 3D</h1><div class="r"><button id="bLoad" title="Tải lại danh sách dự án từ GitHub">↻ Tải từ GitHub</button><button id="bNew">+ Dự án mới</button><button id="bImp">Nhập JSON</button><input type="file" id="fImp" accept=".json" hidden></div></div><div class="meta" id="syncSt" style="margin:-6px 0 12px;white-space:pre-wrap"></div><div class="cards" id="list"></div></section>
 <section id="vEd" hidden><div id="ed">
 <div id="stage"><div id="gt"><button data-g="move" title="Di chuyển (G)">✥</button><button data-g="rot" title="Xoay (R)">⟳</button><button data-g="scl" title="Scale (S)">⤢</button></div><div id="frame"><div id="bgl"></div><div id="vp"></div><div id="ovl"></div><div id="cbox" hidden><i class="rh"></i></div><div id="flab"></div></div><div id="say"></div></div>
 <aside><div class="r" style="margin-bottom:8px"><a href="#" id="back" style="flex:none">← Dự án</a><b id="pn" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></b></div><div class="tabs" id="tabs"></div><div id="panel"></div></aside>
@@ -75,7 +66,7 @@ const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slic
 const FONTS=['Be Vietnam Pro','Roboto','Montserrat','Playfair Display','Pacifico','Lobster','Dancing Script','Oswald','Arial','Georgia','Courier New','Impact'],V2=['txt','dlg','img','vid'],ICON={clip:'🎞',txt:'T',dlg:'💬',img:'🖼',vid:'🎬',aud:'🎵',tts:'🗣',bg:'■'};
 let projects=[];try{projects=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{}
 let P=null,si=0,sel=null,tab='src',pps=60,t=0,playing=false,allMode=false,busy=false,manifest={characters:{},animations:[]},cq='',media=[];const murl={},spoken={};
-const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(projects))}catch(e){say('Không lưu được: '+e.message)}ghSoon()},touch=()=>{P.updated=Date.now();persist();commit()};let tmr;const touchSoon=()=>{P.updated=Date.now();clearTimeout(tmr);tmr=setTimeout(()=>{persist();commit()},300)};
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(projects))}catch(e){say('Không lưu được: '+e.message)}},touch=()=>{P.updated=Date.now();persist();commit()};let tmr;const touchSoon=()=>{P.updated=Date.now();clearTimeout(tmr);tmr=setTimeout(()=>{persist();commit()},300)};
 const sc=()=>P.scenes[si],snap=v=>Math.max(0,Math.round(v*P.fmt.fps)/P.fmt.fps),say=m=>{$('say').textContent=m||'';$('say').hidden=!m},dl=(n,o)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));a.download=n;a.click()};
 const mkScene=n=>({id:uid(),name:'Cảnh '+n,duration:8,bg:'#171923',cam:null,chars:[],tracks:[]});
 const ASP={'16:9':16/9,'9:16':9/16,'1:1':1,'4:3':4/3,'3:4':3/4,'21:9':21/9,'4:5':4/5},POSY={top:12,mid:50,bot:82};
@@ -111,73 +102,52 @@ function libHtml(ctx,types,selId){
 
 /* ---------- Danh sách ---------- */
 function renderList(){const l=projects.slice().sort((a,b)=>b.updated-a.updated);$('list').innerHTML=l.length?l.map(p=>'<div class="card" data-id="'+p.id+'"><h3>'+esc(p.name)+'</h3><div class="meta">'+p.scenes.length+' cảnh · '+(p.fmt?p.fmt.aspect+' · '+p.fmt.fps+'fps · ':'')+new Date(p.updated).toLocaleDateString('vi-VN')+'</div><div class="r"><button class="pri" data-a="open">Mở</button><button data-a="dup">Nhân bản</button><button data-a="exp">Xuất</button><button class="del" data-a="del">Xóa</button></div></div>').join(''):'<div class="empty">Chưa có dự án. Bấm “+ Dự án mới”.</div>'}
-$('list').onclick=e=>{const c=e.target.closest('.card');if(!c)return;const p=projects.find(x=>x.id===c.dataset.id),a=e.target.dataset.a;if(!a||a==='open')return void(location.hash='#p='+p.id);if(a==='exp')return dl(p.name+'.film.json',p);if(a==='dup'){const q=JSON.parse(JSON.stringify(p));q.id=uid();q.name+=' (bản sao)';q.updated=Date.now();projects.push(q)}if(a==='del'&&confirm('Xóa “'+p.name+'”?')){projects=projects.filter(x=>x!==p);ghForget(p.id)}persist();renderList()};
+$('list').onclick=e=>{const c=e.target.closest('.card');if(!c)return;const p=projects.find(x=>x.id===c.dataset.id),a=e.target.dataset.a;if(!a||a==='open')return void(location.hash='#p='+p.id);if(a==='exp')return dl(p.name+'.film.json',p);if(a==='dup'){const q=JSON.parse(JSON.stringify(p));q.id=uid();q.name+=' (bản sao)';q.updated=Date.now();projects.push(q)}if(a==='del'&&confirm('Xóa “'+p.name+'”? (bản trên GitHub cũng bị xóa)')){projects=projects.filter(x=>x!==p);delFromGit(p.id)}persist();renderList()};
 $('bNew').onclick=()=>{const n=prompt('Tên phim mới:');if(!n)return;const p=ensure({id:uid(),name:n.trim(),created:Date.now(),updated:Date.now(),scenes:[mkScene(1)]});projects.push(p);persist();location.hash='#p='+p.id};
 $('bImp').onclick=()=>$('fImp').click();$('fImp').onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!Array.isArray(p.scenes))throw Error('Sai định dạng');p.id=uid();p.updated=Date.now();projects.push(ensure(p));persist();renderList()}catch(x){alert(x.message)}e.target.value=''};
-/* ---------- Đồng bộ GitHub (mỗi dự án = 1 file JSON trong repo) ---------- */
-const GHK='3dis.gh',GHS='3dis.gh.sync',GHD='3dis.gh.del';
-const ghLoad=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch{return d}};
-const ghShared=()=>({token:localStorage.getItem('3dis.github.token')||'',repo:localStorage.getItem('3dis.github.repo')||''});
-let gh=Object.assign({token:'',repo:'',branch:'main',dir:'film-projects',auto:false,pub:false,checked:''},ghLoad(GHK,null)||ghShared()),ghSync=ghLoad(GHS,{}),ghDel=ghLoad(GHD,[]),ghBusy=false,ghAgain=false,ghTmr,ghMsg='';
-const GH_DEF='nhothicam02-code/3d-animation-studio';
-function ghAdopt(){const sh=ghShared();if(!gh.token&&sh.token)gh.token=sh.token;if(!/^[\w.-]+\/[\w.-]+$/.test(gh.repo||''))gh.repo=sh.repo||GH_DEF;if(!gh.branch)gh.branch='main';if(!gh.dir)gh.dir='film-projects'}
-ghAdopt();
-const ghSave=()=>{try{localStorage.setItem(GHK,JSON.stringify(gh));localStorage.setItem(GHS,JSON.stringify(ghSync));localStorage.setItem(GHD,JSON.stringify(ghDel))}catch{}};
-const ghOn=()=>!!gh.token&&/^[\w.-]+\/[\w.-]+$/.test(gh.repo);
-const ghStat=m=>{ghMsg=m;const e=$('ghSt');if(e)e.textContent=m;const se=$('syncSt');if(se)se.textContent=m;const b=$('bGh');if(b){b.title=m;b.classList.toggle('on',ghOn())}};
-const b64=s=>{const b=new TextEncoder().encode(s);let o='';for(let i=0;i<b.length;i+=8192)o+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(o)};
-async function ghApi(path,o={}){const r=await fetch('https://api.github.com/repos/'+gh.repo+'/contents/'+path+(o.q||''),{method:o.method||'GET',cache:'no-store',headers:{Authorization:'Bearer '+gh.token,Accept:o.raw?'application/vnd.github.raw+json':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},body:o.body?JSON.stringify(o.body):undefined});
+/* ---------- Lưu dự án lên GitHub: mỗi dự án = projects/<id>.json ---------- */
+const PDIR='projects',SHAK='3dis.proj.sha';
+let SHA={};try{SHA=JSON.parse(localStorage.getItem(SHAK))||{}}catch{}
+const shaSave=()=>{try{localStorage.setItem(SHAK,JSON.stringify(SHA))}catch{}};
+const gcfg=()=>({token:localStorage.getItem('3dis.github.token')||'',repo:localStorage.getItem('3dis.github.repo')||'nhothicam02-code/3d-animation-studio'});
+const b64=t=>{const b=new TextEncoder().encode(t);let o='';for(let i=0;i<b.length;i+=8192)o+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(o)};
+const gmsg=(m,bad)=>{const e=$('syncSt');if(e){e.textContent=m;e.style.color=bad?'var(--red)':''}if(P)say(m)};
+async function ghApi(path,o={}){const{token,repo}=gcfg();if(!token)throw Error('Chưa có GitHub token — nhập ở trang Thư viện → ⚙ Cài đặt.');
+ const r=await fetch('https://api.github.com/repos/'+repo+'/contents/'+path+(o.method&&o.method!=='GET'?'':'?ref=main'),{method:o.method||'GET',cache:'no-store',headers:{Authorization:'Bearer '+token,Accept:o.raw?'application/vnd.github.raw+json':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'},body:o.body?JSON.stringify(o.body):undefined});
  if(r.status===404&&o.ok404)return null;
- if(!r.ok){let m='';try{m=(await r.json()).message}catch{}throw Error('GitHub '+r.status+(m?': '+m:r.status===401?' (token sai/hết hạn)':''))}
+ if(!r.ok){let m='';try{m=(await r.json()).message}catch{}throw Error('GitHub '+r.status+(m?': '+m:''))}
  return o.raw?r.text():r.json()}
-async function ghRun(pull){
- if(!ghOn())return;if(ghBusy){ghAgain=true;return}
- ghBusy=true;let up=0,down=0,rm=0,cf=0,bl=0;
- try{
-  ghStat('Đang đồng bộ…');
-  const dir=gh.dir.replace(/^\/+|\/+$/g,''),br=gh.branch||'main',q='?ref='+encodeURIComponent(br);
-  if(gh.checked!==gh.repo){try{const ri=await(await fetch('https://api.github.com/repos/'+gh.repo,{cache:'no-store',headers:{Authorization:'Bearer '+gh.token,Accept:'application/vnd.github+json'}})).json();if(typeof ri.private==='boolean'){gh.pub=!ri.private;gh.checked=gh.repo}}catch{}}
-  const list=await ghApi(dir,{q,ok404:true});
-  const remote=new Map((Array.isArray(list)?list:[]).filter(f=>f.type==='file'&&/^\w+\.json$/.test(f.name)).map(f=>[f.name.slice(0,-5),f.sha]));
-  const win=new Set(),blocked=new Set();
-  /* 1. Xóa trên GitHub những dự án đã xóa ở máy này */
-  for(const id of ghDel.slice()){
-   if(remote.has(id)){await ghApi(dir+'/'+id+'.json',{method:'DELETE',body:{message:'Xóa dự án '+id,sha:remote.get(id),branch:br}});remote.delete(id);rm++}
-   delete ghSync[id];ghDel=ghDel.filter(x=>x!==id)}
-  /* 2. Kéo về: file nào trên GitHub khác lần đồng bộ trước */
-  if(pull)for(const [id,sha] of remote){
-   const st=ghSync[id];if(st&&st.sha===sha)continue;
-   if(P&&P.id===id){blocked.add(id);bl++;continue}
-   const rp=JSON.parse(await ghApi(dir+'/'+id+'.json',{q,raw:true}));
-   if(!rp||!Array.isArray(rp.scenes))continue;
-   rp.id=id;
-   const i=projects.findIndex(p=>p.id===id),loc=projects[i],dirty=loc&&(!st||loc.updated!==st.updated);
-   if(dirty){cf++;if((loc.updated||0)>=(rp.updated||0)){win.add(id);continue}}
-   ensure(rp);if(i>=0)projects[i]=rp;else projects.push(rp);
-   ghSync[id]={sha,updated:rp.updated};down++}
-  /* 3. Đẩy lên: dự án mới hoặc đã sửa từ lần đồng bộ trước */
-  for(const p of projects.slice()){
-   if(blocked.has(p.id))continue;
-   const st=ghSync[p.id],has=remote.has(p.id);
-   if(!pull&&has&&(!st||st.sha!==remote.get(p.id))){bl++;continue}
-   if(st&&has&&st.updated===p.updated&&st.sha===remote.get(p.id)&&!win.has(p.id))continue;
-   const u=p.updated,body=JSON.stringify(p,null,1);
-   const res=await ghApi(dir+'/'+p.id+'.json',{method:'PUT',body:{message:'Cập nhật: '+p.name,content:b64(body),branch:br,sha:remote.get(p.id)}});
-   ghSync[p.id]={sha:res.content.sha,updated:u};remote.set(p.id,res.content.sha);up++}
-  if(down||rm){try{localStorage.setItem(KEY,JSON.stringify(projects))}catch{}if(!P)renderList()}
-  const t=new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
-  ghStat('Đã đồng bộ lúc '+t+' · ↑'+up+' ↓'+down+(rm?' · xóa '+rm:'')+(cf?' · '+cf+' xung đột (bản mới hơn thắng)':'')+(bl?' · '+bl+' dự án có thay đổi mới trên GitHub, bấm “Đồng bộ ngay” để kéo về':'')+(gh.pub?'\n⚠ Repo đang PUBLIC: ai cũng xem được dự án của bạn. Nên dùng repo private riêng.':''));
- }catch(e){ghStat('Lỗi: '+e.message)}
- finally{ghBusy=false;ghSave();if(ghAgain){ghAgain=false;ghSoon()}}}
-function ghSoon(){if(!gh.auto||!ghOn())return;clearTimeout(ghTmr);ghTmr=setTimeout(()=>ghRun(false),4000)}
-function ghAuto(){ghAdopt();if(ghOn())ghRun(true);else ghStat('Chưa có GitHub token. Nhập ở trang Thư viện → ⚙ Cài đặt, rồi quay lại bấm “Đồng bộ”.')}
-function syncNow(){ghAdopt();if(!ghOn()){ghStat('Chưa có GitHub token. Nhập ở trang Thư viện → ⚙ Cài đặt, rồi quay lại bấm “Đồng bộ”.');alert('Chưa có GitHub token. Hãy nhập ở trang Thư viện → ⚙ Cài đặt.');return}ghRun(true)}
-function ghForget(id){if(!ghOn())return;if(!ghDel.includes(id))ghDel.push(id);ghSave()}
-$('bGh').onclick=$('bSync').onclick=syncNow;
-$('bGhCfg').onclick=()=>{$('ghRepo').value=gh.repo;$('ghBr').value=gh.branch;$('ghDir').value=gh.dir;$('ghTok').value=gh.token;$('ghAuto').checked=gh.auto;$('ghSt').textContent=ghMsg;$('dGh').showModal()};
-$('ghClose').onclick=()=>$('dGh').close();
-$('ghGo').onclick=()=>{gh.repo=$('ghRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/+$/,'');gh.branch=$('ghBr').value.trim()||'main';gh.dir=$('ghDir').value.trim()||'film-projects';gh.token=$('ghTok').value.trim();gh.auto=$('ghAuto').checked;gh.checked='';ghSave();if(!ghOn())return ghStat('Nhập repo dạng owner/tên và token.');ghRun(true)};
-$('ghOff').onclick=()=>{gh.token='';gh.auto=false;ghSync={};ghDel=[];ghSave();$('ghTok').value='';$('ghAuto').checked=false;ghStat('Đã ngắt kết nối và xóa token khỏi trình duyệt.')};
+async function saveToGit(list){
+ const b=$('bGh');b.disabled=true;let n=0;
+ try{for(const p of list){
+   gmsg('Đang lưu “'+p.name+'” lên GitHub…');
+   const path=PDIR+'/'+p.id+'.json',cur=await ghApi(path,{ok404:true});
+   const res=await ghApi(path,{method:'PUT',body:{message:'Lưu dự án: '+p.name,content:b64(JSON.stringify(p,null,1)),branch:'main',...(cur&&cur.sha?{sha:cur.sha}:{})}});
+   SHA[p.id]=res.content.sha;n++}
+  shaSave();gmsg('✓ Đã lưu '+n+' dự án vào thư mục '+PDIR+'/ trên GitHub ('+new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})+').')}
+ catch(e){gmsg('Lưu chưa xong ('+n+'/'+list.length+'): '+e.message,1)}
+ finally{b.disabled=false}}
+/* Mở trang danh sách: đọc projects/*.json trên GitHub và hiện lên danh sách (bản mới hơn thắng) */
+async function loadFromGit(quiet){
+ if(!gcfg().token){if(!quiet)gmsg('Chưa có GitHub token — nhập ở trang Thư viện → ⚙ Cài đặt.',1);return}
+ const b=$('bLoad');if(b)b.disabled=true;
+ try{gmsg('Đang tải danh sách dự án từ GitHub…');
+  const list=await ghApi(PDIR,{ok404:true}),files=(Array.isArray(list)?list:[]).filter(f=>f.type==='file'&&/^\w+\.json$/.test(f.name));let n=0;
+  await Promise.all(files.map(async f=>{const id=f.name.slice(0,-5),i=projects.findIndex(x=>x.id===id);
+   if(i>=0&&SHA[id]===f.sha)return;                       // đã có đúng bản này
+   if(P&&P.id===id)return;                                // đang mở: không ghi đè
+   const rp=JSON.parse(await ghApi(PDIR+'/'+f.name,{raw:true}));if(!rp||!Array.isArray(rp.scenes))return;
+   rp.id=id;SHA[id]=f.sha;
+   if(i>=0&&(projects[i].updated||0)>(rp.updated||0))return;  // máy này mới hơn → giữ
+   ensure(rp);if(i>=0)projects[i]=rp;else projects.push(rp);n++}));
+  shaSave();try{localStorage.setItem(KEY,JSON.stringify(projects))}catch{}
+  if(!P)renderList();
+  gmsg('Danh sách GitHub: '+files.length+' dự án'+(n?' · đã tải '+n+' mới/cập nhật':'')+'.')}
+ catch(e){gmsg('Không tải được từ GitHub: '+e.message,1)}
+ finally{if(b)b.disabled=false}}
+async function delFromGit(id){try{if(!gcfg().token)return;const path=PDIR+'/'+id+'.json',cur=await ghApi(path,{ok404:true});if(cur&&cur.sha)await ghApi(path,{method:'DELETE',body:{message:'Xóa dự án '+id,sha:cur.sha,branch:'main'}});delete SHA[id];shaSave();gmsg('Đã xóa dự án cả trên GitHub.')}catch(e){gmsg('Đã xóa ở máy này, nhưng chưa xóa được trên GitHub: '+e.message,1)}}
+$('bGh').onclick=()=>saveToGit(P?[P]:projects.slice());
+$('bLoad').onclick=()=>loadFromGit(false);
 function route(){const m=location.hash.match(/#p=(\w+)/),p=m&&projects.find(x=>x.id===m[1]);if(!p){pause();P=null;$('vEd').hidden=true;$('vList').hidden=false;renderList();return}P=ensure(p);H=[hj()];hi=0;si=0;sel=null;tab='src';$('vList').hidden=true;$('vEd').hidden=false;initThree();layout();renderAll();loadScene()}
 addEventListener('hashchange',route);$('back').onclick=e=>{e.preventDefault();location.hash=''};
 
@@ -442,5 +412,5 @@ async function refreshLib(){
  finally{b.disabled=false;b.textContent='↻ Làm mới thư viện'}}
 $('bRefresh').onclick=refreshLib;
 (async()=>{media=(await idb('readonly',s=>s.getAll()))||[];media.forEach(m=>murl[m.id]=URL.createObjectURL(m.blob));
- for(const u of['./library/manifest.json','https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/library/manifest.json']){try{const r=await fetch(u+'?v='+Date.now());if(r.ok){manifest=await r.json();manifest.animations=manifest.animations||[];manifest.characters=manifest.characters||{};break}}catch{}}try{const ci=await K.readJSON('characters/custom/index.json',null);if(ci&&Array.isArray(ci.characters))custom=sortCustom(ci.characters)}catch{}await loadLib();route();ghAuto()})();
+ for(const u of['./library/manifest.json','https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/library/manifest.json']){try{const r=await fetch(u+'?v='+Date.now());if(r.ok){manifest=await r.json();manifest.animations=manifest.animations||[];manifest.characters=manifest.characters||{};break}}catch{}}try{const ci=await K.readJSON('characters/custom/index.json',null);if(ci&&Array.isArray(ci.characters))custom=sortCustom(ci.characters)}catch{}await loadLib();route();loadFromGit(true)})();
 </script></body></html>
