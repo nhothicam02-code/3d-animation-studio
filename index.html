@@ -78,26 +78,123 @@ const grid=new THREE.GridHelper(8,24,0x55596a,0x353846);grid.position.y=-.02;sce
 let model=null,bones={},baseRot=new Map(),action='idle',playing=true,elapsed=0,duration=5,speed=1,modelHeight=2;
 const clock=new THREE.Clock();
 function resize(){const w=mount.clientWidth,h=mount.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}new ResizeObserver(resize).observe(mount);resize();
-function findBone(patterns){const entries=Object.entries(bones);for(const p of patterns){const found=entries.find(([n])=>p.test(n));if(found)return found[1]}return null}
-function addRot(bone,axis,amount){if(!bone)return;const q=baseRot.get(bone.uuid);if(!q)return;const e=new THREE.Euler(axis==='x'?amount:0,axis==='y'?amount:0,axis==='z'?amount:0,'XYZ');bone.quaternion.copy(q).multiply(new THREE.Quaternion().setFromEuler(e))}
+function findBone(patterns){
+ const entries=Object.entries(bones);
+ for(const p of patterns){const found=entries.find(([n])=>p.test(n));if(found)return found[1]}
+ return null;
+}
+function firstBoneChild(bone){
+ if(!bone)return null;
+ const stack=[...bone.children];
+ while(stack.length){const node=stack.shift();if(node.isBone)return node;stack.push(...node.children)}
+ return null;
+}
+const WORLD_UP=new THREE.Vector3(0,1,0),WORLD_FORWARD=new THREE.Vector3(0,0,1),WORLD_RIGHT=new THREE.Vector3(1,0,0);
+function rotateBoneWorld(bone,axis,angle){
+ if(!bone||Math.abs(angle)<1e-5)return;
+ model.updateMatrixWorld(true);
+ const parentQ=new THREE.Quaternion();
+ if(bone.parent)bone.parent.getWorldQuaternion(parentQ);
+ const worldQ=new THREE.Quaternion();
+ bone.getWorldQuaternion(worldQ);
+ const delta=new THREE.Quaternion().setFromAxisAngle(axis.clone().normalize(),angle);
+ const targetWorldQ=delta.multiply(worldQ);
+ bone.quaternion.copy(parentQ.invert().multiply(targetWorldQ));
+ model.updateMatrixWorld(true);
+}
+function aimBone(bone,targetDirection,weight=1){
+ const child=firstBoneChild(bone);
+ if(!bone||!child)return;
+ model.updateMatrixWorld(true);
+ const a=bone.getWorldPosition(new THREE.Vector3());
+ const b=child.getWorldPosition(new THREE.Vector3());
+ const current=b.sub(a).normalize();
+ const target=targetDirection.clone().normalize();
+ const axis=new THREE.Vector3().crossVectors(current,target);
+ const dot=THREE.MathUtils.clamp(current.dot(target),-1,1);
+ const angle=Math.acos(dot);
+ if(axis.lengthSq()<1e-8||angle<1e-4)return;
+ rotateBoneWorld(bone,axis,Math.min(angle,1.35)*THREE.MathUtils.clamp(weight,0,1));
+}
 function setPose(t){
  for(const b of Object.values(bones)){const q=baseRot.get(b.uuid);if(q)b.quaternion.copy(q)}
+ model.updateMatrixWorld(true);
  const s=Math.sin,pi=Math.PI,cycle=t*2*pi;
- const root=findBone([/^root$/i,/root/i]),hips=findBone([/^hips$/i,/pelvis/i]),spine=findBone([/^spine2?$/i,/chest/i]),spine1=findBone([/^spine1$/i]),head=findBone([/^head$/i]),neck=findBone([/^neck$/i]);
- const lArm=findBone([/^leftarm$/i,/leftupperarm/i,/mixamorigleftarm/i]),rArm=findBone([/^rightarm$/i,/rightupperarm/i,/mixamorigrightarm/i]);
- const lFore=findBone([/leftforearm/i,/leftlowerarm/i]),rFore=findBone([/rightforearm/i,/rightlowerarm/i]);
- const lUp=findBone([/leftupleg/i,/leftthigh/i,/leftupperleg/i]),rUp=findBone([/rightupleg/i,/rightthigh/i,/rightupperleg/i]);
- const lLeg=findBone([/^leftleg$/i,/leftlowerleg/i]),rLeg=findBone([/^rightleg$/i,/rightlowerleg/i]);
- const lHand=findBone([/^lefthand$/i]),rHand=findBone([/^righthand$/i]);
- const bob=(v)=>{if(root)root.position.y=(root.userData.baseY||0)+v};
- const rot=(b,a,v)=>addRot(b,a,v);
- if(action==='idle'){bob(.025*s(cycle*1.0));rot(spine,'z',.025*s(cycle*.5));rot(head,'y',.045*s(cycle*.35));rot(spine,'x',.012*s(cycle));}
- if(action==='wave'){bob(.018*s(cycle*2));rot(spine,'z',-.035);rot(head,'z',-.06);rot(rArm,'z',-1.75);rot(rArm,'x',.12);rot(rFore,'z',-.22-.38*Math.abs(s(cycle*2.8)));rot(rHand,'z',.16*s(cycle*2.8));}
- if(action==='walk'||action==='run'){const f=action==='run'?2.5:1.35,amp=action==='run'?.72:.42;bob((action==='run'?.09:.035)*Math.abs(s(cycle*f)));rot(hips,'y',.06*s(cycle*f));rot(spine,'z',.035*s(cycle*f));rot(lUp,'x',amp*s(cycle*f));rot(rUp,'x',-amp*s(cycle*f));rot(lLeg,'x',Math.max(0,-s(cycle*f))*.65);rot(rLeg,'x',Math.max(0,s(cycle*f))*.65);rot(lArm,'x',-amp*.7*s(cycle*f));rot(rArm,'x',amp*.7*s(cycle*f));rot(lFore,'x',-.25);rot(rFore,'x',-.25);}
- if(action==='jump'){const p=(t%duration)/duration;const lift=p<.22?Math.sin(p/.22*pi)*.9:p<.55?.9*(1-(p-.22)/.33):0;bob(lift);rot(lUp,'x',-.35);rot(rUp,'x',-.35);rot(lLeg,'x',.5);rot(rLeg,'x',.5);rot(lArm,'z',1.05);rot(rArm,'z',-1.05);rot(spine,'x',-.08);}
- if(action==='bow'){const p=(t%duration)/duration;const bend=p<.25?p/.25:p<.55?1:p<.8?1-(p-.55)/.25:0;rot(hips,'x',-.12*bend);rot(spine,'x',.48*bend);rot(spine1,'x',.22*bend);rot(head,'x',.22*bend);rot(lArm,'z',.12);rot(rArm,'z',-.12);}
- if(action==='dance'){bob(.08*Math.abs(s(cycle*1.5)));rot(hips,'y',.22*s(cycle));rot(spine,'z',.22*s(cycle));rot(head,'z',-.16*s(cycle));rot(lArm,'z',.8+.35*s(cycle*1.5));rot(rArm,'z',-.8-.35*s(cycle*1.5));rot(lUp,'x',.25*s(cycle*1.5));rot(rUp,'x',-.25*s(cycle*1.5));}
- if(action==='look'){rot(head,'y',.55*s(cycle*.45));rot(neck,'y',.12*s(cycle*.45));rot(spine,'z',.025*s(cycle*.45));}
+ const get=(...names)=>findBone(names.map(n=>new RegExp('^'+n+'$','i')));
+ const root=get('root'),hips=get('hips','pelvis'),spine=get('spine'),spine1=get('spine1'),spine2=get('spine2'),neck=get('neck'),head=get('head');
+ const lArm=get('leftarm','leftupperarm'),rArm=get('rightarm','rightupperarm');
+ const lFore=get('leftforearm','leftlowerarm'),rFore=get('rightforearm','rightlowerarm');
+ const lUp=get('leftupleg','leftthigh','leftupperleg'),rUp=get('rightupleg','rightthigh','rightupperleg');
+ const lLeg=get('leftleg','leftlowerleg'),rLeg=get('rightleg','rightlowerleg');
+ const lFoot=get('leftfoot'),rFoot=get('rightfoot');
+ const bob=v=>{if(root)root.position.y=(root.userData.baseY||0)+v;model.updateMatrixWorld(true)};
+ const sideOf=bone=>{if(!bone)return 1;model.updateMatrixWorld(true);return Math.sign(bone.getWorldPosition(new THREE.Vector3()).x)||1};
+ const aim=(bone,dir,weight=1)=>aimBone(bone,new THREE.Vector3(...dir),weight);
+ const soft=Math.sin(cycle);
+ if(action==='idle'){
+   bob(.012*Math.abs(s(cycle*.5)));
+   rotateBoneWorld(spine,WORLD_RIGHT,.012*s(cycle*.5));
+   rotateBoneWorld(head,WORLD_UP,.025*s(cycle*.3));
+ }
+ if(action==='wave'){
+   bob(.008*Math.abs(s(cycle)));
+   const side=sideOf(rArm);
+   // Raise upper arm toward the sky in the character's frontal plane.
+   aim(rArm,[side*.38,.92,0],1);
+   // Bend the forearm so the hand is above the elbow and facing forward.
+   aim(rFore,[side*.12,.58,.80],1);
+   rotateBoneWorld(rHand,WORLD_FORWARD,.12*s(cycle*2.4));
+ }
+ if(action==='walk'||action==='run'){
+   const fast=action==='run',freq=fast?2.7:1.45,amp=fast?.52:.30;
+   const phase=s(cycle*freq),lift=Math.abs(phase);
+   bob((fast?.035:.012)*lift);
+   rotateBoneWorld(hips,WORLD_UP,.025*phase);
+   const lSwing=amp*phase,rSwing=-amp*phase;
+   aim(lUp,[0,-Math.cos(lSwing),Math.sin(lSwing)],1);
+   aim(rUp,[0,-Math.cos(rSwing),Math.sin(rSwing)],1);
+   const kneeL=Math.max(0,-phase)*(fast?.85:.52),kneeR=Math.max(0,phase)*(fast?.85:.52);
+   aim(lLeg,[0,-Math.cos(kneeL),Math.sin(kneeL)],1);
+   aim(rLeg,[0,-Math.cos(kneeR),Math.sin(kneeR)],1);
+   const armSwing=-phase*(fast?.42:.25);
+   aim(lArm,[sideOf(lArm)*.06,-Math.cos(armSwing),Math.sin(armSwing)],1);
+   aim(rArm,[sideOf(rArm)*.06,-Math.cos(-armSwing),Math.sin(-armSwing)],1);
+   if(lFore)rotateBoneWorld(lFore,WORLD_RIGHT,-.12);
+   if(rFore)rotateBoneWorld(rFore,WORLD_RIGHT,-.12);
+ }
+ if(action==='jump'){
+   const p=(t%duration)/duration;
+   const lift=p<.22?Math.sin(p/.22*pi)*.62:p<.55?.62*(1-(p-.22)/.33):0;
+   bob(lift);
+   aim(lUp,[0,-.88,.48],1);aim(rUp,[0,-.88,.48],1);
+   aim(lLeg,[0,-.72,.69],1);aim(rLeg,[0,-.72,.69],1);
+   aim(lArm,[sideOf(lArm)*.18,.98,0],1);aim(rArm,[sideOf(rArm)*.18,.98,0],1);
+   if(spine)rotateBoneWorld(spine,WORLD_RIGHT,-.08);
+ }
+ if(action==='bow'){
+   const p=(t%duration)/duration;
+   const bend=p<.22?p/.22:p<.58?1:p<.86?1-(p-.58)/.28:0;
+   // Forward is +Z in the viewer's front-facing coordinate system.
+   aim(spine,[0,Math.cos(.20*bend),Math.sin(.20*bend)],1);
+   aim(spine1,[0,Math.cos(.36*bend),Math.sin(.36*bend)],1);
+   aim(spine2,[0,Math.cos(.48*bend),Math.sin(.48*bend)],1);
+   aim(neck,[0,Math.cos(.42*bend),Math.sin(.42*bend)],1);
+   aim(head,[0,Math.cos(.30*bend),Math.sin(.30*bend)],1);
+ }
+ if(action==='dance'){
+   bob(.025*Math.abs(s(cycle*1.3)));
+   rotateBoneWorld(hips,WORLD_UP,.16*s(cycle));
+   rotateBoneWorld(spine,WORLD_FORWARD,.12*s(cycle));
+   aim(lArm,[sideOf(lArm)*.45,.88,.10+.10*s(cycle*1.4)],1);
+   aim(rArm,[sideOf(rArm)*.45,.88,.10-.10*s(cycle*1.4)],1);
+   const step=.22*s(cycle*1.3);
+   aim(lUp,[0,-Math.cos(step),Math.sin(step)],1);
+   aim(rUp,[0,-Math.cos(-step),Math.sin(-step)],1);
+ }
+ if(action==='look'){
+   rotateBoneWorld(neck,WORLD_UP,.10*s(cycle*.45));
+   rotateBoneWorld(head,WORLD_UP,.32*s(cycle*.45));
+ }
 }
 function setAction(a){action=a;elapsed=0;duration=a==='jump'?1.8:a==='bow'?2.8:a==='look'?5:5;document.querySelectorAll('.action').forEach(x=>x.classList.toggle('active',x.dataset.action===a));document.getElementById('scrub').max=duration;document.getElementById('scrub').value=0;playing=true;setPose(0);document.getElementById('playBtn').textContent='▶ Phát'}
 document.querySelectorAll('.action').forEach(b=>b.addEventListener('click',()=>setAction(b.dataset.action)));
