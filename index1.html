@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3DiS — Character Motion Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#101116;--panel:#191b24;--panel2:#222531;--line:#303442;--text:#f4f5f8;--muted:#9da3b4;--accent:#9a83ff;--green:#66d6a3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,system-ui,Segoe UI,sans-serif}
+header{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#14151c}
+.brand{font-weight:800;letter-spacing:.4px;font-size:17px}.brand span{color:var(--accent)}.sub{color:var(--muted);font-size:12px}
+main{height:calc(100vh - 62px);min-height:560px;display:grid;grid-template-columns:minmax(0,1fr) 330px}
+#stage{position:relative;min-width:0;background:radial-gradient(ellipse at 50% 42%,#292b37 0,#171923 58%,#111219 100%);overflow:hidden}
+#viewport{position:absolute;inset:0}canvas{display:block;width:100%;height:100%}
+.stageTag{position:absolute;left:18px;top:16px;background:#171923cc;border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:#dfe1e9;font-size:12px;backdrop-filter:blur(8px)}
+#status{position:absolute;left:18px;bottom:18px;color:var(--muted);font-size:12px;background:#171923cc;border:1px solid var(--line);border-radius:9px;padding:8px 11px;max-width:70%}
+.hint{position:absolute;right:16px;top:16px;color:#aeb3c2;font-size:11px}
+aside{border-left:1px solid var(--line);background:var(--panel);padding:18px;overflow:auto}
+h2{font-size:15px;margin:0 0 13px}h3{font-size:12px;color:#c4c8d3;text-transform:uppercase;letter-spacing:.8px;margin:22px 0 10px}
+.field{margin:10px 0}label{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}
+select,button,input[type=range]{width:100%}select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:11px 9px;border-radius:10px;text-align:left;cursor:pointer;transition:.15s}
+.action:hover{border-color:#7663d2;background:#29283b}.action.active{border-color:var(--accent);background:#30294c;box-shadow:inset 0 0 0 1px #8e7ae9}
+.action b{display:block;font-size:13px}.action small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+button{border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--panel2);color:var(--text);cursor:pointer;font-weight:600}
+button.primary{background:var(--accent);border-color:var(--accent);color:#151220}button:disabled{opacity:.4;cursor:not-allowed}
+.timeline{background:var(--panel2);border:1px solid var(--line);padding:12px;border-radius:10px;margin-top:12px}
+#timeText{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+input[type=range]{accent-color:var(--accent)}
+.info{font-size:12px;line-height:1.55;color:var(--muted);background:#151720;border:1px solid var(--line);border-radius:10px;padding:11px;margin-top:14px}
+#boneList{font:11px/1.6 ui-monospace,monospace;color:#b9c0d2;max-height:100px;overflow:auto;word-break:break-word}
+.pill{display:inline-block;border:1px solid #3b6b59;color:var(--green);padding:3px 7px;border-radius:20px;font-size:10px;margin-left:6px}
+@media(max-width:800px){main{height:auto;min-height:calc(100vh - 62px);grid-template-columns:1fr}#stage{height:55vh;min-height:360px}aside{border-left:0;border-top:1px solid var(--line);overflow:visible}.hint{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<header><div class="brand"><span>3DiS</span> / MOTION LAB</div><div class="sub">FBX Character Preview · Procedural Actions</div></header>
+<main>
+<section id="stage"><div id="viewport"></div><div class="stageTag">CHARACTER PREVIEW <span class="pill" id="loadPill">ĐANG TẢI</span></div><div class="hint">Kéo để xoay · Cuộn để zoom</div><div id="status">Đang tải model FBX từ thư viện GitHub…</div></section>
+<aside>
+<h2>Điều khiển nhân vật</h2>
+<div class="field"><label>MODEL ĐANG SỬ DỤNG</label><select id="modelSelect"><option>20260926223349_4ec5f5b9.fbx</option></select></div>
+<h3>Chọn hành động</h3>
+<div class="actions" id="actions">
+<button class="action active" data-action="idle"><b>🧍 Đứng chờ</b><small>Thở, dồn trọng tâm nhẹ</small></button>
+<button class="action" data-action="wave"><b>👋 Vẫy tay</b><small>Nâng vai, vẫy tay, đầu quay theo</small></button>
+<button class="action" data-action="walk"><b>🚶 Đi bộ</b><small>Chân, hông, thân và tay xoay đối nhau</small></button>
+<button class="action" data-action="run"><b>🏃 Chạy</b><small>Có pha bay, nghiêng người, tay gập</small></button>
+<button class="action" data-action="jump"><b>🦘 Nhảy</b><small>Nhún, bật, tuck, tiếp đất giảm chấn</small></button>
+<button class="action" data-action="bow"><b>🙇 Cúi chào</b><small>Gập từ hông, đầu gối và tay buông theo</small></button>
+<button class="action" data-action="dance"><b>💃 Nhảy múa</b><small>Nhún gối, lắc hông, thân ngược chiều</small></button>
+<button class="action" data-action="look"><b>👀 Nhìn quanh</b><small>Thân → cổ → đầu xoay nối tiếp</small></button>
+</div>
+<div class="controls"><button id="playBtn" class="primary">▶ Phát</button><button id="pauseBtn">Ⅱ Tạm dừng</button><button id="stopBtn">■ Dừng</button></div>
+<div class="timeline"><div id="timeText"><span>THỜI GIAN</span><span id="clock">0.00 s</span></div><input id="scrub" type="range" min="0" max="5" step=".01" value="0"><div class="field" style="margin-bottom:0"><label>Tốc độ: <b id="speedLabel">1.0×</b></label><input id="speed" type="range" min=".25" max="2" step=".25" value="1"></div></div>
+<h3>Timeline keyframe</h3><div class="info" id="keyInfo">Đang chuẩn bị keyframe…</div><button id="exportActions" style="width:100%;margin-top:8px">↓ Tải thư viện keyframe JSON</button><h3>Thông tin model</h3><div class="info" id="modelInfo">Đang phân tích cấu trúc xương…</div>
+<h3>Xương tìm thấy</h3><div id="boneList">Đang chờ FBXLoader…</div>
+<div class="info">Hành động được dựng từ keyframe theo hệ trục của nhân vật (tự dò hướng trái / phải / trước), nội suy spline mượt giữa các tư thế. Bàn chân tự giữ chạm đất, đầu và tay tự cân bằng theo thân, hông tự hạ khi gối gập. File FBX gốc không bị thay đổi. Chất lượng khớp vẫn phụ thuộc cấu trúc rig của model.</div>
+</aside>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const FBX_URL='./20260926223349_4ec5f5b9.fbx';
+const mount=document.getElementById('viewport'),status=document.getElementById('status');
+const scene=new THREE.Scene();scene.background=null;
+const camera=new THREE.PerspectiveCamera(35,1,.01,1000);camera.position.set(0,2.2,6);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;mount.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,1,0);
+scene.add(new THREE.HemisphereLight(0xffffff,0x747080,2));
+const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,6,5);scene.add(key);
+const fill=new THREE.DirectionalLight(0xb6aaff,1.1);fill.position.set(-4,2,-3);scene.add(fill);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(3,64),new THREE.MeshStandardMaterial({color:0x30323e,roughness:.9}));floor.rotation.x=-Math.PI/2;floor.position.y=-.025;scene.add(floor);
+const grid=new THREE.GridHelper(8,24,0x55596a,0x353846);grid.position.y=-.02;scene.add(grid);
+let model=null,boneList=[],action='idle',playing=true,elapsed=0,duration=3,speed=1;
+const clock=new THREE.Clock();
+function resize(){const w=mount.clientWidth,h=mount.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}new ResizeObserver(resize).observe(mount);resize();
+
+/* ───────────────────────── Nhận diện xương ───────────────────────── */
+const rad=THREE.MathUtils.degToRad,mod=(a,n)=>((a%n)+n)%n;
+const norm=s=>String(s).toLowerCase().replace(/^.*:/,'').replace(/^mixamorig/,'').replace(/[^a-z0-9]/g,'');
+const ALIASES={
+ hips:['hips','pelvis','hip'],spine:['spine','spine0','spine01'],spine1:['spine1','spine02','chest'],spine2:['spine2','spine03','upperchest'],
+ neck:['neck','neck1'],head:['head'],
+ lSho:['leftshoulder','leftclavicle','lshoulder','lclavicle'],rSho:['rightshoulder','rightclavicle','rshoulder','rclavicle'],
+ lArm:['leftarm','leftupperarm','lupperarm','larm'],rArm:['rightarm','rightupperarm','rupperarm','rarm'],
+ lFore:['leftforearm','leftlowerarm','lforearm','llowerarm'],rFore:['rightforearm','rightlowerarm','rforearm','rlowerarm'],
+ lHand:['lefthand','lhand'],rHand:['righthand','rhand'],
+ lUp:['leftupleg','leftthigh','leftupperleg','lthigh','lupleg','lupperleg'],rUp:['rightupleg','rightthigh','rightupperleg','rthigh','rupleg','rupperleg'],
+ lLeg:['leftleg','leftlowerleg','leftcalf','leftshin','lcalf','lshin','llowerleg'],rLeg:['rightleg','rightlowerleg','rightcalf','rightshin','rcalf','rshin','rlowerleg'],
+ lFoot:['leftfoot','lfoot'],rFoot:['rightfoot','rfoot']
+};
+const JOINTS=['hips','spine','spine1','spine2','neck','head','lSho','rSho','lArm','rArm','lFore','rFore','lHand','rHand','lUp','rUp','lLeg','rLeg','lFoot','rFoot'];
+const J=JOINTS.length,JI=Object.fromEntries(JOINTS.map((j,i)=>[j,i]));
+const ROOT=J*3,NCH=J*3+4;           // kênh: 20 khớp × (pitch,yaw,roll) + root x,y,z + air
+const normMap=new Map(),jointCache={};
+function getBone(id){
+ if(id in jointCache)return jointCache[id];
+ let f=null;for(const a of ALIASES[id]||[]){const b=normMap.get(a);if(b){f=b;break}}
+ return jointCache[id]=f;
+}
+
+/* ───────────────────────── Dữ liệu keyframe ─────────────────────────
+ Mỗi khớp: [pitch, yaw, roll] (độ) trong hệ trục NHÂN VẬT (không phụ thuộc hướng model):
+   pitch = quay quanh trục ngang trái-phải: thân/đầu + = cúi/ngả trước;
+           chi buông xuống + = vung ra SAU (đùi, tay), đầu gối + = gập, bàn chân + = mũi chân chúc xuống
+   yaw   = quay quanh trục dọc: + = quay sang TRÁI
+   roll  = quay quanh trục trước-sau: + = thân nghiêng sang phải; tay/chân trái + = dang ra
+ Quy ước tự động bù khi dựng:
+   • lUp/rUp  = góc đùi so với phương thẳng đứng (tự trừ pitch của hông)
+   • lFoot/rFoot = góc bàn chân so với mặt đất (tự bù đùi + cẳng chân → chân luôn phẳng)
+   • tay (Arm) = tự bù một phần độ nghiêng của thân (armHang) để tay không bị bay theo thân
+   • đầu = tự giữ thăng bằng theo thân (stab)
+   • root = dịch hông theo (ngang, đứng, trước) tính theo tỉ lệ chiều cao; air = độ cao chân khỏi mặt đất
+   • plantY / plantZ = tự hạ/lùi hông để bàn chân đứng yên trên mặt đất
+*/
+const F=(t,r={},root=[0,0,0],air=0)=>({t,r,root,air});
+function mirrorFrame(f,t){
+ const r={};
+ for(const [id,v] of Object.entries(f.r||{})){
+  let m=id;
+  if(id[0]==='l'&&JI['r'+id.slice(1)]!==undefined)m='r'+id.slice(1);
+  else if(id[0]==='r'&&JI['l'+id.slice(1)]!==undefined)m='l'+id.slice(1);
+  r[m]=[v[0],-v[1],-v[2]];
+ }
+ const rt=f.root||[0,0,0];
+ return {t,r,root:[-rt[0],rt[1],rt[2]],air:f.air||0};
+}
+const halfCycle=(frames,half)=>[...frames,...frames.map(f=>mirrorFrame(f,f.t+half))];
+
+const waveBase={rSho:[0,0,-10],rArm:[-14,0,-88],spine:[0,-3,-1.5],spine1:[0,-3,-1.5],spine2:[0,-2,-1],head:[0,-10,-2],lArm:[1,0,2],lFore:[-8,0,0]};
+const wv=(fore,hand)=>({...waveBase,rFore:[0,0,fore],rHand:[0,0,hand]});
+const bowDeep={hips:[30,0,0],spine:[6,0,0],spine1:[6,0,0],spine2:[5,0,0],neck:[4,0,0],head:[3,0,0],lUp:[-16,0,0],rUp:[-16,0,0],lLeg:[26,0,0],rLeg:[26,0,0],lArm:[-12,0,4],rArm:[-12,0,-4],lFore:[-6,0,0],rFore:[-6,0,0]};
+const lookL={hips:[0,3,0],spine:[0,3,0],spine1:[0,4,0],spine2:[0,5,0],neck:[0,12,0],head:[0,16,1]};
+
+const ACTIONS={
+ idle:{duration:4,loop:true,stab:.5,plantY:true,frames:halfCycle([
+  F(0,{hips:[0,1.5,1.5],spine:[.5,-1,-1],spine1:[0,-1,-.5],spine2:[-.5,-1,-.5],neck:[0,-1,0],head:[.5,-1.5,.5],lArm:[2,0,1],rArm:[-1,0,-1.5],lFore:[-6,0,0],rFore:[-8,0,0],lLeg:[1,0,0],rLeg:[5,0,0],rUp:[-3,0,0]},[.004,0,0]),
+  F(1,{hips:[0,.5,0],spine:[-.5,0,0],spine1:[-1,0,0],spine2:[-1.8,0,0],lSho:[0,0,2],rSho:[0,0,-2],neck:[-.5,0,0],head:[-.5,0,0],lArm:[0,0,1],rArm:[0,0,-1],lFore:[-6,0,0],rFore:[-8,0,0],lLeg:[2,0,0],rLeg:[3,0,0],rUp:[-1.5,0,0]},[.002,0,0])
+ ],2)},
+ wave:{duration:3.4,loop:true,stab:.3,plantY:true,frames:[
+  F(0),
+  F(.55,{rSho:[0,0,-8],rArm:[-12,0,-80],rFore:[0,0,-35],spine:[0,-2,-1.5],spine1:[0,-2,-1.5],spine2:[0,-2,-1],head:[0,-8,-2],lArm:[1,0,2],lFore:[-8,0,0]}),
+  F(.95,wv(-88,0)),F(1.25,wv(-60,10)),F(1.55,wv(-100,-10)),F(1.85,wv(-60,10)),F(2.15,wv(-100,-10)),F(2.45,wv(-62,8)),F(2.75,wv(-88,0)),
+  F(3.05,{rSho:[0,0,-4],rArm:[-4,0,-30],rFore:[0,0,-12],lArm:[0,0,1],head:[0,-3,0]})
+ ]},
+ walk:{duration:1.1,loop:true,stab:.6,plantY:true,frames:halfCycle([
+  // 1) chạm gót (chân trái trước)  2) hạ trọng lượng  3) chân qua nhau  4) nâng/duỗi chân sau khi bước
+  F(0,{hips:[0,-7,0],spine:[1,4,0],spine1:[1,5,0],spine2:[1,5,0],lUp:[-24,0,0],lLeg:[3,0,0],lFoot:[-10,0,0],rUp:[14,0,0],rLeg:[24,0,0],rFoot:[32,0,0],lArm:[20,0,0],lFore:[-10,0,0],rArm:[-22,0,0],rFore:[-22,0,0]}),
+  F(.1,{hips:[0,-5,2],spine:[1,3,-1],spine1:[1,4,-1],spine2:[1,4,-1],lUp:[-18,0,0],lLeg:[16,0,0],lFoot:[0,0,0],rUp:[6,0,0],rLeg:[38,0,0],rFoot:[40,0,0],lArm:[14,0,0],lFore:[-10,0,0],rArm:[-16,0,0],rFore:[-20,0,0]},[.004,0,0]),
+  F(.25,{hips:[0,0,3],spine:[.5,0,-1.5],spine1:[.5,0,-1.5],spine2:[.5,0,-1.5],lUp:[-3,0,0],lLeg:[5,0,0],lFoot:[0,0,0],rUp:[-14,0,0],rLeg:[58,0,0],rFoot:[10,0,0],lArm:[2,0,0],lFore:[-14,0,0],rArm:[-4,0,0],rFore:[-18,0,0]},[.007,0,0]),
+  F(.4,{hips:[0,5,1],spine:[1,-3,-.5],spine1:[1,-4,0],spine2:[1,-4,0],lUp:[12,0,0],lLeg:[14,0,0],lFoot:[28,0,0],rUp:[-25,0,0],rLeg:[12,0,0],rFoot:[-6,0,0],lArm:[-14,0,0],lFore:[-14,0,0],rArm:[14,0,0],rFore:[-12,0,0]},[.003,0,0])
+ ],.55)},
+ run:{duration:.72,loop:true,stab:.6,plantY:true,frames:halfCycle([
+  F(0,{hips:[3,-9,0],spine:[4,5,0],spine1:[4,6,0],spine2:[3,6,0],lUp:[-38,0,0],lLeg:[6,0,0],lFoot:[-6,0,0],rUp:[30,0,0],rLeg:[62,0,0],rFoot:[40,0,0],lArm:[38,0,0],lFore:[-80,0,0],rArm:[-46,0,0],rFore:[-100,0,0]}),
+  F(.07,{hips:[3,-3,3],spine:[4,3,-1],spine1:[4,4,-1],spine2:[3,4,-1],lUp:[-12,0,0],lLeg:[38,0,0],lFoot:[0,0,0],rUp:[-24,0,0],rLeg:[95,0,0],rFoot:[25,0,0],lArm:[10,0,0],lFore:[-85,0,0],rArm:[-14,0,0],rFore:[-90,0,0]},[.005,0,0]),
+  F(.16,{hips:[3,4,1],spine:[4,-1,0],spine1:[4,-2,0],spine2:[3,-2,0],lUp:[22,0,0],lLeg:[22,0,0],lFoot:[42,0,0],rUp:[-44,0,0],rLeg:[72,0,0],rFoot:[14,0,0],lArm:[-22,0,0],lFore:[-85,0,0],rArm:[20,0,0],rFore:[-85,0,0]},[.003,0,0],.02),
+  F(.27,{hips:[3,8,0],spine:[4,-4,0],spine1:[4,-5,0],spine2:[3,-5,0],lUp:[30,0,0],lLeg:[78,0,0],lFoot:[38,0,0],rUp:[-44,0,0],rLeg:[30,0,0],rFoot:[-4,0,0],lArm:[-40,0,0],lFore:[-95,0,0],rArm:[36,0,0],rFore:[-80,0,0]},[0,0,0],.035)
+ ],.36)},
+ jump:{duration:1.6,loop:false,stab:.5,plantY:true,plantZ:true,frames:[
+  F(0),
+  // nhún xuống, tay vung ra sau
+  F(.35,{hips:[10,0,0],spine:[8,0,0],spine1:[8,0,0],spine2:[6,0,0],neck:[2,0,0],lUp:[-50,0,0],rUp:[-50,0,0],lLeg:[88,0,0],rLeg:[88,0,0],lArm:[50,0,8],rArm:[50,0,-8],lFore:[-12,0,0],rFore:[-12,0,0]}),
+  // bật lên: duỗi chân, kiễng mũi, tay hất lên
+  F(.52,{hips:[-4,0,0],spine:[-3,0,0],spine1:[-3,0,0],spine2:[-3,0,0],lUp:[-6,0,0],rUp:[-6,0,0],lLeg:[8,0,0],rLeg:[8,0,0],lFoot:[48,0,0],rFoot:[48,0,0],lArm:[-120,0,10],rArm:[-120,0,-10],lFore:[-10,0,0],rFore:[-10,0,0]},[0,0,0],.005),
+  // đỉnh: co gối nhẹ, tay giơ cao
+  F(.78,{hips:[4,0,0],spine:[2,0,0],spine1:[2,0,0],spine2:[1,0,0],lUp:[-30,0,0],rUp:[-30,0,0],lLeg:[50,0,0],rLeg:[50,0,0],lFoot:[20,0,0],rFoot:[20,0,0],lArm:[-160,0,12],rArm:[-160,0,-12],lFore:[-8,0,0],rFore:[-8,0,0]},[0,0,0],.22),
+  // chuẩn bị đáp: duỗi chân, mũi chân xuống trước
+  F(1.05,{hips:[2,0,0],lUp:[-14,0,0],rUp:[-14,0,0],lLeg:[12,0,0],rLeg:[12,0,0],lFoot:[30,0,0],rFoot:[30,0,0],lArm:[-80,0,18],rArm:[-80,0,-18],lFore:[-8,0,0],rFore:[-8,0,0]},[0,0,0],.06),
+  // tiếp đất, gập gối giảm chấn
+  F(1.22,{hips:[12,0,0],spine:[9,0,0],spine1:[7,0,0],spine2:[5,0,0],lUp:[-58,0,0],rUp:[-58,0,0],lLeg:[96,0,0],rLeg:[96,0,0],lArm:[20,0,10],rArm:[20,0,-10],lFore:[-14,0,0],rFore:[-14,0,0]}),
+  F(1.6)
+ ]},
+ bow:{duration:3.2,loop:false,stab:0,plantY:true,plantZ:true,frames:[
+  F(0),
+  F(.7,{hips:[8,0,0],spine:[2,0,0],lUp:[-4,0,0],rUp:[-4,0,0],lLeg:[7,0,0],rLeg:[7,0,0]}),
+  F(1.3,bowDeep),F(1.65,bowDeep),F(2.0,bowDeep),
+  F(2.6,{hips:[10,0,0],spine:[2,0,0],lUp:[-5,0,0],rUp:[-5,0,0],lLeg:[8,0,0],rLeg:[8,0,0]}),
+  F(3.2)
+ ]},
+ dance:{duration:2,loop:true,stab:.3,plantY:true,frames:halfCycle([
+  F(0,{hips:[0,10,7],spine:[0,-5,-4],spine1:[0,-6,-4],spine2:[0,-6,-3],neck:[0,0,2],head:[0,-4,3],lUp:[-24,0,0],lLeg:[42,0,0],rUp:[-18,0,0],rLeg:[30,0,0],rSho:[0,0,-8],rArm:[-10,0,-128],rFore:[0,0,-6],lArm:[15,0,26],lFore:[-60,0,0]},[.01,0,0]),
+  F(.5,{spine:[-1,0,0],spine1:[-2,0,0],spine2:[-2,0,0],lUp:[-8,0,0],lLeg:[14,0,0],rUp:[-8,0,0],rLeg:[14,0,0],lArm:[-10,0,55],rArm:[-10,0,-55],lFore:[-40,0,0],rFore:[-40,0,0]})
+ ],1)},
+ look:{duration:4.8,loop:true,stab:0,plantY:true,frames:halfCycle([
+  F(0),F(.9,lookL),F(1.6,{...lookL,head:[-1,18,1]})
+ ],2.4)}
+};
+
+/* ───────────────────────── Nội suy spline (Hermite / Catmull-Rom) ───────────────────────── */
+function frameVec(f){
+ const v=new Float32Array(NCH);
+ for(const [id,a] of Object.entries(f.r||{})){const j=JI[id];if(j===undefined)continue;v[j*3]=a[0];v[j*3+1]=a[1];v[j*3+2]=a[2]}
+ v[ROOT]=f.root?.[0]||0;v[ROOT+1]=f.root?.[1]||0;v[ROOT+2]=f.root?.[2]||0;v[ROOT+3]=f.air||0;
+ return v;
+}
+function evalAction(A,t,out){
+ const n=A.times.length,T=A.duration;
+ let k=0;for(let q=0;q<n;q++)if(A.times[q]<=t+1e-9)k=q;
+ if(!A.loop&&k>=n-1){out.set(A.vecs[n-1]);return}
+ const idx=j=>A.loop?mod(j,n):Math.min(Math.max(j,0),n-1);
+ const tm=j=>A.loop?A.times[mod(j,n)]+Math.floor(j/n)*T:A.times[idx(j)];
+ const vv=j=>A.vecs[idx(j)];
+ const t0=tm(k),t1=tm(k+1),h=Math.max(1e-6,t1-t0);
+ const u=Math.min(1,Math.max(0,(t-t0)/h)),u2=u*u,u3=u2*u;
+ const h00=2*u3-3*u2+1,h10=u3-2*u2+u,h01=3*u2-2*u3,h11=u3-u2;
+ const dt0=Math.max(1e-6,tm(k+1)-tm(k-1)),dt1=Math.max(1e-6,tm(k+2)-tm(k));
+ const z0=!A.loop&&k<=0,z1=!A.loop&&k+1>=n-1;      // đầu/cuối clip không lặp: êm vào/ra
+ const a=vv(k),b=vv(k+1),pm=vv(k-1),nx=vv(k+2);
+ for(let c=0;c<NCH;c++){
+  const m0=z0?0:(b[c]-pm[c])/dt0,m1=z1?0:(nx[c]-a[c])/dt1;
+  out[c]=h00*a[c]+h10*h*m0+h01*b[c]+h11*h*m1;
+ }
+}
+
+/* Góc cuối cùng của từng khớp sau khi áp dụng các quy tắc phối hợp toàn thân */
+function finalAngles(v,def){
+ const ang=JOINTS.map((_,j)=>[v[j*3],v[j*3+1],v[j*3+2]]);
+ const g=id=>ang[JI[id]];
+ const hips=g('hips'),s0=g('spine'),s1=g('spine1'),s2=g('spine2');
+ const torso=[0,1,2].map(c=>hips[c]+s0[c]+s1[c]+s2[c]);
+ const hang=def.armHang??.8,stab=def.stab??0;
+ for(const s of ['l','r']){
+  const th=g(s+'Up'),kn=g(s+'Leg'),ft=g(s+'Foot'),arm=g(s+'Arm');
+  const thW=th[0];
+  th[0]=thW-hips[0];               // đùi giữ góc so với phương đứng, không bị hông kéo theo
+  ft[0]=ft[0]-(thW+kn[0]);         // bàn chân giữ góc so với mặt đất
+  arm[0]-=hang*torso[0];           // tay buông theo trọng lực khi thân nghiêng
+ }
+ const hd=g('head');for(let c=0;c<3;c++)hd[c]-=stab*torso[c];   // đầu giữ thăng bằng
+ return ang;
+}
+
+/* ───────────────────────── Dựng rig & nướng animation ───────────────────────── */
+let rig=null,compiled={};
+const tmpA=new THREE.Quaternion(),tmpB=new THREE.Quaternion(),tmpV=new THREE.Vector3();
+
+function setupRig(H){
+ model.updateMatrixWorld(true);
+ const v1=new THREE.Vector3(),v2=new THREE.Vector3();
+ // 1) hệ trục nhân vật: ngang (trái +), đứng, trước
+ const lp=getBone('lUp'),rp=getBone('rUp');
+ const side=new THREE.Vector3(1,0,0);
+ if(lp&&rp){lp.getWorldPosition(v1);rp.getWorldPosition(v2);side.copy(v1.sub(v2));side.y=0;if(side.lengthSq()<1e-10)side.set(1,0,0);side.normalize()}
+ const up=new THREE.Vector3(0,1,0),fwd=new THREE.Vector3().crossVectors(side,up).normalize();
+
+ // 2) tư thế trung tính: hạ tay xuống thân (model thường ở dáng chữ T/A)
+ const aim=(bone,child,target)=>{
+  bone.updateWorldMatrix(true,true);
+  const p=new THREE.Vector3(),c=new THREE.Vector3();bone.getWorldPosition(p);child.getWorldPosition(c);
+  const d=c.sub(p);if(d.lengthSq()<1e-12)return;d.normalize();
+  const q=new THREE.Quaternion().setFromUnitVectors(d,target);
+  const w=bone.getWorldQuaternion(new THREE.Quaternion());
+  const pq=bone.parent?bone.parent.getWorldQuaternion(new THREE.Quaternion()):new THREE.Quaternion();
+  bone.quaternion.copy(pq.invert().multiply(q.multiply(w))).normalize();
+  bone.updateWorldMatrix(false,true);
+ };
+ for(const s of ['l','r']){
+  const out=side.clone().multiplyScalar(s==='l'?1:-1);
+  const arm=getBone(s+'Arm'),fore=getBone(s+'Fore'),hand=getBone(s+'Hand');
+  const a=rad(14),b=rad(10);
+  if(arm&&fore)aim(arm,fore,up.clone().multiplyScalar(-Math.cos(a)).addScaledVector(out,Math.sin(a)).normalize());
+  if(fore&&hand)aim(fore,hand,up.clone().multiplyScalar(-Math.cos(b)).addScaledVector(fwd,Math.sin(b)).addScaledVector(out,Math.sin(a)*.5).normalize());
+ }
+ model.updateMatrixWorld(true);
+
+ // 3) lưu trạng thái trung tính
+ const neutral=new Map(),parentQ=new Map();
+ for(const b of boneList){
+  neutral.set(b.uuid,b.quaternion.clone());
+  const pq=new THREE.Quaternion();if(b.parent)b.parent.getWorldQuaternion(pq);parentQ.set(b.uuid,pq);
+ }
+ const hips=getBone('hips'),lf=getBone('lFoot'),rf=getBone('rFoot');
+ const m=new THREE.Matrix4();
+ if(hips&&hips.parent){hips.parent.updateWorldMatrix(true,false);m.copy(hips.parent.matrixWorld).invert()}
+ const ankleL=new THREE.Vector3(),ankleR=new THREE.Vector3();
+ if(lf)lf.getWorldPosition(ankleL);if(rf)rf.getWorldPosition(ankleR);
+ rig={side,up,fwd,H,neutral,parentQ,hips,hipsBase:hips?hips.position.clone():new THREE.Vector3(),hipsInv3:new THREE.Matrix3().setFromMatrix4(m),ankleL,ankleR,jb:JOINTS.map(getBone),lf,rf};
+}
+
+function bakeActions(){
+ const {side,up,fwd,H,jb,hips,lf,rf}=rig;
+ const pn=jb.map(b=>b?rig.parentQ.get(b.uuid):null),pni=pn.map(q=>q?q.clone().invert():null);
+ const qa=new THREE.Quaternion(),qb=new THREE.Quaternion(),qc=new THREE.Quaternion(),dq=new THREE.Quaternion();
+ const La=new THREE.Vector3(),Lb=new THREE.Vector3(),off=new THREE.Vector3();
+ const softK=.004*H;
+ compiled={};
+ for(const [name,def] of Object.entries(ACTIONS)){
+  const frames=def.frames.slice().sort((a,b)=>a.t-b.t);
+  const A={...def,times:frames.map(f=>f.t),vecs:frames.map(frameVec)};
+  const T=def.duration,N=Math.max(2,Math.round(T*60)),count=def.loop?N:N+1;
+  const quats=new Float32Array(count*J*4),offs=new Float32Array(count*3),v=new Float32Array(NCH);
+  for(let i=0;i<count;i++){
+   evalAction(A,i*T/N,v);
+   const ang=finalAngles(v,def);
+   for(let j=0;j<J;j++){
+    const b=jb[j];if(!b)continue;
+    qa.setFromAxisAngle(side,rad(ang[j][0]));qb.setFromAxisAngle(up,rad(ang[j][1]));qc.setFromAxisAngle(fwd,rad(ang[j][2]));
+    dq.copy(qc).multiply(qb).multiply(qa);                         // delta trong hệ trục nhân vật
+    qa.copy(pni[j]).multiply(dq).multiply(pn[j]).multiply(rig.neutral.get(b.uuid)).normalize(); // sang hệ cục bộ của xương cha
+    b.quaternion.copy(qa);qa.toArray(quats,(i*J+j)*4);
+   }
+   if(hips)hips.position.copy(rig.hipsBase);
+   off.set(0,0,0);
+   if((def.plantY||def.plantZ)&&lf&&rf){
+    model.updateMatrixWorld(true);
+    lf.getWorldPosition(La);rf.getWorldPosition(Lb);La.sub(rig.ankleL);Lb.sub(rig.ankleR);
+    if(def.plantY){const sm=-softK*Math.log(Math.exp(-La.y/softK)+Math.exp(-Lb.y/softK));off.y-=sm}   // soft-min: chân thấp hơn luôn chạm đất
+    if(def.plantZ)off.addScaledVector(fwd,-(La.dot(fwd)+Lb.dot(fwd))/2);
+   }
+   off.addScaledVector(side,v[ROOT]*H).addScaledVector(up,v[ROOT+1]*H+Math.max(0,v[ROOT+3])*H).addScaledVector(fwd,v[ROOT+2]*H);
+   off.applyMatrix3(rig.hipsInv3);off.toArray(offs,i*3);
+  }
+  compiled[name]={duration:T,loop:def.loop,N,quats,offs,keyCount:def.frames.length};
+ }
+ // trả xương về tư thế trung tính
+ for(const b of boneList)b.quaternion.copy(rig.neutral.get(b.uuid));
+ if(hips)hips.position.copy(rig.hipsBase);
+}
+
+function applyPose(time){
+ const A=compiled[action];if(!A||!rig)return;
+ const T=A.duration,N=A.N;
+ const tt=A.loop?mod(time,T):Math.min(Math.max(time,0),T);
+ const f=tt/T*N;let i=Math.floor(f);const u=f-i;let i2=i+1;
+ if(A.loop){i%=N;i2%=N}else{i=Math.min(i,N);i2=Math.min(i2,N)}
+ for(let j=0;j<J;j++){
+  const b=rig.jb[j];if(!b)continue;
+  tmpA.fromArray(A.quats,(i*J+j)*4);tmpB.fromArray(A.quats,(i2*J+j)*4);
+  b.quaternion.copy(tmpA.slerp(tmpB,u));
+ }
+ if(rig.hips){
+  const o=A.offs;
+  tmpV.set(o[i*3]+(o[i2*3]-o[i*3])*u,o[i*3+1]+(o[i2*3+1]-o[i*3+1])*u,o[i*3+2]+(o[i2*3+2]-o[i*3+2])*u);
+  rig.hips.position.copy(rig.hipsBase).add(tmpV);
+ }
+ model.updateMatrixWorld(true);
+}
+function setPose(t){applyPose(t)}
+
+/* ───────────────────────── Giao diện ───────────────────────── */
+function setAction(a){
+ action=a;elapsed=0;duration=compiled[a]?.duration||3;
+ document.querySelectorAll('.action').forEach(x=>x.classList.toggle('active',x.dataset.action===a));
+ document.getElementById('scrub').max=duration;document.getElementById('scrub').value=0;
+ playing=true;setPose(0);document.getElementById('playBtn').textContent='▶ Phát';
+ document.getElementById('keyInfo').textContent=(compiled[a]?.keyCount||0)+' keyframe · '+duration.toFixed(2)+' giây · nội suy spline';
+}
+document.querySelectorAll('.action').forEach(b=>b.addEventListener('click',()=>setAction(b.dataset.action)));
+document.getElementById('exportActions').onclick=()=>{
+ const payload={format:'3DiS-Keyframe-2.0',model:'20260926223349_4ec5f5b9.fbx',
+  conventions:'Mỗi khớp [pitch,yaw,roll] (độ) trong hệ trục nhân vật (trái +). lUp/rUp là góc đùi so với phương đứng, lFoot/rFoot là góc bàn chân so với mặt đất, root tính theo tỉ lệ chiều cao, air là độ cao chân khỏi mặt đất.',
+  joints:JOINTS,actions:ACTIONS};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='3dis-basic-actions-keyframes.json';a.click();URL.revokeObjectURL(url);
+};
+document.getElementById('playBtn').onclick=()=>{const A=compiled[action];if(A&&!A.loop&&elapsed>=A.duration)elapsed=0;playing=true};
+document.getElementById('pauseBtn').onclick=()=>{playing=false};
+document.getElementById('stopBtn').onclick=()=>{playing=false;elapsed=0;setPose(0);updateClock()};
+document.getElementById('speed').oninput=e=>{speed=+e.target.value;document.getElementById('speedLabel').textContent=speed.toFixed(2)+'×'};
+document.getElementById('scrub').oninput=e=>{elapsed=+e.target.value;setPose(elapsed);updateClock()};
+function updateClock(){document.getElementById('clock').textContent=elapsed.toFixed(2)+' s';document.getElementById('scrub').value=elapsed}
+
+/* ───────────────────────── Tải model ───────────────────────── */
+const loader=new FBXLoader();
+status.textContent='Đang tải FBX (khoảng 15,7 MB)…';
+loader.load(FBX_URL,obj=>{
+ model=obj;scene.add(model);
+ let meshCount=0,vertexCount=0;
+ model.traverse(o=>{
+   if(o.isBone)boneList.push(o);
+   if(o.isMesh){
+     meshCount++;vertexCount+=o.geometry?.attributes?.position?.count||0;
+     o.visible=true;o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;
+     const mats=Array.isArray(o.material)?o.material:(o.material?[o.material]:[]);
+     if(!mats.length){o.material=new THREE.MeshStandardMaterial({color:0xd8cbd0,roughness:.78,side:THREE.DoubleSide});}
+     else mats.forEach(m=>{
+       m.side=THREE.DoubleSide;
+       m.transparent=false;
+       if(!Number.isFinite(m.opacity)||m.opacity<.05)m.opacity=1;
+       m.visible=true;
+       if(m.color && m.color.getHex()===0x000000)m.color.setHex(0xcfc6c8);
+       if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;
+       m.needsUpdate=true;
+     });
+   }
+ });
+ for(const b of boneList){const k=norm(b.name);if(!normMap.has(k))normMap.set(k,b)}
+ // Chuẩn hóa theo kích thước lớn nhất, rồi căn giữa theo bounds đã biến đổi.
+ model.scale.setScalar(1);
+ model.updateMatrixWorld(true);
+ let bounds=new THREE.Box3().setFromObject(model);
+ if(bounds.isEmpty()||!Number.isFinite(bounds.getBoundingSphere(new THREE.Sphere()).radius)){
+   throw new Error('FBX có skeleton nhưng không tìm thấy hình học mesh hợp lệ.');
+ }
+ let rawSize=bounds.getSize(new THREE.Vector3());
+ const largest=Math.max(rawSize.x,rawSize.y,rawSize.z);
+ if(largest<=0)throw new Error('Kích thước mesh không hợp lệ.');
+ model.scale.setScalar(2.6/largest);
+ model.updateMatrixWorld(true);
+ bounds.setFromObject(model);
+ const center=bounds.getCenter(new THREE.Vector3());
+ model.position.x-=center.x;
+ model.position.y-=bounds.min.y;
+ model.position.z-=center.z;
+ model.updateMatrixWorld(true);
+ bounds.setFromObject(model);
+ const size=bounds.getSize(new THREE.Vector3());
+ const sphere=bounds.getBoundingSphere(new THREE.Sphere());
+ const names=boneList.map(b=>b.name);
+
+ setupRig(size.y);
+ bakeActions();
+ duration=compiled.idle.duration;
+ document.getElementById('scrub').max=duration;
+ document.getElementById('keyInfo').textContent=compiled.idle.keyCount+' keyframe · '+duration.toFixed(2)+' giây · nội suy spline';
+
+ const radius=Math.max(sphere.radius,.5);
+ camera.near=Math.max(.001,radius/100);
+ camera.far=Math.max(100,radius*100);
+ camera.updateProjectionMatrix();
+ const fov=THREE.MathUtils.degToRad(camera.fov);
+ const distance=(radius/Math.sin(fov/2))*1.35;
+ camera.position.set(center.x,center.y+radius*.18,center.z+distance);
+ controls.target.copy(new THREE.Vector3(center.x,center.y,center.z));
+ controls.minDistance=radius*.45;
+ controls.maxDistance=radius*12;
+ controls.update();
+ const found=JOINTS.filter(j=>getBone(j)),missing=JOINTS.filter(j=>!getBone(j));
+ document.getElementById('loadPill').textContent='ĐÃ TẢI';
+ document.getElementById('loadPill').style.color='var(--green)';
+ status.textContent='Đã tải model · '+meshCount+' mesh · '+names.length+' xương · '+vertexCount.toLocaleString('vi-VN')+' đỉnh.';
+ document.getElementById('modelInfo').innerHTML='<b style="color:#f4f5f8">FBX đã nạp thành công</b><br>'+meshCount+' mesh · '+vertexCount.toLocaleString('vi-VN')+' đỉnh<br>'+names.length+' xương trong model · '+found.length+'/'+J+' khớp điều khiển được'+(missing.length?'<br>Thiếu: '+missing.join(', '):'')+'<br>Kích thước khung nhìn: '+size.x.toFixed(2)+' × '+size.y.toFixed(2)+' × '+size.z.toFixed(2)+'<br>Hành động thử nghiệm: 8';
+ document.getElementById('boneList').textContent=names.join(' · ')||'Không tìm thấy bone';
+ setPose(0);
+},xhr=>{if(xhr.total)status.textContent='Đang tải FBX… '+Math.round(xhr.loaded/xhr.total*100)+'%'},err=>{
+ console.error(err);
+ document.getElementById('loadPill').textContent='LỖI';
+ status.textContent='Không thể hiển thị model: '+(err?.message||'Lỗi không xác định');
+ document.getElementById('modelInfo').textContent='Lỗi xử lý FBX: '+(err?.message||'Không rõ nguyên nhân');
+});
+function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.05);if(playing&&model&&rig){elapsed+=dt*speed;if(elapsed>duration){if(compiled[action]?.loop)elapsed%=duration;else{elapsed=duration;playing=false}}setPose(elapsed);updateClock()}controls.update();renderer.render(scene,camera)}tick();
+</script>
+</body></html>
