@@ -19,6 +19,22 @@
   },
   "animations": [
     {
+      "id": "mua-dancing-mwrl03b9",
+      "name": "Múa dancing",
+      "category": "Action",
+      "duration": 4.4666666984558105,
+      "loop": true,
+      "speed": 1,
+      "tracks": 53,
+      "keyframes": 3135,
+      "source": "Hip Hop Dancing.fbx",
+      "createdAt": "2026-11-22T08:35:07.916Z",
+      "dataPath": "library/animations/mua-dancing-mwrl03b9.json",
+      "thumbnailPath": "library/thumbnails/animations/mua-dancing-mwrl03b9.png",
+      "thumbnail": "./library/thumbnails/animations/mua-dancing-mwrl03b9.png",
+      "rigSignature": []
+    },
+    {
       "id": "i-bo-mwrip8n1",
       "name": "Đi bộ",
       "category": "Action",
