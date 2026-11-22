@@ -189,12 +189,15 @@ export function boneOptions(rig) {
    (X = ngang, Y = lên, Z = phía trước). Hình khối tự co theo độ dài xương.
    ============================================================ */
 export const SLOTS = [
-  {id: 'hat', label: 'Mũ', icon: '🎩'}, {id: 'hair', label: 'Tóc', icon: '💇'}, {id: 'scarf', label: 'Khăn choàng', icon: '🧣'}, {id: 'jacket', label: 'Áo khoác', icon: '🧥'},
+  {id: 'hat', label: 'Mũ', icon: '🎩'}, {id: 'hair', label: 'Tóc', icon: '💇'}, {id: 'mask', label: 'Mặt nạ', icon: '🎭'}, {id: 'scarf', label: 'Khăn choàng', icon: '🧣'}, {id: 'jacket', label: 'Áo khoác', icon: '🧥'},
   {id: 'sleeves', label: 'Tay áo', icon: '💪'}, {id: 'gloves', label: 'Bao tay', icon: '🧤'}, {id: 'outer', label: 'Áo ngoài', icon: '👕'},
   {id: 'under', label: 'Áo lót', icon: '🎽'}, {id: 'brief', label: 'Quần lót', icon: '🩲'}, {id: 'shorts', label: 'Quần ngắn', icon: '🩳'},
   {id: 'pants', label: 'Quần dài', icon: '👖'}, {id: 'skirt', label: 'Váy', icon: '👗'}, {id: 'socks', label: 'Vớ', icon: '🧦'},
-  {id: 'shoes', label: 'Giày', icon: '👟'}, {id: 'acc', label: 'Phụ kiện', icon: '👓'}, {id: 'ear', label: 'Hoa tai', icon: '💎'}
+  {id: 'shoes', label: 'Giày', icon: '👟'}, {id: 'belt', label: 'Thắt lưng', icon: '🥋'}, {id: 'tail', label: 'Đuôi', icon: '🦊'},
+  {id: 'acc', label: 'Phụ kiện', icon: '👓'}, {id: 'ear', label: 'Hoa tai', icon: '💎'}
 ];
+/** Xương gắn mặc định cho từng danh mục (dùng chung cho Custom, Studio…). */
+export const DEFAULT_BONE = {hat: 'head', scarf: 'neck', jacket: 'spine2', outer: 'spine2', under: 'spine2', sleeves: 'lArm', gloves: 'lHand', hair: 'head', mask: 'head', brief: 'hips', shorts: 'hips', pants: 'hips', skirt: 'hips', socks: 'lFoot', shoes: 'lFoot', belt: 'hips', tail: 'hips', acc: 'head', ear: 'head'};
 
 const P = (part, label, bone, prims, side) => ({part, label, bone, prims, side});
 const LR = fn => [fn('l', 'trái'), fn('r', 'phải')];
@@ -206,6 +209,23 @@ const fore = r => s => P('fore' + s, 'Cổ tay áo ' + (s === 'l' ? 'trái' : 'p
 const thigh = (r, upto = 1) => s => P('thigh' + s, 'Ống quần đùi ' + (s === 'l' ? 'trái' : 'phải'), s + 'Up', [{t: 'tube', to: s + 'Leg', r0: r * 1.08, r1: r * 0.84, upto}], s);
 const calf = r => s => P('calf' + s, 'Ống quần cẳng ' + (s === 'l' ? 'trái' : 'phải'), s + 'Leg', [{t: 'tube', to: s + 'Foot', r0: r * 0.88, r1: r * 0.68}], s);
 const pelvis = (h = 0.2, y = 0.03, r = 0.16) => P('pelvis', 'Hông', 'hips', [{t: 'cyl', rt: r, rb: r * 0.95, h, c: [0, y, 0], s: [1.08, 1, 0.78]}]);
+
+/**
+ * Dựng một chuỗi ống nối tiếp (đuôi, tóc buộc…) từ điểm start, mỗi đoạn [hướng, độ dài].
+ * Bán kính nội suy r0 → r1; tip='tip' thêm quả cầu màu phụ ở đầu mút; mid = bán kính phình giữa (tuỳ chọn).
+ */
+function chain(start, segs, r0, r1, tip, bulge = 0, at) {
+  const out = [], cur = new THREE.Vector3(...start), n = segs.length;
+  segs.forEach(([d, len], i) => {
+    const dir = new THREE.Vector3(...d).normalize(), a = i / n, b = (i + 1) / n;
+    const ra = r0 + (r1 - r0) * a + bulge * Math.sin(Math.PI * a), rb = r0 + (r1 - r0) * b + bulge * Math.sin(Math.PI * b);
+    out.push({t: 'tube', dir: dir.toArray(), len, r0: ra, r1: rb, c: cur.toArray(), ...(at ? {at} : {})});
+    cur.addScaledVector(dir, len);
+    out.push({t: 'sph', r: rb * 1.02, c: cur.toArray(), ...(at ? {at} : {})});
+  });
+  if (tip) out.push({t: 'sph', r: r1 * 1.25, s: [1, 1, 1.5], c: cur.toArray(), col: 2});
+  return out;
+}
 
 export const PRESETS = [
   // ---- Mũ
@@ -290,7 +310,7 @@ export const PRESETS = [
     {t: 'box', s: [0.025, 0.004, 0.004], at: 'headTop', c: [0, -0.085, 0.1]}, {t: 'box', s: [0.004, 0.004, 0.16], at: 'headTop', c: [0.075, -0.09, 0.02]}, {t: 'box', s: [0.004, 0.004, 0.16], at: 'headTop', c: [-0.075, -0.09, 0.02]}])]},
   {id: 'acc-backpack', slot: 'acc', name: 'Ba lô', color: '#e17055', color2: '#2d3436', pieces: [P('main', 'Ba lô', 'spine2', [
     {t: 'box', s: [0.28, 0.38, 0.12], c: [0, -0.02, -0.15]}, {t: 'box', s: [0.2, 0.14, 0.05], c: [0, -0.1, -0.23], col: 2}])]},
-  {id: 'acc-belt', slot: 'acc', name: 'Thắt lưng', color: '#2d3436', color2: '#f1c40f', pieces: [P('main', 'Thắt lưng', 'hips', [
+  {id: 'acc-belt', slot: 'belt', name: 'Thắt lưng', color: '#2d3436', color2: '#f1c40f', pieces: [P('main', 'Thắt lưng', 'hips', [
     {t: 'cyl', rt: 0.165, rb: 0.165, h: 0.035, c: [0, 0.07, 0], s: [1.08, 1, 0.8], open: true}, {t: 'box', s: [0.04, 0.036, 0.012], c: [0, 0.07, 0.133], col: 2}])]},
   {id: 'acc-watch', slot: 'acc', name: 'Đồng hồ (tay trái)', color: '#2d3436', color2: '#dfe6e9', pieces: [P('main', 'Đồng hồ', 'lFore', [
     {t: 'tube', to: 'lHand', r0: 0.05, r1: 0.05, from: 0.8, upto: 1}, {t: 'box', s: [0.03, 0.03, 0.012], at: ['lHand', 0], c: [0, 0.05, 0], col: 2}])]},
@@ -298,6 +318,44 @@ export const PRESETS = [
     {t: 'tor', R: 0.08, r: 0.007, rot: [75, 0, 0], c: [0, -0.03, 0.025]}, {t: 'sph', r: 0.02, c: [0, -0.08, 0.1], col: 2}])]},
   {id: 'acc-headband', slot: 'acc', name: 'Băng đô', color: '#e84393', color2: '#fd79a8', pieces: [P('main', 'Băng đô', 'head', [
     {t: 'tor', R: 0.103, r: 0.01, rot: [90, 0, 0], at: 'headTop', c: [0, -0.07, 0.0], s: [1, 1, 1]}])]},
+  // ---- Thắt lưng (thêm)
+  {id: 'belt-wide', slot: 'belt', name: 'Thắt lưng bản to', color: '#5d4037', color2: '#d4af37', pieces: [P('main', 'Thắt lưng', 'hips', [
+    {t: 'cyl', rt: 0.168, rb: 0.168, h: 0.06, c: [0, 0.065, 0], s: [1.08, 1, 0.8], open: true}, {t: 'box', s: [0.07, 0.055, 0.014], c: [0, 0.065, 0.135], col: 2}])]},
+  {id: 'belt-sash', slot: 'belt', name: 'Dải thắt eo (đai)', color: '#c0392b', color2: '#7f1d1d', pieces: [P('main', 'Đai', 'hips', [
+    {t: 'cyl', rt: 0.166, rb: 0.166, h: 0.07, c: [0, 0.07, 0], s: [1.08, 1, 0.8], open: true},
+    {t: 'box', s: [0.06, 0.22, 0.012], c: [0.05, -0.05, 0.135], rot: [0, 0, 6], col: 2}, {t: 'box', s: [0.06, 0.18, 0.012], c: [-0.02, -0.03, 0.138], rot: [0, 0, -8], col: 2}])]},
+  {id: 'belt-chain', slot: 'belt', name: 'Dây xích eo', color: '#b2bec3', color2: '#f1c40f', pieces: [P('main', 'Dây xích', 'hips', [
+    {t: 'tor', R: 0.162, r: 0.006, rot: [90, 0, 0], c: [0, 0.07, 0], s: [1.08, 0.8, 1]}, {t: 'sph', r: 0.018, c: [0.11, 0.06, 0.12], col: 2}])]},
+  // ---- Đuôi
+  {id: 'tail-cat', slot: 'tail', name: 'Đuôi mèo', color: '#e17055', color2: '#ffeaa7', pieces: [P('main', 'Đuôi', 'hips', chain([0, -0.02, -0.11], [
+    [[0, -0.4, -1], 0.16], [[0, 0, -1], 0.14], [[0, 0.7, -0.7], 0.14], [[0, 1, -0.2], 0.12]], 0.032, 0.022, 'tip'))]},
+  {id: 'tail-fox', slot: 'tail', name: 'Đuôi cáo (xù)', color: '#e67e22', color2: '#ffffff', pieces: [P('main', 'Đuôi', 'hips', chain([0, -0.02, -0.11], [
+    [[0, -0.2, -1], 0.17], [[0, -0.6, -0.8], 0.17], [[0, -1, -0.3], 0.15]], 0.05, 0.075, 'tip', 0.04))]},
+  {id: 'tail-bunny', slot: 'tail', name: 'Đuôi thỏ', color: '#ffffff', color2: '#fab1a0', pieces: [P('main', 'Đuôi', 'hips', [
+    {t: 'sph', r: 0.065, c: [0, 0.0, -0.15]}, {t: 'sph', r: 0.025, c: [0, 0.0, -0.205], col: 2}])]},
+  {id: 'tail-devil', slot: 'tail', name: 'Đuôi quỷ', color: '#c0392b', color2: '#7f1d1d', pieces: [P('main', 'Đuôi', 'hips', [
+    ...chain([0, -0.02, -0.11], [[[0, -0.6, -1], 0.16], [[0, -0.1, -1], 0.14], [[0, 0.8, -0.6], 0.14]], 0.02, 0.014),
+    {t: 'cone', r: 0.04, h: 0.09, c: [0, 0.26, -0.36], rot: [-30, 0, 0], col: 2}])]},
+  // ---- Mặt nạ
+  {id: 'mask-domino', slot: 'mask', name: 'Mặt nạ che mắt', color: '#2d3436', color2: '#f1c40f', pieces: [P('main', 'Mặt nạ', 'head', [
+    {t: 'sph', r: 0.1, s: [1.0, 0.3, 0.45], at: 'headTop', c: [0, -0.092, 0.062]}, {t: 'box', s: [0.004, 0.012, 0.15], at: 'headTop', c: [0.098, -0.092, 0.0], col: 2}, {t: 'box', s: [0.004, 0.012, 0.15], at: 'headTop', c: [-0.098, -0.092, 0.0], col: 2}])]},
+  {id: 'mask-full', slot: 'mask', name: 'Mặt nạ che mặt', color: '#f5f6fa', color2: '#e84393', pieces: [P('main', 'Mặt nạ', 'head', [
+    {t: 'sph', r: 0.105, s: [0.98, 1.1, 0.5], at: 'headTop', c: [0, -0.105, 0.068]}, {t: 'box', s: [0.05, 0.012, 0.01], at: 'headTop', c: [0.038, -0.095, 0.116], col: 2}, {t: 'box', s: [0.05, 0.012, 0.01], at: 'headTop', c: [-0.038, -0.095, 0.116], col: 2}])]},
+  {id: 'mask-surgical', slot: 'mask', name: 'Khẩu trang', color: '#a8e6cf', color2: '#dfe6e9', pieces: [P('main', 'Khẩu trang', 'head', [
+    {t: 'sph', r: 0.09, s: [1.0, 0.55, 0.55], at: 'headTop', c: [0, -0.155, 0.062]}, {t: 'box', s: [0.004, 0.008, 0.1], at: 'headTop', c: [0.088, -0.15, 0.0], col: 2}, {t: 'box', s: [0.004, 0.008, 0.1], at: 'headTop', c: [-0.088, -0.15, 0.0], col: 2}])]},
+  {id: 'mask-half', slot: 'mask', name: 'Mặt nạ nửa trên', color: '#6c5ce7', color2: '#ffeaa7', pieces: [P('main', 'Mặt nạ', 'head', [
+    {t: 'sph', r: 0.102, s: [1.0, 0.55, 0.5], at: 'headTop', c: [0, -0.085, 0.064]}, {t: 'cone', r: 0.012, h: 0.05, at: 'headTop', c: [0, -0.03, 0.115], rot: [90, 0, 0], col: 2}])]},
+  // ---- Tóc (dựng sẵn)
+  {id: 'hair-short', slot: 'hair', name: 'Tóc ngắn', color: '#3b2a20', color2: '#5d4037', pieces: [P('main', 'Tóc', 'head', [
+    {t: 'sph', r: 0.108, s: [1, 0.95, 1.06], th: 0.5, at: 'headTop', c: [0, -0.075, -0.005]}, {t: 'box', s: [0.17, 0.03, 0.03], at: 'headTop', c: [0, -0.04, 0.095], col: 2}])]},
+  {id: 'hair-long', slot: 'hair', name: 'Tóc dài', color: '#2d1f1a', color2: '#4e342e', pieces: [P('main', 'Tóc', 'head', [
+    {t: 'sph', r: 0.108, s: [1, 0.95, 1.06], th: 0.5, at: 'headTop', c: [0, -0.075, -0.005]},
+    {t: 'box', s: [0.215, 0.34, 0.07], at: 'headTop', c: [0, -0.23, -0.075]}, {t: 'box', s: [0.03, 0.26, 0.1], at: 'headTop', c: [0.1, -0.2, -0.03]}, {t: 'box', s: [0.03, 0.26, 0.1], at: 'headTop', c: [-0.1, -0.2, -0.03]}])]},
+  {id: 'hair-bun', slot: 'hair', name: 'Tóc búi', color: '#6d4c41', color2: '#e84393', pieces: [P('main', 'Tóc', 'head', [
+    {t: 'sph', r: 0.108, s: [1, 0.95, 1.06], th: 0.5, at: 'headTop', c: [0, -0.075, -0.005]}, {t: 'sph', r: 0.05, at: 'headTop', c: [0, 0.045, -0.035]}, {t: 'tor', R: 0.045, r: 0.008, rot: [90, 0, 0], at: 'headTop', c: [0, 0.012, -0.035], col: 2}])]},
+  {id: 'hair-ponytail', slot: 'hair', name: 'Tóc đuôi ngựa', color: '#f9a825', color2: '#d63031', pieces: [P('main', 'Tóc', 'head', [
+    {t: 'sph', r: 0.108, s: [1, 0.95, 1.06], th: 0.5, at: 'headTop', c: [0, -0.075, -0.005]},
+    ...chain([0, -0.05, -0.1], [[[0, -0.2, -1], 0.1], [[0, -1, -0.3], 0.2]], 0.04, 0.03, null, 0, 'headTop'), {t: 'sph', r: 0.022, at: 'headTop', c: [0, -0.05, -0.1], col: 2}])]},
   // ---- Hoa tai
   {id: 'ear-stud', slot: 'ear', name: 'Hoa tai tròn', color: '#f1c40f', color2: '#dfe6e9', pieces: [P('main', 'Hoa tai', 'head', [
     {t: 'sph', r: 0.012, at: 'headTop', c: [0.083, -0.115, 0]}, {t: 'sph', r: 0.012, at: 'headTop', c: [-0.083, -0.115, 0]}])]},
@@ -325,7 +383,7 @@ function makePrim(p, rig, key, side, m1, m2) {
   let geo, quat = new THREE.Quaternion(), pos = new THREE.Vector3();
   switch (p.t) {
     case 'box': geo = new THREE.BoxGeometry(...p.s); break;
-    case 'sph': geo = new THREE.SphereGeometry(p.r, 24, 16); if (p.s) geo.scale(...p.s); break;
+    case 'sph': geo = new THREE.SphereGeometry(p.r, 24, 16, 0, Math.PI * 2, 0, p.th ? Math.PI * p.th : Math.PI); if (p.s) geo.scale(...p.s); break;
     case 'cyl': geo = new THREE.CylinderGeometry(p.rt, p.rb, p.h, 28, 1, !!p.open); if (p.s) geo.scale(p.s[0], 1, p.s[2]); break;
     case 'cone': geo = new THREE.CylinderGeometry(0, p.r, p.h, 28); break;
     case 'tor': geo = new THREE.TorusGeometry(p.R, p.r, 12, 44); if (p.s) geo.scale(...p.s); break;
@@ -334,7 +392,7 @@ function makePrim(p, rig, key, side, m1, m2) {
       let dir, len;
       if (p.to) { const b = rig.pos(p.to); if (!a || !b) return null; dir = b.sub(a); len = dir.length(); }
       else if (p.along) { const b = rig.pos(p.along); if (!a || !b) return null; dir = a.clone().sub(b); len = p.len; }
-      else { dir = new THREE.Vector3(0, -1, 0); len = p.len || 0.3; }
+      else { dir = p.dir ? new THREE.Vector3(...p.dir) : new THREE.Vector3(0, -1, 0); len = p.len || 0.3; }
       if (len < 1e-5) return null;
       dir.normalize();
       const f = p.from ?? 0, u = p.upto ?? 1;

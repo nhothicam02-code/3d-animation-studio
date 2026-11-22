@@ -57,7 +57,7 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
  <div class="chips" id="slotChips"></div>
  <div class="presets" id="presetList"></div>
  <div class="note">Đồ dựng sẵn là hình khối tự co theo độ dài xương của nhân vật. Muốn đồ chi tiết hơn, dùng mục thư viện bên dưới hoặc nhập mô hình riêng.</div>
- <h2>Thư viện đồ <small id="libCount"></small></h2>
+ <h2>Thư viện đồ <small id="libCount"></small> <button id="libRefresh" class="quiet" style="float:right;padding:3px 8px;font-size:11px;text-transform:none" title="Tải lại danh mục từ GitHub">↻ Làm mới</button></h2>
  <input type="search" id="libSearch" placeholder="Tìm trong thư viện…" autocomplete="off">
  <div class="libgrid" id="libGrid"></div>
  <div class="pgr"><button id="libPrev">‹</button><span id="libInfo"></span><button id="libNext">›</button></div>
@@ -113,7 +113,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '
 const say = (el, msg, type = '') => { el.textContent = msg; el.className = 'status ' + type; };
 const tag = (msg, bad) => { const t = $('stageTag'); t.textContent = msg; t.style.color = bad ? 'var(--red)' : ''; };
 const D2R = Math.PI / 180;
-const DEFAULT_BONE = {hat: 'head', scarf: 'neck', jacket: 'spine2', outer: 'spine2', under: 'spine2', sleeves: 'lArm', gloves: 'lHand', hair: 'head', brief: 'hips', shorts: 'hips', pants: 'hips', skirt: 'hips', socks: 'lFoot', shoes: 'lFoot', acc: 'head', ear: 'head'};
+const DEFAULT_BONE = K.DEFAULT_BONE; // đồng bộ với danh mục ở Kho tài nguyên
 
 const S = {base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false, lib: [], libQ: '', libPage: 0};
 let renderer, scene, camera, controls, spinG, selBox, loadSeq = 0;
@@ -318,6 +318,16 @@ function renderLib() {
   $('libCount').textContent = '· ' + list.length; $('libInfo').textContent = (S.libPage + 1) + ' / ' + pages;
   $('libPrev').disabled = S.libPage <= 0; $('libNext').disabled = S.libPage >= pages - 1;
 }
+async function reloadLib() {
+  const b = $('libRefresh'); b.disabled = true; b.textContent = '↻ Đang tải…';
+  try {
+    const assets = await K.readJSON('library/assets.json', {items: []});
+    S.lib = (assets && Array.isArray(assets.items)) ? assets.items : []; S.libPage = 0; renderLib(); fillScene();
+    say($('importStatus'), 'Đã làm mới thư viện: ' + S.lib.length + ' item.', 'good');
+  } catch (e) { say($('importStatus'), 'Không làm mới được: ' + e.message, 'bad'); }
+  b.disabled = false; b.textContent = '↻ Làm mới';
+}
+$('libRefresh').onclick = reloadLib;
 $('libSearch').oninput = e => { S.libQ = e.target.value; S.libPage = 0; renderLib(); };
 $('libPrev').onclick = () => { S.libPage--; renderLib(); };
 $('libNext').onclick = () => { S.libPage++; renderLib(); };

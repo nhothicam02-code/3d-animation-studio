@@ -30,7 +30,7 @@ aside{grid-row:1;grid-column:2;background:var(--panel);border-left:1px solid var
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;width:min(440px,92vw);padding:16px}dialog::backdrop{background:#000a}dialog h3{margin:0 0 4px}header nav button.on{border-color:#6fd3a0}.chk{display:flex;gap:8px;align-items:center;color:var(--text);font-size:12px}#ghSt{min-height:30px;white-space:pre-wrap}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script></head><body>
-<header><div class="brand"><span>3DiS</span> / FILM STUDIO</div><nav><a href="./index.html">Thư viện</a><a href="./library.html">Kho tài nguyên</a><button id="bGh" title="Đồng bộ GitHub">☁ GitHub</button></nav></header>
+<header><div class="brand"><span>3DiS</span> / FILM STUDIO</div><nav><a href="./index.html">Thư viện</a><a href="./library.html">Kho tài nguyên</a><button id="bRefresh" title="Tải lại danh sách nhân vật, nhân vật Custom, clip và nguồn media từ GitHub mà không cần mở lại trang">↻ Làm mới thư viện</button><button id="bGh" title="Đồng bộ GitHub">☁ GitHub</button></nav></header>
 <dialog id="dGh"><h3>☁ Đồng bộ GitHub</h3>
 <div class="hint">Mỗi dự án được lưu thành một file JSON trong repo. Dữ liệu vẫn nằm ở localStorage; GitHub là bản sao lưu và để dùng chung giữa nhiều máy. Lần đầu, token và repo được lấy từ phần “Cài đặt GitHub” của trang Thư viện nếu bạn đã nhập ở đó.</div>
 <label>Repository (owner/tên)</label><input type="text" id="ghRepo" placeholder="ten-ban/film-projects" autocomplete="off">
@@ -51,6 +51,9 @@ import * as THREE from 'three';
 import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {clone as skClone} from 'three/addons/utils/SkeletonUtils.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import * as K from './js/character-kit.js';
 const $=id=>document.getElementById(id),KEY='3dis.projects',LW=130,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').toLowerCase().replace(/^.*:/,'').replace(/^mixamorig/,'').replace(/[^a-z0-9]/g,'');
 const groups={hips:['pelvis','hip'],spine:['spine0','spine01'],spine1:['spine02','chest'],spine2:['spine03','upperchest'],neck:['neck1'],headTop:['headtopend'],lSho:['leftshoulder','leftclavicle','lshoulder','lclavicle'],rSho:['rightshoulder','rightclavicle','rshoulder','rclavicle'],lArm:['leftarm','leftupperarm','lupperarm','larm'],rArm:['rightarm','rightupperarm','rupperarm','rarm'],lFore:['leftforearm','leftlowerarm','lforearm','llowerarm'],rFore:['rightforearm','rightlowerarm','rforearm','rlowerarm'],lHand:['lefthand','lhand'],rHand:['righthand','rhand'],lUp:['leftupleg','leftthigh','leftupperleg','lthigh','lupleg','lupperleg'],rUp:['rightupleg','rightthigh','rightupperleg','rthigh','rupleg','rupperleg'],lLeg:['leftleg','leftlowerleg','leftcalf','leftshin','lcalf','lshin','llowerleg'],rLeg:['rightleg','rightlowerleg','rightcalf','rightshin','rcalf','rshin','rlowerleg'],lFoot:['leftfoot','lfoot'],rFoot:['rightfoot','rfoot']};
@@ -86,6 +89,25 @@ const idb=async(mode,fn)=>{const db=await DB;if(!db)return null;return new Promi
 const probe=(k,u)=>new Promise(r=>{if(k==='img')return r(5);const m=document.createElement(k==='vid'?'video':'audio');m.preload='metadata';m.onloadedmetadata=()=>r(isFinite(m.duration)?m.duration:5);m.onerror=()=>r(5);m.src=u});
 async function importFiles(fs){const out=[];for(const f of fs){const k=f.type.startsWith('image')?'img':f.type.startsWith('video')?'vid':f.type.startsWith('audio')?'aud':null;if(!k)continue;const id=uid();murl[id]=URL.createObjectURL(f);const rec={id,name:f.name,type:k,blob:f,dur:r2(await probe(k,murl[id]))};await idb('readwrite',s=>s.put(rec));media.push(rec);out.push(rec)}if(tab==='src'&&P)renderPanel();return out}
 const srcOf=it=>it.media?murl[it.media]:it.url;
+/* ---------- Thư viện GitHub (library/assets.json) → coi như nguồn media, id = 'lib:<id>' ---------- */
+const LRAW=()=>'https://raw.githubusercontent.com/'+(localStorage.getItem('3dis.github.repo')||'nhothicam02-code/3d-animation-studio')+'/main/';
+async function loadLib(force){let idx=null,base='./';const ep=q=>q.split('/').map(encodeURIComponent).join('/');
+ for(const b of force?[LRAW(),'./']:['./',LRAW()]){try{const r=await fetch(b+'library/assets.json?v='+Date.now(),{cache:'no-store'});if(r.ok){const j=await r.json();if(j&&Array.isArray(j.items)){idx=j;base=b;break}}}catch{}}
+ if(!idx)return -1;
+ for(let i=media.length-1;i>=0;i--)if(media[i].lib){delete murl[media[i].id];media.splice(i,1)}
+ const T={image:'img',video:'vid',audio:'aud'};let n=0;
+ for(const x of idx.items){const ty=T[x.kind];if(!ty||!x.path)continue;const id='lib:'+x.id;if(media.some(m=>m.id===id))continue;
+  const tp=x.thumbPath||String(x.thumbnail||'').replace(/^\.\//,'');
+  media.push({id,name:x.name,type:ty,lib:1,cat:x.category,dur:x.duration||0,thumb:tp?base+ep(tp):''});murl[id]=base+ep(x.path);n++}
+ return n}
+const LIBCAT=[['','Tất cả'],['bgimage','Ảnh nền'],['bgvideo','Video nền'],['bgmusic','Nhạc nền'],['sfx','Âm thanh hiệu ứng']],LS={src:{c:'',q:'',p:0},bg:{c:'',q:'',p:0}},LPAGE=6;
+const lfold=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').toLowerCase();
+const lcard=(m,sel,drag)=>'<div class="cd"'+(drag?' draggable="true" data-mid="'+m.id+'" data-use="'+m.id+'"':' data-bgm="'+m.id+'"')+(sel?' style="border-color:var(--ac);background:#2a2740"':'')+'>'+(m.thumb?'<img alt="" loading="lazy" src="'+esc(m.thumb)+'" onerror="this.style.display=\'none\'">':'<div class="ic">'+(m.type==='aud'?'🎵':'🖼')+'</div>')+'<b>'+esc(m.name)+'</b></div>';
+function libHtml(ctx,types,selId){
+ const st=LS[ctx],k=lfold(st.q).trim(),l=media.filter(m=>m.lib&&types.includes(m.type)&&(!st.c||m.cat===st.c)&&(!k||lfold(m.name).includes(k))),n=Math.max(1,Math.ceil(l.length/LPAGE));
+ st.p=Math.min(Math.max(st.p,0),n-1);
+ const cats=ctx==='src'?'<select data-lcat="src">'+LIBCAT.map(c=>'<option value="'+c[0]+'"'+(c[0]===st.c?' selected':'')+'>'+c[1]+'</option>').join('')+'</select>':'';
+ return '<div class="r"><input type="text" data-lq="'+ctx+'" placeholder="Tìm trong thư viện…" value="'+esc(st.q)+'" autocomplete="off">'+cats+'</div><div class="grid">'+l.slice(st.p*LPAGE,(st.p+1)*LPAGE).map(m=>lcard(m,ctx==='bg'&&m.id===selId,ctx==='src')).join('')+'</div>'+(l.length?'':'<div class="hint">Chưa có item nào khớp. Thêm file ở trang Kho tài nguyên.</div>')+'<div class="r"><button data-lpg="'+ctx+':-1"'+(st.p<=0?' disabled':'')+'>‹</button><span style="flex:1;text-align:center">'+(st.p+1)+' / '+n+' · '+l.length+' item</span><button data-lpg="'+ctx+':1"'+(st.p>=n-1?' disabled':'')+'>›</button></div>'}
 
 /* ---------- Danh sách ---------- */
 function renderList(){const l=projects.slice().sort((a,b)=>b.updated-a.updated);$('list').innerHTML=l.length?l.map(p=>'<div class="card" data-id="'+p.id+'"><h3>'+esc(p.name)+'</h3><div class="meta">'+p.scenes.length+' cảnh · '+(p.fmt?p.fmt.aspect+' · '+p.fmt.fps+'fps · ':'')+new Date(p.updated).toLocaleDateString('vi-VN')+'</div><div class="r"><button class="pri" data-a="open">Mở</button><button data-a="dup">Nhân bản</button><button data-a="exp">Xuất</button><button class="del" data-a="del">Xóa</button></div></div>').join(''):'<div class="empty">Chưa có dự án. Bấm “+ Dự án mới”.</div>'}
@@ -161,10 +183,40 @@ function layout(){if(!P||!renderer)return;const st=$('stage'),W=st.clientWidth-2
 function autoCam(){const s=sc(),xs=s.chars.map(c=>c.x),a=Math.min(...xs,0),b=Math.max(...xs,0),cx=(a+b)/2,th=Math.tan(camera.fov*Math.PI/360),d=Math.max(1/th,((b-a)/2+.9)/(th*camera.aspect))*1.2;camera.position.set(cx,1.3,d);controls.target.set(cx,.9,0);controls.update()}
 const getF=f=>fbx[f]||(fbx[f]=loader.loadAsync('./characters/'+encodeURIComponent(f)).catch(()=>loader.loadAsync('./'+encodeURIComponent(f))));
 function place(ch){const r=R[ch.id];if(!r)return;const D=Math.PI/180;r.g.scale.set(r.fit*(+(ch.sx??ch.scale)||1),r.fit*(+(ch.sy??ch.scale)||1),r.fit*(+(ch.sz??ch.scale)||1));r.g.position.set(+ch.x||0,+ch.y||0,+ch.z||0);r.g.rotation.order='YXZ';r.g.rotation.set((+ch.rx||0)*D,(+ch.rot||0)*D,(+ch.rz||0)*D);const op=ch.opacity??1;for(const m of r.mats){m.transparent=op<1;m.opacity=op}}
-async function addRt(ch,my){const o=skClone(await getF(ch.file));if(my!==tok)return;const mats=[];o.traverse(n=>{if(n.material){n.material=Array.isArray(n.material)?n.material.map(m=>m.clone()):n.material.clone();mats.push(...[].concat(n.material))}});const bx=new THREE.Box3().setFromObject(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());o.position.set(-c.x,-bx.min.y,-c.z);const g=new THREE.Group();g.add(o);tscene.add(g);R[ch.id]={g,o,mats,fit:1.7/Math.max(sz.y,.001),mx:new THREE.AnimationMixer(o),cur:'~',clips:{}};place(ch)}
+/* ---------- Nhân vật Custom: dựng lại đồ đã lưu ở trang Custom lên model gốc ---------- */
+let custom=[];const CC={},IB={};
+const getCustom=e=>CC[e.id]||(CC[e.id]=K.readJSON(e.dataPath).then(d=>{if(!d||!Array.isArray(d.items))throw Error('không đọc được dữ liệu '+e.dataPath);return d}).catch(x=>{delete CC[e.id];throw x}));
+const getItemBytes=p=>IB[p]||(IB[p]=K.fetchRepoBytes(p).catch(x=>{delete IB[p];throw x}));
+async function parseItem(ext,buf){
+ if(ext==='glb')return(await new Promise((res,rej)=>new GLTFLoader().parse(buf,'',res,rej))).scene;
+ if(ext==='fbx')return new FBXLoader().parse(buf,'');
+ if(ext==='obj')return new OBJLoader().parse(new TextDecoder().decode(buf));
+ throw Error('định dạng .'+ext+' chưa hỗ trợ')}
+async function dressCustom(o,ch,mats,my){
+ const doc=await getCustom(ch.custom),warn=[],wrap=K.normalizeModel(o,1.8);          // giống hệt trang Custom: cao 1.8, quay mặt +Z
+ o.traverse(n=>{if(n.isSkinnedMesh)n.frustumCulled=false});
+ const rig=K.buildRig(o),groups=JSON.parse(JSON.stringify(doc.items)),res={wrap,warn,ver:doc.updatedAt||''};
+ for(const g of groups)for(const p of g.pieces||[]){
+  p.pos=p.pos||[0,0,0];p.rot=p.rot||[0,0,0];p.scale=p.scale||1;
+  if(p.file){
+   if(!p.file.path){warn.push((p.label||'đồ')+': chưa có file trên GitHub');continue}
+   try{p._obj=K.fitImported(await parseItem(p.file.ext,await getItemBytes(p.file.path))).obj}catch(e){warn.push((p.label||p.file.path)+': '+e.message);continue}
+   if(my!==tok)return res}
+  const rt=K.mountPiece(g,p,rig);
+  if(!rt){warn.push((g.name||'đồ')+' › '+(p.label||p.part)+': không gắn được vào xương');continue}
+  rt.content.traverse(n=>{if(n.isMesh&&n.material)mats.push(...[].concat(n.material))})}   // để chỉnh độ mờ cả đồ
+ return res}
+async function addRt(ch,my){const o=skClone(await getF(ch.file));if(my!==tok)return;const mats=[];o.traverse(n=>{if(n.material){n.material=Array.isArray(n.material)?n.material.map(m=>m.clone()):n.material.clone();mats.push(...[].concat(n.material))}});
+ let w=null,ver='';
+ if(ch.custom){try{const d=await dressCustom(o,ch,mats,my);w=d.wrap;ver=d.ver;if(d.warn.length)say('⚠ '+ch.name+': '+d.warn.join(' · '))}catch(e){say('Lỗi nhân vật Custom “'+ch.name+'”: '+e.message+' — đang dùng nhân vật gốc.')}}
+ if(my!==tok)return;
+ const g=new THREE.Group();let fit;
+ if(w){g.add(w);fit=1.7/1.8}
+ else{const bx=new THREE.Box3().setFromObject(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());o.position.set(-c.x,-bx.min.y,-c.z);g.add(o);fit=1.7/Math.max(sz.y,.001)}
+ tscene.add(g);R[ch.id]={g,o,w,ver,mats,fit,mx:new THREE.AnimationMixer(o),cur:'~',clips:{}};place(ch)}
 async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;say(s.chars.length?'Đang tải nhân vật…':'Thêm nhân vật ở tab “Nhân vật”.');
  await Promise.all(s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')})));if(my!==tok)return;busy=false;if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&s.chars.length)say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
-async function getClip(r,id){if(id in r.clips)return r.clips[id];const e=manifest.animations.find(x=>x.id===id);r.clips[id]=null;if(!e)return null;try{const d=jc[id]||(jc[id]=await(await fetch('./'+e.dataPath)).json()),s0=r.g.scale.clone();r.g.scale.setScalar(1);r.g.updateMatrixWorld(true);const m=mapClip(THREE.AnimationClip.parse(d.clip),r.o);r.g.scale.copy(s0);r.clips[id]=m.clip.tracks.length?m.clip:null}catch{}return r.clips[id]}
+async function getClip(r,id){if(id in r.clips)return r.clips[id];const e=manifest.animations.find(x=>x.id===id);r.clips[id]=null;if(!e)return null;try{const d=jc[id]||(jc[id]=await(await fetch('./'+e.dataPath)).json()),s0=r.g.scale.clone(),q0=r.g.quaternion.clone(),w0=r.w&&{p:r.w.position.clone(),q:r.w.quaternion.clone(),s:r.w.scale.clone()};r.g.scale.setScalar(1);r.g.quaternion.identity();if(r.w){r.w.position.set(0,0,0);r.w.quaternion.identity();r.w.scale.setScalar(1)}r.g.updateMatrixWorld(true);let m;try{m=mapClip(THREE.AnimationClip.parse(d.clip),r.o)}finally{r.g.scale.copy(s0);r.g.quaternion.copy(q0);if(w0){r.w.position.copy(w0.p);r.w.quaternion.copy(w0.q);r.w.scale.copy(w0.s)}r.g.updateMatrixWorld(true)}r.clips[id]=m.clip.tracks.length?m.clip:null}catch{}return r.clips[id]}
 async function apply(){if(!P)return;const s=sc(),tt=Math.floor(t*P.fmt.fps+1e-6)/P.fmt.fps;
  for(const ch of s.chars){const r=R[ch.id];if(!r)continue;const top=ch.clips.filter(c=>c.clip&&c.start<=tt+1e-6).sort((a,b)=>b.start-a.start)[0],key=top?top.id+top.clip:'';
   if(key!==r.cur){r.cur=key;r.mx.stopAllAction();r.act=null;if(top){const c=await getClip(r,top.clip);if(c&&r.cur===key){r.act=r.mx.clipAction(c);r.act.play()}}}
@@ -294,10 +346,12 @@ const BGT=[['color','Màu đơn'],['grad','Gradient'],['img','Ảnh'],['vid','Vi
 function bgUI(s){const ty=s.bgt||'color';let h='<label>Nền cảnh</label><select data-sc="bgt">'+BGT.map(x=>'<option value="'+x[0]+'"'+(x[0]===ty?' selected':'')+'>'+x[1]+'</option>').join('')+'</select>';
  if(ty==='color')h+='<label>Màu</label><input type="color" data-sc="bg" value="'+s.bg+'">';
  if(ty==='grad')h+='<div class="r"><div><label>Màu 1</label><input type="color" data-sc="bg" value="'+s.bg+'"></div><div><label>Màu 2</label><input type="color" data-sc="bg2" value="'+(s.bg2||'#000000')+'"></div><div><label>Góc (độ)</label><input type="number" step="any" data-sc="bga" value="'+(s.bga??135)+'"></div></div><div class="grid">'+GP.map(g=>{const[a,b]=g.split(',');return '<button class="cd" data-gp="'+g+'" style="height:30px;background:linear-gradient(135deg,'+a+','+b+')"></button>'}).join('')+'</div>';
- if(ty==='img'||ty==='vid'){const l=media.filter(m=>m.type===ty);h+='<input type="file" id="fbg" accept="'+(ty==='img'?'image/*':'video/*')+'" hidden><button id="bgimp" class="pri" style="width:100%;margin-top:8px">+ Nhập '+(ty==='img'?'ảnh':'video')+' từ máy…</button><div class="grid">'+l.map(m=>'<div class="cd" data-bgm="'+m.id+'"'+(m.id===s.bgm?' style="border-color:var(--ac);background:#2a2740"':'')+'>'+(ty==='img'?'<img alt="" src="'+murl[m.id]+'">':'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>')+'<b>'+esc(m.name)+'</b></div>').join('')+'</div>'+(l.length?'':'<div class="hint">Chưa có file nào, hãy nhập file ở trên.</div>')+'<label>Cách vừa khung</label><select data-sc="bgfit">'+[['cover','Phủ kín (cắt phần thừa)'],['contain','Vừa khung (giữ nguyên tỉ lệ)'],['fill','Kéo giãn đầy khung']].map(x=>'<option value="'+x[0]+'"'+(x[0]===(s.bgfit||'cover')?' selected':'')+'>'+x[1]+'</option>').join('')+'</select><div class="r"><div><label>Thu phóng (%)</label><input type="number" step="any" min="10" max="500" data-sc="bgz" value="'+(s.bgz??100)+'"></div><div><label>Lệch X (%)</label><input type="number" step="any" data-sc="bgx" value="'+(s.bgx||0)+'"></div><div><label>Lệch Y (%)</label><input type="number" step="any" data-sc="bgy" value="'+(s.bgy||0)+'"></div></div><div class="r"><button data-bgreset="1">Đặt lại kích thước nền</button></div>'}
+ if(ty==='img'||ty==='vid'){const l=media.filter(m=>m.type===ty&&!m.lib);h+='<input type="file" id="fbg" accept="'+(ty==='img'?'image/*':'video/*')+'" hidden><button id="bgimp" class="pri" style="width:100%;margin-top:8px">+ Nhập '+(ty==='img'?'ảnh':'video')+' từ máy…</button><div class="grid">'+l.map(m=>'<div class="cd" data-bgm="'+m.id+'"'+(m.id===s.bgm?' style="border-color:var(--ac);background:#2a2740"':'')+'>'+(ty==='img'?'<img alt="" src="'+murl[m.id]+'">':'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>')+'<b>'+esc(m.name)+'</b></div>').join('')+'</div>'+(l.length?'':'<div class="hint">Chưa có file nào, hãy nhập file ở trên.</div>')+'<label>Thư viện GitHub</label>'+libHtml('bg',[ty],s.bgm)+'<label>Cách vừa khung</label><select data-sc="bgfit">'+[['cover','Phủ kín (cắt phần thừa)'],['contain','Vừa khung (giữ nguyên tỉ lệ)'],['fill','Kéo giãn đầy khung']].map(x=>'<option value="'+x[0]+'"'+(x[0]===(s.bgfit||'cover')?' selected':'')+'>'+x[1]+'</option>').join('')+'</select><div class="r"><div><label>Thu phóng (%)</label><input type="number" step="any" min="10" max="500" data-sc="bgz" value="'+(s.bgz??100)+'"></div><div><label>Lệch X (%)</label><input type="number" step="any" data-sc="bgx" value="'+(s.bgx||0)+'"></div><div><label>Lệch Y (%)</label><input type="number" step="any" data-sc="bgy" value="'+(s.bgy||0)+'"></div></div><div class="r"><button data-bgreset="1">Đặt lại kích thước nền</button></div>'}
  return h}
 /* ---------- Panel ---------- */
 const TABS=[['src','Nguồn'],['chars','Nhân vật'],['clip','Clip'],['props','Thuộc tính'],['scene','Cảnh'],['film','Phim']];
+function customCard(c){const th=String(c.thumbnail||'').replace(/^\.\//,''),ep=th.split('/').map(encodeURIComponent).join('/'),tip=esc(c.name+' · '+(c.items||0)+' món đồ · gốc: '+(c.base||''));
+ return '<button class="cd" data-addc="'+esc(c.id)+'" title="'+tip+'">'+(th?'<img alt="" src="./'+esc(ep)+'" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\''+esc(LRAW()+ep)+'\'}else this.style.visibility=\'hidden\'">':'<div class="ic">✦</div>')+'<b>✦ '+esc(c.name)+'</b></button>'}
 function renderAll(){renderStrip();renderTabs();renderPanel();renderTL();$('pn').textContent=P.name}
 function renderStrip(){$('sc').innerHTML=P.scenes.map((s,i)=>'<button data-i="'+i+'" class="'+(i===si?'on':'')+'">'+esc(s.name)+'</button>').join('')+'<button data-i="new">+ Cảnh</button>'}
 $('sc').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(i==='new'){P.scenes.push(mkScene(P.scenes.length+1));si=P.scenes.length-1;touch()}else si=+i;sel=null;renderAll();loadScene()};
@@ -312,8 +366,8 @@ function field(k,l,ty,v){const a='data-k="'+k+'" ',g=x=>'<label>'+l+'</label>'+x
  if(ty==='voice'){const vs=(window.speechSynthesis?speechSynthesis.getVoices():[]).slice().sort((x,y)=>/^vi/.test(y.lang)-/^vi/.test(x.lang));return g('<select '+a+'><option value="">Mặc định (vi-VN)</option>'+vs.map(x=>'<option value="'+esc(x.name)+'"'+(x.name===v?' selected':'')+'>'+esc(x.name+' ('+x.lang+')')+'</option>').join('')+'</select>')}
  if(ty==='r'||ty==='r2')l+=' <b data-v="'+k+'" style="color:var(--text)">'+r2(+(v??1))+'</b>';return g('<input '+a+'type="'+({n:'number',c:'color',r:'range',r2:'range',t:'text'}[ty])+'"'+(ty==='n'?' step="any"':ty==='r'?' min="0" max="1" step="0.01"':ty==='r2'?' min="0.5" max="2" step="0.05"':'')+' value="'+esc(v)+'">')}
 function renderPanel(){const s=sc();let h='';
- if(tab==='src'){h='<div class="r"><button data-q="txt">+ Văn bản</button><button data-q="dlg">+ Phụ đề</button><button data-q="tts">+ Giọng đọc</button><button data-q="bg">+ Nền màu</button></div><label>Tệp của bạn</label><input type="file" id="fi" multiple accept="image/*,video/*,audio/*" hidden><button id="fib" class="pri" style="width:100%">+ Nhập file từ máy…</button><div class="hint">Kéo file từ máy thả vào đây, hoặc kéo thẻ vào khung video / timeline. Bấm thẻ để thêm tại đường đỏ. Mỗi lần thả sẽ tạo một track mới (thả đúng vào track có sẵn để dùng chung).</div><div class="grid">'+media.map(m=>'<div class="cd" draggable="true" data-mid="'+m.id+'" data-use="'+m.id+'">'+(m.type==='img'?'<img alt="" src="'+murl[m.id]+'">':m.type==='vid'?'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>':'<div class="ic">🎵</div>')+'<b>'+esc(m.name)+'</b><button class="del x" data-delm="'+m.id+'">✕</button></div>').join('')+'</div>'}
- if(tab==='chars'){h='<div class="hint">Bấm nhân vật để thêm vào cảnh “'+esc(s.name)+'”.</div><div class="grid">'+Object.entries(manifest.characters).map(([f,c])=>'<button class="cd" data-add="'+esc(f)+'"><img alt="" src="'+esc(c.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(f.replace(/\.fbx$/i,''))+'</b></button>').join('')+'</div><label>Trong cảnh</label>'+(s.chars.map(c=>'<div class="li'+onc(c.id)+'" data-sel="'+c.id+'"><span>🧍 '+esc(c.name)+'</span><button class="del" data-rm="'+c.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có nhân vật.</div>')}
+ if(tab==='src'){h='<div class="r"><button data-q="txt">+ Văn bản</button><button data-q="dlg">+ Phụ đề</button><button data-q="tts">+ Giọng đọc</button><button data-q="bg">+ Nền màu</button></div><label>Tệp của bạn</label><input type="file" id="fi" multiple accept="image/*,video/*,audio/*" hidden><button id="fib" class="pri" style="width:100%">+ Nhập file từ máy…</button><div class="hint">Kéo file từ máy thả vào đây, hoặc kéo thẻ vào khung video / timeline. Bấm thẻ để thêm tại đường đỏ. Mỗi lần thả sẽ tạo một track mới (thả đúng vào track có sẵn để dùng chung).</div><div class="grid">'+media.filter(m=>!m.lib).map(m=>'<div class="cd" draggable="true" data-mid="'+m.id+'" data-use="'+m.id+'">'+(m.type==='img'?'<img alt="" src="'+murl[m.id]+'">':m.type==='vid'?'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>':'<div class="ic">🎵</div>')+'<b>'+esc(m.name)+'</b><button class="del x" data-delm="'+m.id+'">✕</button></div>').join('')+'</div><label>Thư viện GitHub (ảnh, video, nhạc nền, âm thanh hiệu ứng)</label>'+libHtml('src',['img','vid','aud'])}
+ if(tab==='chars'){h='<div class="hint">Bấm nhân vật để thêm vào cảnh “'+esc(s.name)+'”. Vừa tạo/lưu nhân vật mới? Bấm “↻ Làm mới thư viện” ở thanh trên.</div><label>✦ Nhân vật Custom ('+custom.length+')</label><div class="grid">'+(custom.map(customCard).join('')||'<div class="hint">Chưa có nhân vật nào lưu ở trang Custom.</div>')+'</div><label>Nhân vật gốc (FBX)</label><div class="grid">'+Object.entries(manifest.characters).map(([f,c])=>'<button class="cd" data-add="'+esc(f)+'"><img alt="" src="'+esc(c.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(f.replace(/\.fbx$/i,''))+'</b></button>').join('')+'</div><label>Trong cảnh</label>'+(s.chars.map(c=>'<div class="li'+onc(c.id)+'" data-sel="'+c.id+'"><span>'+(c.custom?'✦':'🧍')+' '+esc(c.name)+'</span><button class="del" data-rm="'+c.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có nhân vật.</div>')}
  if(tab==='clip'){const ch=chOf();if(!ch)h='<div class="hint">Chọn một nhân vật (bấm tên ở timeline hoặc click vào nhân vật trong khung) để thêm clip.</div>';else{const k=cq.toLowerCase();h='<b>Clip cho '+esc(ch.name)+'</b><div class="hint">Bấm clip để thêm vào timeline tại đường đỏ.</div><input id="cq" type="text" placeholder="Tìm clip…" value="'+esc(cq)+'" style="margin-top:6px"><div class="grid">'+manifest.animations.filter(a=>!k||a.name.toLowerCase().includes(k)).map(a=>'<button class="cd" data-clip="'+esc(a.id)+'"><img alt="" src="'+esc(a.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(a.name)+' · '+(+a.duration).toFixed(1)+'s</b></button>').join('')+'</div>'}}
  if(tab==='props'){const it=cur(),ty=stype();h=it?SCH[ty].map(([k,l,y])=>field(k,l,y,it[k])).join('')+(ty==='txt'||ty==='dlg'?'<div class="r" style="margin-top:12px"><button class="pri" data-act="t2a">🔊 Chuyển thành audio</button><button data-act="test">▶ Nghe thử</button></div>':'')+(ty==='tts'?'<div class="r" style="margin-top:12px"><button class="pri" data-act="test">▶ Nghe thử</button><button data-act="est">Ước lượng độ dài</button></div>':'')+'<button class="del" style="margin-top:12px;width:100%" data-act="del">Xóa mục này (Delete)</button>':'<div class="hint">Bấm một đối tượng trong khung video hoặc một khối trên timeline. Kéo đối tượng để dời, kéo chấm tím để xoay (giữ Shift để xoay theo bước 15°), kéo ô vuông góc dưới phải để phóng to/thu nhỏ. Giá trị chỉnh ở đây cập nhật ngay.</div>'}
  if(tab==='scene'){h='<label>Tên cảnh</label><input type="text" data-sc="name" value="'+esc(s.name)+'"><div class="r"><div><label>Thời lượng (s)</label><input type="number" min="1" data-sc="duration" value="'+s.duration+'"></div></div>'+bgUI(s)+'<label>Camera của cảnh này</label><div class="r"><button id="camS" class="pri">Lưu góc nhìn</button><button id="camA">Tự động</button></div><div class="hint">'+(s.cam?'Đã lưu góc camera riêng.':'Đang dùng camera tự động.')+' Kéo vào vùng trống trong khung để xoay camera, cuộn để zoom, rồi bấm “Lưu góc nhìn”.</div><label>Quản lý cảnh</label><div class="r"><button data-m="up">‹ Lên</button><button data-m="down">Xuống ›</button><button data-m="dup">Nhân bản</button><button class="del" data-m="del">Xóa</button></div>'}
@@ -329,11 +383,12 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
  const bm=el.closest('[data-bgm]');if(bm){s.bgm=bm.dataset.bgm;touch();renderPanel();apply();return}
  if(d.delm){await idb('readwrite',st=>st.delete(d.delm));media=media.filter(m=>m.id!==d.delm);URL.revokeObjectURL(murl[d.delm]);renderPanel();return}
  if(d.q)return void addItem(d.q);
- const use=el.closest('[data-use]');if(use)return void addMediaItem(media.find(m=>m.id===use.dataset.use));
+ const lp=el.closest('[data-lpg]');if(lp){const[c,dd]=lp.dataset.lpg.split(':');LS[c].p+=+dd;renderPanel();return}
+ const use=el.closest('[data-use]');if(use){const m=media.find(x=>x.id===use.dataset.use);if(m&&m.lib&&!m.dur&&m.type!=='img')m.dur=await probe(m.type,murl[m.id]);return void addMediaItem(m)}
  if(d.rm){if(R[d.rm]){tscene.remove(R[d.rm].g);delete R[d.rm]}s.chars.splice(s.chars.findIndex(c=>c.id===d.rm),1);sel=null;touch();renderPanel();renderTL();return}
  if(d.sel){sel={id:d.sel};renderPanel();renderTL();return}
- const b=el.closest('[data-add],[data-clip]');
- if(b&&b.dataset.add){const f=b.dataset.add,n=s.chars.length,ch={id:uid(),file:f,name:f.replace(/\.fbx$/i,''),x:n?(n%2?1:-1)*Math.ceil(n/2)*1.2:0,z:0,rot:0,scale:1,opacity:1,y:0,rx:0,rz:0,sx:1,sy:1,sz:1,lock:true,fixed:true,clips:[]};s.chars.push(ch);sel={id:ch.id};touch();renderPanel();renderTL();addRt(ch,tok).then(()=>{if(!s.cam)autoCam();apply()}).catch(x=>say('Lỗi '+f+': '+x.message))}
+ const b=el.closest('[data-add],[data-addc],[data-clip]');
+ if(b&&(b.dataset.add||b.dataset.addc)){const cc=b.dataset.addc?custom.find(x=>x.id===b.dataset.addc):null;if(b.dataset.addc&&!cc)return;const f=cc?cc.base:b.dataset.add,n=s.chars.length,ch={id:uid(),file:f,name:cc?cc.name:f.replace(/\.fbx$/i,''),...(cc?{custom:{id:cc.id,dataPath:cc.dataPath,name:cc.name}}:{}),x:n?(n%2?1:-1)*Math.ceil(n/2)*1.2:0,z:0,rot:0,scale:1,opacity:1,y:0,rx:0,rz:0,sx:1,sy:1,sz:1,lock:true,fixed:true,clips:[]};s.chars.push(ch);sel={id:ch.id};touch();renderPanel();renderTL();addRt(ch,tok).then(()=>{if(!s.cam)autoCam();apply()}).catch(x=>say('Lỗi '+f+': '+x.message))}
  if(b&&b.dataset.clip){const ch=chOf(),a=manifest.animations.find(x=>x.id===b.dataset.clip),c={id:uid(),clip:a.id,start:snap(t),dur:r2(a.duration||2),loop:a.loop!==false};ch.clips.push(c);sel={id:c.id};if(c.start+c.dur>s.duration)s.duration=Math.ceil(c.start+c.dur);touch();renderTL();renderPanel();apply()}
  if(d.act==='del')remove();
  if(d.act==='test')speak(cur(),1);
@@ -353,6 +408,8 @@ $('panel').oninput=e=>{const el=e.target,d=el.dataset,s=sc();
  if(el.id==='fi'){importFiles([...el.files]);el.value='';return}
  if(el.id==='fbg'){importFiles([...el.files]).then(r=>{const m=r.find(x=>x.type===s.bgt);if(m){s.bgm=m.id;touch();renderPanel();apply()}});el.value='';return}
  if(el.id==='cq'){cq=el.value;const p=el.selectionStart;renderPanel();const n=$('cq');n.focus();n.setSelectionRange(p,p);return}
+ if(d.lq){LS[d.lq].q=el.value;LS[d.lq].p=0;const p=el.selectionStart;renderPanel();const n=document.querySelector('[data-lq="'+d.lq+'"]');if(n){n.focus();n.setSelectionRange(p,p)}return}
+ if(d.lcat){LS[d.lcat].c=el.value;LS[d.lcat].p=0;renderPanel();return}
  if(el.type==='number'&&el.value==='')return;const v=el.type==='checkbox'?el.checked:el.type==='number'||el.type==='range'?+el.value:el.value;
  if(d.k){const it=cur(),ty=stype();if(!it)return;if(['sx','sy','sz'].includes(d.k)&&it.lock&&it[d.k]>0&&v>0){const k=v/it[d.k];for(const a of['sx','sy','sz'])if(a!==d.k&&it[a]!==undefined)it[a]=Math.round(it[a]*k*1000)/1000}it[d.k]=v;if(ty==='clip'&&d.k==='clip'){const a=manifest.animations.find(x=>x.id===v);if(a)it.dur=r2(a.duration);const l=loc();if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~'}if(ty==='char')place(it);
   if((it.start||0)+(it.dur||0)>s.duration)s.duration=Math.ceil((it.start||0)+it.dur);if(['start','dur','text','name','color','clip','who'].includes(d.k))renderTL();if(ty==='char'&&d.k==='name')renderTL();renderOv();apply();touchSoon();sync()}
@@ -360,6 +417,25 @@ $('panel').oninput=e=>{const el=e.target,d=el.dataset,s=sc();
  if(d.pj){P[d.pj]=v;if(d.pj==='name')$('pn').textContent=v;touchSoon()}
  if(d.f){P.fmt[d.f]=d.f==='aspect'?v:+v;setFmt(P.fmt);layout();renderPanel();if(!s.cam)autoCam();touch()}};
 if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{if(P&&tab==='props'&&['tts','txt','dlg'].includes(stype()))renderPanel()};
+const sortCustom=a=>a.slice().sort((x,y)=>(y.updatedAt||'').localeCompare(x.updatedAt||''));
+/* ---------- ↻ Làm mới thư viện: tải lại danh sách mà không cần mở lại trang ---------- */
+async function refreshLib(){
+ const b=$('bRefresh');if(b.disabled)return;b.disabled=true;b.textContent='↻ Đang tải…';
+ try{
+  const[m,ci,models]=await Promise.all([K.readJSON('library/manifest.json',null),K.readJSON('characters/custom/index.json',null),K.listModels().catch(()=>[])]);
+  if(m)manifest=m;manifest.animations=manifest.animations||[];manifest.characters=manifest.characters||{};
+  if(models.length){for(const f of models)if(!manifest.characters[f])manifest.characters[f]={model:f,thumbnail:''};for(const f of Object.keys(manifest.characters))if(!models.includes(f))delete manifest.characters[f]}
+  if(ci&&Array.isArray(ci.characters))custom=sortCustom(ci.characters);
+  for(const k in CC)delete CC[k];for(const k in IB)delete IB[k];
+  const n=await loadLib(true);
+  if(P){renderPanel();const s=sc();
+   // nhân vật Custom đang có trong cảnh mà đã được sửa/lưu lại → dựng lại bản mới nhất
+   if(s&&!playing&&s.chars.some(c=>c.custom&&R[c.id]&&R[c.id].ver!==((custom.find(x=>x.id===c.custom.id)||{}).updatedAt||''))){const t0=t;await loadScene();t=t0;syncTp();apply()}}
+  const msg='Đã làm mới: '+Object.keys(manifest.characters).length+' nhân vật gốc · '+custom.length+' Custom · '+manifest.animations.length+' clip'+(n>=0?' · '+media.filter(x=>x.lib).length+' nguồn media':' (không tải được kho media)');
+  say(msg);setTimeout(()=>{if($('say').textContent===msg)say('')},5000);
+ }catch(e){say('Không làm mới được: '+e.message)}
+ finally{b.disabled=false;b.textContent='↻ Làm mới thư viện'}}
+$('bRefresh').onclick=refreshLib;
 (async()=>{media=(await idb('readonly',s=>s.getAll()))||[];media.forEach(m=>murl[m.id]=URL.createObjectURL(m.blob));
- for(const u of['./library/manifest.json','https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/library/manifest.json']){try{const r=await fetch(u+'?v='+Date.now());if(r.ok){manifest=await r.json();manifest.animations=manifest.animations||[];manifest.characters=manifest.characters||{};break}}catch{}}route();ghAuto()})();
+ for(const u of['./library/manifest.json','https://raw.githubusercontent.com/nhothicam02-code/3d-animation-studio/main/library/manifest.json']){try{const r=await fetch(u+'?v='+Date.now());if(r.ok){manifest=await r.json();manifest.animations=manifest.animations||[];manifest.characters=manifest.characters||{};break}}catch{}}try{const ci=await K.readJSON('characters/custom/index.json',null);if(ci&&Array.isArray(ci.characters))custom=sortCustom(ci.characters)}catch{}await loadLib();route();ghAuto()})();
 </script></body></html>

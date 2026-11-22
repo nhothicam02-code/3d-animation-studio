@@ -81,20 +81,22 @@ const MEDIA = [
   {id: 'sfx', label: 'Âm thanh hiệu ứng', icon: '🔊', kind: 'audio', accept: 'audio/*'}
 ];
 const WEAR = K.SLOTS.map(s => ({...s, kind: 'model', accept: '.glb,.fbx,.obj'}));
-const CATS = [...MEDIA, ...WEAR], catOf = id => CATS.find(c => c.id === id);
-const S = {items: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: []};
+const CHAR_CAT = {id: 'character', label: 'Nhân vật', icon: '🧍', kind: 'character'};
+const CATS = [...MEDIA, ...WEAR], catOf = id => id === CHAR_CAT.id ? CHAR_CAT : CATS.find(c => c.id === id);
+const S = {items: [], chars: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: []};
+const allItems = () => S.items.concat(S.chars);
 if (S.cat && !catOf(S.cat)) S.cat = '';
 
 /* ---------------- Danh sách ---------------- */
 function renderCats() {
-  const n = id => S.items.filter(x => x.category === id).length;
+  const n = id => allItems().filter(x => x.category === id).length;
   const btn = (id, label, icon, count) => '<button class="cat' + (S.cat === id ? ' active' : '') + '" data-cat="' + id + '"><span>' + icon + ' ' + esc(label) + '</span><b>' + count + '</b></button>';
-  $('cats').innerHTML = btn('', 'Tất cả', '📚', S.items.length) + '<div class="cg">Nền &amp; âm thanh</div>' + MEDIA.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
+  $('cats').innerHTML = btn('', 'Tất cả', '📚', allItems().length) + '<div class="cg">Nhân vật</div>' + btn(CHAR_CAT.id, CHAR_CAT.label + ' (gốc + Custom)', CHAR_CAT.icon, n(CHAR_CAT.id)) + '<div class="cg">Nền &amp; âm thanh</div>' + MEDIA.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
     '<div class="cg">Trang phục &amp; phụ kiện</div>' + WEAR.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('');
 }
 function view() {
   const k = fold(S.q).trim();
-  const a = S.items.filter(x => (!S.cat || x.category === S.cat) && (!k || fold([x.name, catOf(x.category)?.label, x.ext].join(' ')).includes(k)));
+  const a = allItems().filter(x => (!S.cat || x.category === S.cat) && (!k || fold([x.name, catOf(x.category)?.label, x.ext].join(' ')).includes(k)));
   return a.sort(S.sort === 'name' ? (x, y) => x.name.localeCompare(y.name, 'vi') : (x, y) => (y.createdAt || '').localeCompare(x.createdAt || ''));
 }
 const thumbPath = x => x.thumbPath || String(x.thumbnail || '').replace(/^\.\//, '');
@@ -102,7 +104,7 @@ const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(
 function card(x) {
   const c = catOf(x.category) || {icon: '📦', label: x.category};
   return '<article class="card" data-id="' + esc(x.id) + '"><div class="thumb"><div class="ph">' + c.icon + '</div><img alt="" loading="lazy" data-th="' + esc(thumbPath(x)) + '" data-id="' + esc(x.id) + '"><span class="badge">' + esc(x.ext) + '</span></div>' +
-    '<div class="cb"><div class="ct" title="' + esc(x.name) + '">' + esc(x.name) + '</div><div class="meta">' + esc(c.label) + ' · ' + fmtSize(x.size || 0) + (x.duration ? ' · ' + Number(x.duration).toFixed(1) + 's' : '') + '</div></div></article>';
+    '<div class="cb"><div class="ct" title="' + esc(x.name) + '">' + esc(x.name) + '</div><div class="meta">' + esc(c.label) + ' · ' + (x.kind === 'character' ? (x.ref.type === 'custom' ? 'Custom · ' + x.ref.items + ' món đồ' : 'FBX gốc') : fmtSize(x.size || 0)) + (x.duration ? ' · ' + Number(x.duration).toFixed(1) + 's' : '') + '</div></div></article>';
 }
 function render() {
   renderCats();
@@ -112,10 +114,10 @@ function render() {
   $('catTitle').textContent = c ? c.icon + ' ' + c.label : '📚 Tất cả item';
   $('count').textContent = a.length + ' item';
   $('grid').innerHTML = a.length ? a.slice((S.page - 1) * PAGE, S.page * PAGE).map(card).join('') :
-    '<div class="empty">' + (S.items.length ? 'Không có item nào khớp.' : 'Thư viện đang trống. Bấm “＋ Thêm item” để tải file đầu tiên.') + '</div>';
+    '<div class="empty">' + (allItems().length ? 'Không có item nào khớp.' : 'Thư viện đang trống. Bấm “＋ Thêm item” để tải file đầu tiên.') + '</div>';
   for (const img of $('grid').querySelectorAll('img[data-th]')) {
     const fr = S.fresh.get(img.dataset.id);
-    if (fr) img.src = fr.thumb; else K.setSrc(img, img.dataset.th, () => img.remove());
+    if (fr) img.src = fr.thumb; else if (/^data:/.test(img.dataset.th)) img.src = img.dataset.th; else K.setSrc(img, img.dataset.th, () => img.remove());
   }
   const set = [...new Set([1, pages, S.page - 1, S.page, S.page + 1])].filter(p => p >= 1 && p <= pages).sort((x, y) => x - y);
   let html = '', last = 0;
@@ -169,7 +171,8 @@ async function mount3D(stage, it, my) {
   return {stop() { cancelAnimationFrame(raf); ctl.dispose(); obj.traverse(o => { if (o.geometry) o.geometry.dispose(); }); r.dispose(); }};
 }
 async function openDetail(id) {
-  const it = S.items.find(x => x.id === id); if (!it) return;
+  const it = allItems().find(x => x.id === id); if (!it) return;
+  if (it.kind === 'character') return openCharDetail(it);
   const c = catOf(it.category) || {label: it.category, icon: '📦'}, fr = S.fresh.get(id), my = ++vtoken;
   if (viewer) { viewer.stop(); viewer = null; }
   $('dTitle').textContent = it.name;
@@ -185,6 +188,19 @@ async function openDetail(id) {
     try { viewer = await mount3D($('dStage'), it, my); }
     catch (e) { if (my === vtoken) $('dStage').outerHTML = '<div class="status bad">Không dựng được mô hình: ' + esc(e.message) + '</div>'; }
   }
+}
+function openCharDetail(it) {
+  vtoken++; if (viewer) { viewer.stop(); viewer = null; }
+  const r = it.ref, q = encodeURIComponent, custom = r.type === 'custom', base = custom ? r.base : r.file;
+  $('dTitle').textContent = it.name;
+  $('dBody').innerHTML = '<img id="dThumb" class="dmedia" style="max-height:340px" alt="">' +
+    '<div class="meta">🧍 Nhân vật · ' + (custom ? 'Custom · ' + r.items + ' món đồ (tóc, mũ, trang phục…)' : 'Model FBX gốc') + (it.createdAt ? ' · ' + new Date(it.createdAt).toLocaleDateString('vi-VN') : '') + '</div>' +
+    '<div class="meta">Nhân vật gốc: ' + esc(base) + '</div>' +
+    '<div class="row"><a href="./custom.html?' + (custom ? 'char=' + q(r.id) : 'model=' + q(r.file)) + '"><button type="button" class="primary">✦ ' + (custom ? 'Mở để chỉnh trong Custom' : 'Custom nhân vật này') + '</button></a>' +
+    '<a href="./apply.html?model=' + q(base) + '"><button type="button">▶ Xem animation</button></a><a href="./studio.html"><button type="button">🎬 Dùng trong Studio</button></a></div>';
+  $('detail').classList.add('open');
+  const t = $('dThumb'), tp = thumbPath(it);
+  if (!tp) t.remove(); else if (/^data:/.test(tp)) t.src = tp; else K.setSrc(t, tp, () => t.remove());
 }
 async function removeItem(id) {
   if (!K.auth().token) { alert('Cần GitHub token (trang Thư viện → ⚙ Cài đặt).'); return; }
@@ -260,7 +276,7 @@ function fillUpCat() {
 $('upCat').onchange = () => { $('upFile').accept = catOf($('upCat').value).accept; };
 $('upFile').onchange = () => { $('nameRow').classList.toggle('hide', $('upFile').files.length > 1); };
 $('addBtn').onclick = () => {
-  $('upCat').value = S.cat || 'bgimage'; $('upFile').accept = catOf($('upCat').value).accept; $('upFile').value = ''; $('upName').value = ''; $('upList').innerHTML = '';
+  $('upCat').value = S.cat && S.cat !== CHAR_CAT.id ? S.cat : 'bgimage'; $('upFile').accept = catOf($('upCat').value).accept; $('upFile').value = ''; $('upName').value = ''; $('upList').innerHTML = '';
   $('nameRow').classList.remove('hide'); say($('upStatus'), K.auth().token ? 'Chọn danh mục và file rồi bấm tải lên.' : 'Chưa có GitHub token — nhập ở Thư viện → ⚙ Cài đặt (index.html) trước khi tải lên.', K.auth().token ? '' : 'bad');
   $('upModal').classList.add('open');
 };
@@ -307,6 +323,17 @@ $('upGo').onclick = async () => {
   $('upGo').disabled = false;
 };
 
+/* ---------------- Nhân vật (FBX gốc + Custom) ---------------- */
+async function loadChars() {
+  try {
+    const [m, ci, models] = await Promise.all([K.readJSON('library/manifest.json', {characters: {}}), K.readJSON('characters/custom/index.json', {characters: []}), K.listModels().catch(() => [])]);
+    const mc = (m && m.characters) || {}, names = models.length ? models : Object.keys(mc), out = [];
+    for (const n of names) { const e = mc[n] || {}; out.push({id: 'char:' + n, name: n.replace(/\.fbx$/i, ''), category: CHAR_CAT.id, kind: 'character', ext: 'fbx', size: 0, thumbPath: String(e.thumbnail || '').replace(/^\.\//, ''), createdAt: e.updatedAt || '', ref: {type: 'base', file: n}}); }
+    for (const c of (ci && ci.characters) || []) out.push({id: 'char:custom:' + c.id, name: c.name, category: CHAR_CAT.id, kind: 'character', ext: 'custom', size: 0, thumbPath: String(c.thumbnail || '').replace(/^\.\//, ''), createdAt: c.updatedAt || '', ref: {type: 'custom', id: c.id, base: c.base, items: c.items || 0}});
+    S.chars = out; render();
+  } catch (e) { console.warn('Không nạp được danh sách nhân vật:', e); }
+}
+
 /* ---------------- Khởi động ---------------- */
 (async function init() {
   fillUpCat();
@@ -314,5 +341,6 @@ $('upGo').onclick = async () => {
   render();
   try { const idx = await K.readJSON(INDEX, {version: 1, items: []}); S.items = Array.isArray(idx?.items) ? idx.items : []; } catch (e) { console.warn(e); }
   render();
+  loadChars();
 })();
 </script></body></html>
