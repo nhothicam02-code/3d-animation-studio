@@ -243,6 +243,10 @@ loader.load(FBX_URL,obj=>{
  const sphere=bounds.getBoundingSphere(new THREE.Sphere());
  const names=Object.keys(bones);
  for(const b of Object.values(bones))b.userData.baseY=b.position.y;
+ compileActions();
+ duration=compiledActions.idle.duration;
+ document.getElementById('scrub').max=duration;
+ document.getElementById('keyInfo').textContent=compiledActions.idle.frames.length+' keyframe · '+duration.toFixed(2)+' giây';
  // Frame the complete model with a margin, independent of the original FBX units/origin.
  const radius=Math.max(sphere.radius,.5);
  camera.near=Math.max(.001,radius/100);
