@@ -1,0 +1,56 @@
+{
+  "format": "3DiS-Character-1.0",
+  "id": "sa-mwrwz278",
+  "name": "sa",
+  "base": "20260926223349_4ec5f5b9.fbx",
+  "updatedAt": "2026-11-22T14:10:15.141Z",
+  "items": [
+    {
+      "id": "g8mcsinq",
+      "slot": "sleeves",
+      "preset": "sleeve-short",
+      "name": "Tay áo ngắn",
+      "color": "#e17055",
+      "color2": "#fab1a0",
+      "visible": true,
+      "pieces": [
+        {
+          "uid": "pw93tyip",
+          "part": "arml",
+          "label": "Tay áo trái",
+          "bone": "lArm",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ],
+          "scale": 1,
+          "visible": true
+        },
+        {
+          "uid": "pxxmxtz2",
+          "part": "armr",
+          "label": "Tay áo phải",
+          "bone": "rArm",
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ],
+          "scale": 1,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}
