@@ -17,38 +17,5 @@
       "updatedAt": "2026-11-22T05:49:32.112Z"
     }
   },
-  "animations": [
-    {
-      "id": "i-bo-mwrimizg",
-      "name": "Đi bộ",
-      "category": "Locomotion",
-      "duration": 0.9666666388511658,
-      "loop": true,
-      "speed": 1,
-      "tracks": 53,
-      "keyframes": 1590,
-      "source": "Walking.fbx",
-      "createdAt": "2026-11-22T07:28:35.767Z",
-      "dataPath": "library/animations/i-bo-mwrimizg.json",
-      "thumbnailPath": "library/thumbnails/animations/i-bo-mwrimizg.png",
-      "thumbnail": "./library/thumbnails/animations/i-bo-mwrimizg.png",
-      "rigSignature": []
-    },
-    {
-      "id": "mixamo-com-mwriift5",
-      "name": "mixamo.com",
-      "category": "Locomotion",
-      "duration": 0.9666666388511658,
-      "loop": true,
-      "speed": 1,
-      "tracks": 53,
-      "keyframes": 1590,
-      "source": "Walking.fbx",
-      "createdAt": "2026-11-22T07:25:25.064Z",
-      "dataPath": "library/animations/mixamo-com-mwriift5.json",
-      "thumbnailPath": "library/thumbnails/animations/mixamo-com-mwriift5.png",
-      "thumbnail": "./library/thumbnails/animations/mixamo-com-mwriift5.png",
-      "rigSignature": []
-    }
-  ]
+  "animations": []
 }
