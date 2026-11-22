@@ -45,7 +45,7 @@ input[type=range]{accent-color:var(--accent)}
 <div class="actions" id="actions">
 <button class="action active" data-action="idle"><b>🧍 Đứng chờ</b><small>Thở và đung đưa nhẹ</small></button>
 <button class="action" data-action="wave"><b>👋 Vẫy tay</b><small>Giơ tay và vẫy chào</small></button>
-<button class="action" data-action="walk"><b>🚶 Đi bộ</b><small>Bước chân luân phiên</small></button>
+<button class="action" data-action="walk"><b>🚶 Đi bộ</b><small>Chu kỳ 8 tư thế: chạm đất → nén → passing → nâng</small></button>
 <button class="action" data-action="run"><b>🏃 Chạy</b><small>Chạy tại chỗ</small></button>
 <button class="action" data-action="jump"><b>🦘 Nhảy</b><small>Nhún, bật lên, tiếp đất</small></button>
 <button class="action" data-action="bow"><b>🙇 Cúi chào</b><small>Cúi người rồi đứng thẳng</small></button>
@@ -116,10 +116,16 @@ const ACTIONS={
   {t:2.05,r:{rArm:[0,0,1,68],rFore:[0,0,1,-22]}},{t:2.4,r:{}}
  ]},
  walk:{duration:1.2,loop:true,frames:[
-  {t:0,r:{lUp:[1,0,0,0],rUp:[1,0,0,0]}},{t:.3,r:{lUp:[1,0,0,-24],rUp:[1,0,0,24],lLeg:[1,0,0,-18],rLeg:[1,0,0,0],lArm:[1,0,0,14],rArm:[1,0,0,-14]}},
-  {t:.6,r:{lUp:[1,0,0,0],rUp:[1,0,0,0],lLeg:[1,0,0,0],rLeg:[1,0,0,0],lArm:[1,0,0,0],rArm:[1,0,0,0]}},
-  {t:.9,r:{lUp:[1,0,0,24],rUp:[1,0,0,-24],lLeg:[1,0,0,0],rLeg:[1,0,0,-18],lArm:[1,0,0,-14],rArm:[1,0,0,14]}},
-  {t:1.2,r:{}}
+  // Contact → recoil → passing → high point, then mirrored on the other leg.
+  {t:0,rootY:0,r:{lUp:[1,0,0,28],rUp:[1,0,0,-28],lLeg:[1,0,0,0],rLeg:[1,0,0,0],lArm:[1,0,0,-24],rArm:[1,0,0,24],lFore:[1,0,0,-8],rFore:[1,0,0,-8],hips:[0,1,0,2]}},
+  {t:.15,rootY:-.035,r:{lUp:[1,0,0,16],rUp:[1,0,0,-16],lLeg:[1,0,0,10],rLeg:[1,0,0,-5],lArm:[1,0,0,-16],rArm:[1,0,0,16],hips:[0,1,0,1]}},
+  {t:.30,rootY:0,r:{lUp:[1,0,0,0],rUp:[1,0,0,0],lLeg:[1,0,0,28],rLeg:[1,0,0,0],lArm:[1,0,0,0],rArm:[1,0,0,0],hips:[0,1,0,0]}},
+  {t:.45,rootY:.045,r:{lUp:[1,0,0,-18],rUp:[1,0,0,18],lLeg:[1,0,0,18],rLeg:[1,0,0,0],lArm:[1,0,0,18],rArm:[1,0,0,-18],hips:[0,1,0,-2]}},
+  {t:.60,rootY:0,r:{lUp:[1,0,0,-28],rUp:[1,0,0,28],lLeg:[1,0,0,0],rLeg:[1,0,0,0],lArm:[1,0,0,24],rArm:[1,0,0,-24],lFore:[1,0,0,-8],rFore:[1,0,0,-8],hips:[0,1,0,-2]}},
+  {t:.75,rootY:-.035,r:{lUp:[1,0,0,-16],rUp:[1,0,0,16],lLeg:[1,0,0,-5],rLeg:[1,0,0,10],lArm:[1,0,0,16],rArm:[1,0,0,-16],hips:[0,1,0,-1]}},
+  {t:.90,rootY:0,r:{lUp:[1,0,0,0],rUp:[1,0,0,0],lLeg:[1,0,0,0],rLeg:[1,0,0,28],lArm:[1,0,0,0],rArm:[1,0,0,0],hips:[0,1,0,0]}},
+  {t:1.05,rootY:.045,r:{lUp:[1,0,0,18],rUp:[1,0,0,-18],lLeg:[1,0,0,0],rLeg:[1,0,0,18],lArm:[1,0,0,-18],rArm:[1,0,0,18],hips:[0,1,0,2]}},
+  {t:1.2,rootY:0,r:{lUp:[1,0,0,28],rUp:[1,0,0,-28],lLeg:[1,0,0,0],rLeg:[1,0,0,0],lArm:[1,0,0,-24],rArm:[1,0,0,24],hips:[0,1,0,2]}}
  ]},
  run:{duration:.8,loop:true,frames:[
   {t:0,r:{}},{t:.2,r:{lUp:[1,0,0,-38],rUp:[1,0,0,38],lLeg:[1,0,0,-35],rLeg:[1,0,0,0],lArm:[1,0,0,25],rArm:[1,0,0,-25],spine:[1,0,0,-8]}},
