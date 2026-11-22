@@ -246,6 +246,19 @@ const POSES=[
 POSES.forEach(p=>{ACTIONS[p.id]=poseAction(p.r)});
 
 /* ───────────────────────── Nội suy spline (Hermite / Catmull-Rom) ───────────────────────── */
+function withFingerKeys(frame,actionName){
+ const r={...(frame.r||{})};
+ const presets={
+  idle:[2,7,5,2],wave:[0,2,1,0],walk:[4,9,7,3],run:[18,26,22,14],
+  jump:[0,3,2,0],bow:[3,8,6,3],dance:[0,4,2,0],look:[2,7,5,2]
+ };
+ const curl=presets[actionName]||[3,8,6,3];
+ for(const side of ['l','r'])for(const digit of ['Thumb','Index','Middle','Ring','Pinky'])for(let segment=1;segment<=4;segment++){
+  const id=side+digit+segment;
+  if(!r[id]){const v=curl[Math.min(segment-1,3)];r[id]=[digit==='Thumb'?v*.7:v,0,0]}
+ }
+ return {...frame,r};
+}
 function frameVec(f){
  const v=new Float32Array(NCH);
  for(const [id,a] of Object.entries(f.r||{})){const j=JI[id];if(j===undefined)continue;v[j*3]=a[0];v[j*3+1]=a[1];v[j*3+2]=a[2]}
@@ -345,7 +358,7 @@ function bakeActions(){
  compiled={};
  for(const [name,def] of Object.entries(ACTIONS)){
   const frames=def.frames.slice().sort((a,b)=>a.t-b.t);
-  const A={...def,times:frames.map(f=>f.t),vecs:frames.map(frameVec)};
+  const A={...def,times:frames.map(f=>f.t),vecs:frames.map(f=>frameVec(withFingerKeys(f,name)))};
   const T=def.duration,N=Math.max(2,Math.round(T*30)),count=def.loop?N:N+1;
   const quats=new Float32Array(count*J*4),offs=new Float32Array(count*3),v=new Float32Array(NCH);
   for(let i=0;i<count;i++){
