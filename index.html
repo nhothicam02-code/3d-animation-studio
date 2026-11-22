@@ -80,7 +80,7 @@ const clock=new THREE.Clock();
 function resize(){const w=mount.clientWidth,h=mount.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}new ResizeObserver(resize).observe(mount);resize();
 const boneAliases={
  root:['root'],hips:['hips','pelvis'],spine:['spine'],spine1:['spine1'],spine2:['spine2'],neck:['neck'],head:['head'],
- lArm:['leftarm','leftupperarm'],rArm:['rightarm','rightupperarm'],lFore:['leftforearm','leftlowerarm'],rFore:['rightforearm','rightlowerarm'],
+ lArm:['leftarm','leftupperarm'],rArm:['rightarm','rightupperarm'],lFore:['leftforearm','leftlowerarm'],rFore:['rightforearm','rightlowerarm'],lHand:['lefthand'],rHand:['righthand'],
  lUp:['leftupleg','leftthigh','leftupperleg'],rUp:['rightupleg','rightthigh','rightupperleg'],
  lLeg:['leftleg','leftlowerleg'],rLeg:['rightleg','rightlowerleg'],lFoot:['leftfoot'],rFoot:['rightfoot']
 };
