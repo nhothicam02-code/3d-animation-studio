@@ -2,7 +2,7 @@
  "id": "nkrlrszxs",
  "name": "phim",
  "created": 1795343875120,
- "updated": 1795364178030,
+ "updated": 1795364198419,
  "tts": false,
  "scenes": [
   {
@@ -40,8 +40,8 @@
       "dataPath": "characters/custom/aa-mwrxq55p.json",
       "name": "aa"
      },
-     "x": 1.26,
-     "z": -1.11,
+     "x": -0.41,
+     "z": -1.72,
      "rot": 0,
      "scale": 1,
      "opacity": 1,
