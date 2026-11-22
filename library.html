@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3DiS — Kho tài nguyên</title>
+<style>
+:root{color-scheme:dark;--bg:#101116;--panel:#191b24;--panel2:#222531;--line:#303442;--text:#f4f5f8;--muted:#9da3b4;--accent:#9a83ff;--green:#66d6a3;--red:#ff8585}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,system-ui,Segoe UI,sans-serif}
+button,input,select{font:inherit}button{border:1px solid var(--line);border-radius:10px;padding:9px 13px;background:var(--panel2);color:var(--text);cursor:pointer;font-weight:650}button:hover{border-color:var(--accent)}button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--accent);border-color:var(--accent);color:#171322}.danger{color:var(--red)}.quiet{background:transparent}
+input,select{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;outline:none}input:focus,select:focus{border-color:var(--accent)}
+label{display:block;color:var(--muted);font-size:12px;margin:0 0 6px}a{color:#c2b5ff;text-decoration:none}.muted{color:var(--muted)}
+header{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--line);background:#14151c;position:sticky;top:0;z-index:5}
+.brand{font-weight:850;font-size:18px}.brand span{color:var(--accent)}.hact{display:flex;gap:14px;align-items:center}
+.pill{display:inline-flex;padding:4px 8px;border:1px solid #3b6b59;border-radius:20px;color:var(--green);font-size:10px}.pill.off{border-color:#6b3b3b;color:var(--red)}
+main{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100vh - 62px)}
+#cats{border-right:1px solid var(--line);background:var(--panel);padding:14px;position:sticky;top:62px;height:calc(100vh - 62px);overflow:auto}
+.cg{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:14px 6px 6px}
+.cat{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;text-align:left;border:0;background:transparent;padding:9px 10px;border-radius:9px;font-weight:600}
+.cat.active{background:#2a2740}.cat b{font-size:11px;color:var(--muted);font-weight:600}
+section{padding:22px;min-width:0}
+.top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}.top h1{font-size:22px;margin:0 auto 0 0}.top input{max-width:280px}.top select{max-width:150px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;min-width:0}.card:hover{border-color:var(--accent)}
+.thumb{aspect-ratio:4/3;position:relative;background:linear-gradient(135deg,#34364a,#222431);overflow:hidden}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.ph{position:absolute;inset:0;display:grid;place-items:center;font-size:40px;opacity:.7}
+.badge{position:absolute;right:8px;top:8px;background:#11131bcc;border:1px solid var(--line);border-radius:6px;padding:2px 6px;font-size:10px;text-transform:uppercase;z-index:1}
+.cb{padding:11px 12px}.ct{font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{font-size:11px;color:var(--muted);margin-top:4px}
+.empty{grid-column:1/-1;border:1px dashed #44495a;border-radius:14px;padding:36px;text-align:center;color:var(--muted)}
+.pager{display:flex;justify-content:center;align-items:center;gap:6px;margin:22px 0;flex-wrap:wrap}.pager button{min-width:38px;padding:8px 10px}.pager button.cur{background:var(--accent);border-color:var(--accent);color:#171322}
+.modal{display:none;position:fixed;inset:0;background:#08090dcc;z-index:20;align-items:center;justify-content:center;padding:16px}.modal.open{display:flex}
+.dialog{width:min(760px,100%);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+.dh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.dh h2{margin:0;font-size:18px;overflow-wrap:anywhere}
+.dmedia{width:100%;max-height:52vh;object-fit:contain;border-radius:12px;background:#0d0e13;display:block;margin-bottom:10px}
+.stage3d{height:380px;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#303241,#171923 72%);margin-bottom:10px}.stage3d canvas{width:100%;height:100%;display:block}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}.row>.f{flex:1;min-width:160px}
+.status{padding:10px 12px;border-radius:9px;background:#151720;color:var(--muted);font-size:12px;line-height:1.5;margin-top:12px}.status.good{color:var(--green)}.status.bad{color:var(--red)}
+.up{display:grid;gap:6px;margin-top:10px;font-size:12px}.up div{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;background:#151720;border-radius:8px}.up span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hide{display:none!important}
+@media(max-width:800px){main{grid-template-columns:1fr}#cats{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);max-height:210px}section{padding:14px}.hact .opt{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head><body>
+<header><div class="brand"><span>3DiS</span> / KHO TÀI NGUYÊN</div>
+ <div class="hact"><span id="gitState" class="pill off">GitHub chưa kết nối</span><a class="opt" href="./custom.html">✦ Custom nhân vật</a><a class="opt" href="./index.html">← Thư viện</a><button class="primary" id="addBtn">＋ Thêm item</button></div></header>
+<main>
+ <aside id="cats"></aside>
+ <section>
+  <div class="top"><h1 id="catTitle"></h1><input type="search" id="q" placeholder="Tìm theo tên…" autocomplete="off"><select id="sort"><option value="new">Mới nhất</option><option value="name">Tên A–Z</option></select><span class="muted" id="count"></span></div>
+  <div class="grid" id="grid"></div><div class="pager" id="pager"></div>
+ </section>
+</main>
+
+<div class="modal" id="upModal"><div class="dialog">
+ <div class="dh"><h2>＋ Thêm item vào thư viện</h2><button class="quiet" data-close="upModal">✕</button></div>
+ <div class="row" style="margin-top:0"><div class="f"><label>Danh mục</label><select id="upCat"></select></div></div>
+ <div class="row"><div class="f"><label>Chọn file (có thể chọn nhiều)</label><input type="file" id="upFile" multiple></div></div>
+ <div class="row" id="nameRow"><div class="f"><label>Tên hiển thị (để trống = lấy theo tên file)</label><input id="upName" maxlength="80"></div></div>
+ <div class="status" id="upStatus">Thumbnail được tạo tự động từ file (ảnh, khung hình video, dạng sóng âm thanh, hình 3D). Item được lưu lên GitHub và đồng bộ sang trang Custom.</div>
+ <div class="up" id="upList"></div>
+ <div class="row" style="justify-content:flex-end"><button data-close="upModal">Đóng</button><button class="primary" id="upGo">☁ Tải lên &amp; đồng bộ GitHub</button></div>
+</div></div>
+<div class="modal" id="detail"><div class="dialog"><div class="dh"><h2 id="dTitle"></h2><button class="quiet" id="dClose">✕</button></div><div id="dBody"></div></div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import * as K from './js/character-kit.js';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const fold = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+const say = (el, msg, type = '') => { el.textContent = msg; el.className = 'status ' + type; };
+const INDEX = 'library/assets.json', PAGE = 12, MAX_BYTES = 90 * 1048576, TW = 320, TH = 240;
+
+const MEDIA = [
+  {id: 'bgimage', label: 'Ảnh nền', icon: '🖼️', kind: 'image', accept: 'image/*'},
+  {id: 'bgvideo', label: 'Video nền', icon: '🎬', kind: 'video', accept: 'video/*'},
+  {id: 'bgmusic', label: 'Nhạc nền', icon: '🎵', kind: 'audio', accept: 'audio/*'},
+  {id: 'sfx', label: 'Âm thanh hiệu ứng', icon: '🔊', kind: 'audio', accept: 'audio/*'}
+];
+const WEAR = K.SLOTS.map(s => ({...s, kind: 'model', accept: '.glb,.fbx,.obj'}));
+const CATS = [...MEDIA, ...WEAR], catOf = id => CATS.find(c => c.id === id);
+const S = {items: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: []};
+if (S.cat && !catOf(S.cat)) S.cat = '';
+
+/* ---------------- Danh sách ---------------- */
+function renderCats() {
+  const n = id => S.items.filter(x => x.category === id).length;
+  const btn = (id, label, icon, count) => '<button class="cat' + (S.cat === id ? ' active' : '') + '" data-cat="' + id + '"><span>' + icon + ' ' + esc(label) + '</span><b>' + count + '</b></button>';
+  $('cats').innerHTML = btn('', 'Tất cả', '📚', S.items.length) + '<div class="cg">Nền &amp; âm thanh</div>' + MEDIA.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
+    '<div class="cg">Trang phục &amp; phụ kiện</div>' + WEAR.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('');
+}
+function view() {
+  const k = fold(S.q).trim();
+  const a = S.items.filter(x => (!S.cat || x.category === S.cat) && (!k || fold([x.name, catOf(x.category)?.label, x.ext].join(' ')).includes(k)));
+  return a.sort(S.sort === 'name' ? (x, y) => x.name.localeCompare(y.name, 'vi') : (x, y) => (y.createdAt || '').localeCompare(x.createdAt || ''));
+}
+const thumbPath = x => x.thumbPath || String(x.thumbnail || '').replace(/^\.\//, '');
+const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+function card(x) {
+  const c = catOf(x.category) || {icon: '📦', label: x.category};
+  return '<article class="card" data-id="' + esc(x.id) + '"><div class="thumb"><div class="ph">' + c.icon + '</div><img alt="" loading="lazy" data-th="' + esc(thumbPath(x)) + '" data-id="' + esc(x.id) + '"><span class="badge">' + esc(x.ext) + '</span></div>' +
+    '<div class="cb"><div class="ct" title="' + esc(x.name) + '">' + esc(x.name) + '</div><div class="meta">' + esc(c.label) + ' · ' + fmtSize(x.size || 0) + (x.duration ? ' · ' + Number(x.duration).toFixed(1) + 's' : '') + '</div></div></article>';
+}
+function render() {
+  renderCats();
+  const a = view(), pages = Math.max(1, Math.ceil(a.length / PAGE));
+  S.page = Math.min(Math.max(S.page, 1), pages);
+  const c = S.cat ? catOf(S.cat) : null;
+  $('catTitle').textContent = c ? c.icon + ' ' + c.label : '📚 Tất cả item';
+  $('count').textContent = a.length + ' item';
+  $('grid').innerHTML = a.length ? a.slice((S.page - 1) * PAGE, S.page * PAGE).map(card).join('') :
+    '<div class="empty">' + (S.items.length ? 'Không có item nào khớp.' : 'Thư viện đang trống. Bấm “＋ Thêm item” để tải file đầu tiên.') + '</div>';
+  for (const img of $('grid').querySelectorAll('img[data-th]')) {
+    const fr = S.fresh.get(img.dataset.id);
+    if (fr) img.src = fr.thumb; else K.setSrc(img, img.dataset.th, () => img.remove());
+  }
+  const set = [...new Set([1, pages, S.page - 1, S.page, S.page + 1])].filter(p => p >= 1 && p <= pages).sort((x, y) => x - y);
+  let html = '', last = 0;
+  if (pages > 1) {
+    html = '<button data-pg="' + (S.page - 1) + '"' + (S.page === 1 ? ' disabled' : '') + '>‹</button>';
+    for (const p of set) { if (p - last > 1) html += '<span class="muted">…</span>'; html += '<button data-pg="' + p + '" class="' + (p === S.page ? 'cur' : '') + '">' + p + '</button>'; last = p; }
+    html += '<button data-pg="' + (S.page + 1) + '"' + (S.page === pages ? ' disabled' : '') + '>›</button>';
+  }
+  $('pager').innerHTML = html;
+}
+$('cats').onclick = e => { const b = e.target.closest('[data-cat]'); if (!b) return; S.cat = b.dataset.cat; S.page = 1; history.replaceState(null, '', S.cat ? '?cat=' + S.cat : location.pathname); render(); };
+$('pager').onclick = e => { const b = e.target.closest('[data-pg]'); if (!b || b.disabled) return; S.page = +b.dataset.pg; render(); scrollTo({top: 0, behavior: 'smooth'}); };
+$('q').oninput = e => { S.q = e.target.value; S.page = 1; render(); };
+$('sort').onchange = e => { S.sort = e.target.value; S.page = 1; render(); };
+$('grid').onclick = e => { const c = e.target.closest('.card'); if (c) openDetail(c.dataset.id).catch(err => alert(err.message)); };
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).classList.remove('open'));
+
+/* ---------------- Chi tiết / xem ---------------- */
+let viewer = null, vtoken = 0;
+function closeDetail() { vtoken++; if (viewer) viewer.stop(); viewer = null; $('dBody').innerHTML = ''; $('detail').classList.remove('open'); }
+$('dClose').onclick = closeDetail;
+$('detail').addEventListener('click', e => { if (e.target === $('detail')) closeDetail(); });
+async function getBytes(it) {
+  const fr = S.fresh.get(it.id);
+  return fr ? (await fetch(fr.blob)).arrayBuffer() : K.fetchRepoBytes(it.path);
+}
+async function parseModel(ext, buf) {
+  if (ext === 'glb') return (await new Promise((res, rej) => new GLTFLoader().parse(buf, '', res, rej))).scene;
+  if (ext === 'fbx') return new FBXLoader().parse(buf, '');
+  if (ext === 'obj') return new OBJLoader().parse(new TextDecoder().decode(buf));
+  throw Error('Định dạng .' + ext + ' chưa được hỗ trợ (dùng .glb, .fbx, .obj).');
+}
+function frame(obj, cam) {
+  const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+  obj.position.sub(ctr);
+  const rad = Math.max(size.length() / 2, 1e-3), dist = rad / Math.sin(THREE.MathUtils.degToRad(cam.fov / 2)) * 1.05;
+  cam.near = dist / 200; cam.far = dist * 20; cam.position.set(dist * .45, dist * .25, dist * .85); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix();
+  return dist;
+}
+function lights(sc) { sc.add(new THREE.HemisphereLight(0xffffff, 0x777080, 2)); const d = new THREE.DirectionalLight(0xffffff, 2); d.position.set(3, 5, 5); sc.add(d); }
+async function mount3D(stage, it, my) {
+  const buf = await getBytes(it), obj = await parseModel(it.ext, buf);
+  if (my !== vtoken) return null;
+  const r = new THREE.WebGLRenderer({antialias: true, alpha: true});
+  r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.outputColorSpace = THREE.SRGBColorSpace;
+  r.setSize(stage.clientWidth || 600, stage.clientHeight || 380, false); stage.appendChild(r.domElement);
+  const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(35, (stage.clientWidth || 600) / (stage.clientHeight || 380), .01, 1000);
+  lights(sc); sc.add(obj); frame(obj, cam);
+  const ctl = new OrbitControls(cam, r.domElement); ctl.enableDamping = true; ctl.autoRotate = true; ctl.autoRotateSpeed = 2;
+  let raf = 0; (function tick() { raf = requestAnimationFrame(tick); ctl.update(); r.render(sc, cam); })();
+  return {stop() { cancelAnimationFrame(raf); ctl.dispose(); obj.traverse(o => { if (o.geometry) o.geometry.dispose(); }); r.dispose(); }};
+}
+async function openDetail(id) {
+  const it = S.items.find(x => x.id === id); if (!it) return;
+  const c = catOf(it.category) || {label: it.category, icon: '📦'}, fr = S.fresh.get(id), my = ++vtoken;
+  if (viewer) { viewer.stop(); viewer = null; }
+  $('dTitle').textContent = it.name;
+  const media = {image: '<img id="dMedia" class="dmedia" alt="">', video: '<video id="dMedia" class="dmedia" controls playsinline loop></video>',
+    audio: '<img id="dThumb" class="dmedia" style="max-height:200px" alt=""><audio id="dMedia" controls style="width:100%"></audio>', model: '<div class="stage3d" id="dStage"></div>'}[it.kind] || '';
+  $('dBody').innerHTML = media + '<div class="meta">' + esc(c.icon + ' ' + c.label) + ' · ' + esc(it.ext.toUpperCase()) + ' · ' + fmtSize(it.size || 0) + (it.duration ? ' · ' + Number(it.duration).toFixed(1) + 's' : '') + ' · ' + new Date(it.createdAt || Date.now()).toLocaleDateString('vi-VN') + '</div><div class="meta">' + esc(it.path) + '</div>' +
+    '<div class="row"><a href="' + esc(K.repoRaw(it.path)) + '" target="_blank" rel="noopener"><button type="button">Mở file gốc ↗</button></a>' + (it.kind === 'model' ? '<a href="./custom.html"><button type="button">✦ Dùng trong Custom</button></a>' : '') + '<button class="danger" id="dDel" style="margin-left:auto">Gỡ khỏi thư viện</button></div>';
+  $('detail').classList.add('open');
+  $('dDel').onclick = () => removeItem(id);
+  const m = $('dMedia'); if (m) { if (fr) m.src = fr.blob; else K.setSrc(m, it.path, () => {}); }
+  const t = $('dThumb'); if (t) { if (fr) t.src = fr.thumb; else K.setSrc(t, thumbPath(it), () => t.remove()); }
+  if (it.kind === 'model') {
+    try { viewer = await mount3D($('dStage'), it, my); }
+    catch (e) { if (my === vtoken) $('dStage').outerHTML = '<div class="status bad">Không dựng được mô hình: ' + esc(e.message) + '</div>'; }
+  }
+}
+async function removeItem(id) {
+  if (!K.auth().token) { alert('Cần GitHub token (trang Thư viện → ⚙ Cài đặt).'); return; }
+  if (!confirm('Gỡ item này khỏi thư viện? File trên GitHub vẫn được giữ lại để tránh xóa nhầm.')) return;
+  try {
+    const latest = (await K.readJSON(INDEX, {version: 1, items: []})) || {};
+    const items = (latest.items || []).filter(x => x.id !== id);
+    await K.ghPutText(INDEX, JSON.stringify({version: 1, items}, null, 2), 'Remove library item');
+    S.items = items; closeDetail(); render();
+  } catch (e) { alert('Không cập nhật được GitHub: ' + e.message); }
+}
+
+/* ---------------- Tạo thumbnail tự động ---------------- */
+const mkCanvas = () => { const c = document.createElement('canvas'); c.width = TW; c.height = TH; return c; };
+function cover(ctx, src, sw, sh) { const r = TW / TH; let w = sw, h = sw / r; if (h > sh) { h = sh; w = sh * r; } ctx.drawImage(src, (sw - w) / 2, (sh - h) / 2, w, h, 0, 0, TW, TH); }
+const once = (el, ev, ms = 15000) => new Promise((res, rej) => {
+  const t = setTimeout(() => rej(Error('Hết thời gian đọc file')), ms);
+  el.addEventListener(ev, () => { clearTimeout(t); res(); }, {once: true});
+  el.addEventListener('error', () => { clearTimeout(t); rej(Error('Không đọc được file')); }, {once: true});
+});
+function iconThumb(icon) {
+  const c = mkCanvas(), x = c.getContext('2d'), g = x.createLinearGradient(0, 0, TW, TH);
+  g.addColorStop(0, '#34364a'); g.addColorStop(1, '#222431'); x.fillStyle = g; x.fillRect(0, 0, TW, TH);
+  x.font = '90px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(icon, TW / 2, TH / 2);
+  return {data: c.toDataURL('image/png')};
+}
+async function thumbImage(file) {
+  const bmp = await createImageBitmap(file), c = mkCanvas();
+  cover(c.getContext('2d'), bmp, bmp.width, bmp.height); if (bmp.close) bmp.close();
+  return {data: c.toDataURL('image/jpeg', .82)};
+}
+async function thumbVideo(file) {
+  const url = URL.createObjectURL(file), v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+  try {
+    await once(v, 'loadeddata');
+    const dur = v.duration || 0, t = Math.min(1, dur * .1);
+    if (Math.abs(v.currentTime - t) > .01) { v.currentTime = t; await once(v, 'seeked'); }
+    const c = mkCanvas(); cover(c.getContext('2d'), v, v.videoWidth, v.videoHeight);
+    return {data: c.toDataURL('image/jpeg', .82), duration: isFinite(dur) ? dur : 0};
+  } finally { URL.revokeObjectURL(url); }
+}
+async function thumbAudio(file) {
+  const AC = window.AudioContext || window.webkitAudioContext, ctx = new AC();
+  let ab; try { ab = await ctx.decodeAudioData(await file.arrayBuffer()); } finally { if (ctx.close) ctx.close(); }
+  const ch = ab.getChannelData(0), bars = 64, step = Math.max(1, Math.floor(ch.length / bars)), peaks = [];
+  for (let i = 0; i < bars; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step && j < ch.length; j += Math.max(1, step >> 6)) m = Math.max(m, Math.abs(ch[j])); peaks.push(m); }
+  const top = Math.max(...peaks, 1e-6), c = mkCanvas(), x = c.getContext('2d'), g = x.createLinearGradient(0, 0, TW, TH);
+  g.addColorStop(0, '#2b2547'); g.addColorStop(1, '#1b1d29'); x.fillStyle = g; x.fillRect(0, 0, TW, TH);
+  x.fillStyle = '#9a83ff'; const bw = TW / bars;
+  peaks.forEach((p, i) => { const h = Math.max(4, (p / top) * TH * .7); x.fillRect(i * bw + 1, (TH - h) / 2, bw - 2, h); });
+  return {data: c.toDataURL('image/png'), duration: ab.duration};
+}
+let tr = null;
+async function thumbModel(file) {
+  const ext = file.name.split('.').pop().toLowerCase(), obj = await parseModel(ext, await file.arrayBuffer());
+  if (!tr) { tr = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true}); tr.setPixelRatio(1); tr.setSize(TW, TH, false); tr.outputColorSpace = THREE.SRGBColorSpace; }
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x242633); lights(sc); sc.add(obj);
+  const cam = new THREE.PerspectiveCamera(35, TW / TH, .01, 1000); frame(obj, cam); tr.render(sc, cam);
+  const data = tr.domElement.toDataURL('image/png'); obj.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  return {data};
+}
+async function makeThumb(c, file) {
+  try { return await ({image: thumbImage, video: thumbVideo, audio: thumbAudio, model: thumbModel}[c.kind])(file); }
+  catch (e) { console.warn('Thumbnail dự phòng:', e); return iconThumb(c.icon); }
+}
+
+/* ---------------- Thêm item + đồng bộ GitHub ---------------- */
+function fillUpCat() {
+  const opt = c => '<option value="' + c.id + '">' + c.icon + ' ' + esc(c.label) + '</option>';
+  $('upCat').innerHTML = '<optgroup label="Nền &amp; âm thanh">' + MEDIA.map(opt).join('') + '</optgroup><optgroup label="Trang phục &amp; phụ kiện (mô hình .glb/.fbx/.obj)">' + WEAR.map(opt).join('') + '</optgroup>';
+}
+$('upCat').onchange = () => { $('upFile').accept = catOf($('upCat').value).accept; };
+$('upFile').onchange = () => { $('nameRow').classList.toggle('hide', $('upFile').files.length > 1); };
+$('addBtn').onclick = () => {
+  $('upCat').value = S.cat || 'bgimage'; $('upFile').accept = catOf($('upCat').value).accept; $('upFile').value = ''; $('upName').value = ''; $('upList').innerHTML = '';
+  $('nameRow').classList.remove('hide'); say($('upStatus'), K.auth().token ? 'Chọn danh mục và file rồi bấm tải lên.' : 'Chưa có GitHub token — nhập ở Thư viện → ⚙ Cài đặt (index.html) trước khi tải lên.', K.auth().token ? '' : 'bad');
+  $('upModal').classList.add('open');
+};
+async function flushIndex() {
+  if (!S.pending.length) return;
+  const latest = (await K.readJSON(INDEX, {version: 1, items: []})) || {}, ids = new Set(S.pending.map(x => x.id));
+  const items = [...S.pending, ...(latest.items || []).filter(x => !ids.has(x.id))];
+  await K.ghPutText(INDEX, JSON.stringify({version: 1, items}, null, 2), 'Update library index (' + S.pending.length + ' item)');
+  S.items = items; S.pending = []; render();
+}
+$('upGo').onclick = async () => {
+  if (!K.auth().token) { say($('upStatus'), 'Chưa có GitHub token. Nhập ở trang Thư viện → ⚙ Cài đặt.', 'bad'); return; }
+  const c = catOf($('upCat').value), files = [...$('upFile').files];
+  if (!files.length && !S.pending.length) { say($('upStatus'), 'Hãy chọn ít nhất một file.', 'bad'); return; }
+  $('upGo').disabled = true; $('upList').innerHTML = '';
+  const rows = files.map(f => { const d = document.createElement('div'); d.innerHTML = '<span>' + esc(f.name) + '</span><span>Đang chờ…</span>'; $('upList').appendChild(d); return d.lastChild; });
+  let ok = 0;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], st = t => { rows[i].textContent = t; };
+    try {
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (c.kind === 'model' && !['glb', 'fbx', 'obj'].includes(ext)) throw Error('chỉ nhận .glb/.fbx/.obj');
+      if (f.size > MAX_BYTES) throw Error('file quá lớn (> 90 MB)');
+      st('Đang tạo thumbnail…');
+      const th = await makeThumb(c, f);
+      const base = f.name.replace(/\.[^.]+$/, ''), name = (files.length === 1 && $('upName').value.trim()) || base.replace(/[_-]+/g, ' ').trim() || 'Item';
+      const id = K.slug(base) + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      const path = 'library/assets/' + c.id + '/' + id + '.' + ext, tp = 'library/thumbnails/assets/' + id + '.' + (th.data.startsWith('data:image/jpeg') ? 'jpg' : 'png');
+      st('Đang tải file lên GitHub…');
+      await K.ghPutBytes(path, new Uint8Array(await f.arrayBuffer()), 'Add library item ' + name);
+      st('Đang lưu thumbnail…');
+      await K.ghPutDataUrl(tp, th.data, 'Add library thumbnail ' + name);
+      S.pending.push({id, name, category: c.id, kind: c.kind, ext, size: f.size, path, thumbPath: tp, thumbnail: './' + tp, ...(th.duration ? {duration: +th.duration.toFixed(2)} : {}), createdAt: new Date().toISOString()});
+      S.fresh.set(id, {thumb: th.data, blob: URL.createObjectURL(f)});
+      st('✓ Đã tải lên'); ok++;
+    } catch (e) { st('✗ ' + e.message); }
+  }
+  try {
+    say($('upStatus'), 'Đang cập nhật danh mục trên GitHub…');
+    const n = S.pending.length; await flushIndex();
+    say($('upStatus'), n ? 'Đã đồng bộ ' + n + ' item. Trang Custom sẽ tự thấy các item trang phục trong danh mục tương ứng.' : 'Không có item nào được tải lên.', n ? 'good' : 'bad');
+    if (n) { S.cat = c.id; S.page = 1; render(); }
+  } catch (e) { say($('upStatus'), 'File đã lên GitHub nhưng chưa cập nhật được danh mục: ' + e.message + ' — bấm “Tải lên” lần nữa để thử lại.', 'bad'); }
+  $('upGo').disabled = false;
+};
+
+/* ---------------- Khởi động ---------------- */
+(async function init() {
+  fillUpCat();
+  const a = K.auth(); $('gitState').textContent = a.token ? 'GitHub kết nối' : 'GitHub chưa kết nối'; $('gitState').className = 'pill' + (a.token ? '' : ' off');
+  render();
+  try { const idx = await K.readJSON(INDEX, {version: 1, items: []}); S.items = Array.isArray(idx?.items) ? idx.items : []; } catch (e) { console.warn(e); }
+  render();
+})();
+</script></body></html>

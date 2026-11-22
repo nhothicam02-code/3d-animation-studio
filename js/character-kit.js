@@ -74,6 +74,21 @@ export async function listModels() {
   const m = await readJSON('library/manifest.json', {characters: {}});
   return Object.keys(m.characters || {});
 }
+export const repoRaw = path => 'https://raw.githubusercontent.com/' + auth().repo + '/main/' + encPath(path);
+/** Gán src cho img/video/audio: thử file tương đối (GitHub Pages) → raw.githubusercontent → gọi fail(). */
+export function setSrc(el, path, fail) {
+  let step = 0;
+  el.onerror = () => { if (step++ === 0) el.src = repoRaw(path); else { el.onerror = null; if (fail) fail(); } };
+  el.src = './' + encPath(path);
+}
+/** Tải byte của một file trong repo (tương đối → raw → API có token). */
+export async function fetchRepoBytes(path) {
+  for (const u of ['./' + encPath(path), repoRaw(path)]) {
+    try { const r = await fetch(u + '?v=' + Date.now(), {cache: 'no-store'}); if (r.ok) return await r.arrayBuffer(); } catch (e) { /* thử nguồn khác */ }
+  }
+  if (auth().token) { const r = await gh(path, {raw: true}); return await r.arrayBuffer(); }
+  throw Error('Không tải được ' + path + ' (GitHub Pages có thể chưa cập nhật, hãy thử lại sau ít phút)');
+}
 export const slug = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'item';
 
 /* ============================================================
@@ -174,7 +189,7 @@ export function boneOptions(rig) {
    (X = ngang, Y = lên, Z = phía trước). Hình khối tự co theo độ dài xương.
    ============================================================ */
 export const SLOTS = [
-  {id: 'hat', label: 'Mũ', icon: '🎩'}, {id: 'scarf', label: 'Khăn choàng', icon: '🧣'}, {id: 'jacket', label: 'Áo khoác', icon: '🧥'},
+  {id: 'hat', label: 'Mũ', icon: '🎩'}, {id: 'hair', label: 'Tóc', icon: '💇'}, {id: 'scarf', label: 'Khăn choàng', icon: '🧣'}, {id: 'jacket', label: 'Áo khoác', icon: '🧥'},
   {id: 'sleeves', label: 'Tay áo', icon: '💪'}, {id: 'gloves', label: 'Bao tay', icon: '🧤'}, {id: 'outer', label: 'Áo ngoài', icon: '👕'},
   {id: 'under', label: 'Áo lót', icon: '🎽'}, {id: 'brief', label: 'Quần lót', icon: '🩲'}, {id: 'shorts', label: 'Quần ngắn', icon: '🩳'},
   {id: 'pants', label: 'Quần dài', icon: '👖'}, {id: 'skirt', label: 'Váy', icon: '👗'}, {id: 'socks', label: 'Vớ', icon: '🧦'},
@@ -368,7 +383,16 @@ export function mountPiece(group, piece, rig, parent) {
   if (piece.file) {
     if (!piece._obj) return null;
     const obj = piece._obj;
-    built = {content: obj, worldCenter: bone ? rig.rest.get(bone).pos.clone() : new THREE.Vector3(), mats: []};
+    // nhân bản vật liệu để có thể pha màu (blend) mà không làm hỏng bản gốc
+    const tint = [];
+    obj.traverse(o => {
+      if (!o.isMesh || !o.material) return;
+      const arr = Array.isArray(o.material) ? o.material : [o.material];
+      const nm = arr.map(m => { if (!m.color || m._tintClone) return m; const c = m.clone(); c._base = m.color.clone(); c._tintClone = true; return c; });
+      o.material = Array.isArray(o.material) ? nm : nm[0];
+      nm.forEach(m => { if (m._tintClone) tint.push(m); });
+    });
+    built = {content: obj, worldCenter: bone ? rig.rest.get(bone).pos.clone() : new THREE.Vector3(), mats: [], tint};
   } else {
     built = buildPieceContent(group, piece, rig);
     if (!built) return null;
@@ -384,7 +408,7 @@ export function mountPiece(group, piece, rig, parent) {
   holder.add(center); center.add(offset); offset.add(built.content);
   bone.add(holder);
   built.content.traverse(o => { if (o.isMesh) { o.userData.pieceUid = piece.uid; o.frustumCulled = false; } });
-  piece._rt = {holder, center, offset, content: built.content, mats: built.mats, group};
+  piece._rt = {holder, center, offset, content: built.content, mats: built.mats, tint: built.tint || [], group};
   applyPiece(group, piece);
   return piece._rt;
 }
@@ -404,6 +428,10 @@ export function applyPiece(group, piece) {
   rt.offset.scale.setScalar(piece.scale);
   rt.holder.visible = group.visible !== false && piece.visible !== false;
   if (rt.mats.length) { rt.mats[0].color.set(group.color); rt.mats[1].color.set(group.color2 || group.color); }
+  if (rt.tint && rt.tint.length) { // đồ nhập/thư viện: pha màu với màu gốc của mô hình
+    const t = new THREE.Color(group.color || '#ffffff'), b = Math.min(Math.max(group.blend || 0, 0), 1), mul = group.blendMode === 'multiply';
+    for (const m of rt.tint) { m.color.copy(m._base); if (b > 0) m.color.lerp(mul ? m._base.clone().multiply(t) : t, b); }
+  }
 }
 export function newPiece(part, label, bone) {
   return {uid: 'p' + Math.random().toString(36).slice(2, 9), part, label, bone, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, visible: true};
