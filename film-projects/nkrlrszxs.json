@@ -2,7 +2,7 @@
  "id": "nkrlrszxs",
  "name": "phim",
  "created": 1795343875120,
- "updated": 1795364240843,
+ "updated": 1795364251104,
  "tts": false,
  "scenes": [
   {
@@ -52,7 +52,7 @@
      "sy": 1,
      "sz": 1,
      "lock": true,
-     "fixed": true,
+     "fixed": false,
      "clips": [
       {
        "id": "r6y9k9fbd",
