@@ -1,0 +1,85 @@
+{
+ "id": "nkrlrszxs",
+ "name": "phim",
+ "created": 1795343875120,
+ "updated": 1795357985161,
+ "tts": false,
+ "scenes": [
+  {
+   "id": "i4wrrw9an",
+   "name": "Cảnh 2",
+   "duration": 8,
+   "bg": "#667adb",
+   "cam": null,
+   "chars": [
+    {
+     "id": "mg8ljkr93",
+     "file": "Sitting Laughing.fbx",
+     "name": "Sitting Laughing",
+     "x": 0.27,
+     "z": -0.38,
+     "rot": -21.4,
+     "scale": 1,
+     "opacity": 1,
+     "y": 0.14,
+     "rx": 0,
+     "rz": 1.5,
+     "sx": 1,
+     "sy": 1,
+     "sz": 1,
+     "lock": true,
+     "clips": [],
+     "fixed": true
+    },
+    {
+     "id": "m9l6noa3v",
+     "file": "20260926223349_4ec5f5b9.fbx",
+     "name": "aa",
+     "custom": {
+      "id": "aa-mwrxq55p",
+      "dataPath": "characters/custom/aa-mwrxq55p.json",
+      "name": "aa"
+     },
+     "x": 1.2,
+     "z": 0,
+     "rot": 0,
+     "scale": 1,
+     "opacity": 1,
+     "y": 0,
+     "rx": 0,
+     "rz": 0,
+     "sx": 1,
+     "sy": 1,
+     "sz": 1,
+     "lock": true,
+     "fixed": true,
+     "clips": [
+      {
+       "id": "r6y9k9fbd",
+       "clip": "mua-dancing-mwrl03b9",
+       "start": 0,
+       "dur": 4.47,
+       "loop": true
+      }
+     ]
+    }
+   ],
+   "tracks": [],
+   "bgt": "img",
+   "bg2": "#5b3fa8",
+   "bga": 135,
+   "bgm": "isjc9ejuc",
+   "bgfit": "cover",
+   "bgz": 101,
+   "bgx": 0,
+   "bgy": 0
+  }
+ ],
+ "fmt": {
+  "aspect": "16:9",
+  "res": 1080,
+  "fps": 30,
+  "w": 1920,
+  "h": 1080
+ }
+}
