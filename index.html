@@ -54,7 +54,7 @@ input[type=range]{accent-color:var(--accent)}
 </div>
 <div class="controls"><button id="playBtn" class="primary">▶ Phát</button><button id="pauseBtn">Ⅱ Tạm dừng</button><button id="stopBtn">■ Dừng</button></div>
 <div class="timeline"><div id="timeText"><span>THỜI GIAN</span><span id="clock">0.00 s</span></div><input id="scrub" type="range" min="0" max="5" step=".01" value="0"><div class="field" style="margin-bottom:0"><label>Tốc độ: <b id="speedLabel">1.0×</b></label><input id="speed" type="range" min=".25" max="2" step=".25" value="1"></div></div>
-<h3>Timeline keyframe</h3><div class="info" id="keyInfo">Đang chuẩn bị keyframe…</div><h3>Thông tin model</h3><div class="info" id="modelInfo">Đang phân tích cấu trúc xương…</div>
+<h3>Timeline keyframe</h3><div class="info" id="keyInfo">Đang chuẩn bị keyframe…</div><button id="exportActions" style="width:100%;margin-top:8px">↓ Tải thư viện keyframe JSON</button><h3>Thông tin model</h3><div class="info" id="modelInfo">Đang phân tích cấu trúc xương…</div>
 <h3>Xương tìm thấy</h3><div id="boneList">Đang chờ FBXLoader…</div>
 <div class="info">Các hành động được tạo trực tiếp trong trình duyệt bằng cách xoay xương theo thời gian. File FBX gốc được giữ nguyên, không chuyển đổi hay ghi đè. Đây là bản thử nghiệm procedural; chất lượng khớp phụ thuộc cấu trúc rig của model.</div>
 </aside>
@@ -191,6 +191,7 @@ function applyPose(time){
 function setPose(t){applyPose(t)}
 function setAction(a){action=a;elapsed=0;duration=compiledActions[a]?.duration||3;document.querySelectorAll('.action').forEach(x=>x.classList.toggle('active',x.dataset.action===a));document.getElementById('scrub').max=duration;document.getElementById('scrub').value=0;playing=true;setPose(0);document.getElementById('playBtn').textContent='▶ Phát';document.getElementById('keyInfo').textContent=(compiledActions[a]?.frames.length||0)+' keyframe · '+duration.toFixed(2)+' giây';}
 document.querySelectorAll('.action').forEach(b=>b.addEventListener('click',()=>setAction(b.dataset.action)));
+document.getElementById('exportActions').onclick=()=>{const payload={format:'3DiS-Keyframe-1.0',model:'20260926223349_4ec5f5b9.fbx',coordinateSystem:'character-world axes converted to parent-local quaternions at runtime',actions:ACTIONS};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='3dis-basic-actions-keyframes.json';a.click();URL.revokeObjectURL(url);};
 document.getElementById('playBtn').onclick=()=>{playing=true};
 document.getElementById('pauseBtn').onclick=()=>{playing=false};
 document.getElementById('stopBtn').onclick=()=>{playing=false;elapsed=0;setPose(0);updateClock()};
