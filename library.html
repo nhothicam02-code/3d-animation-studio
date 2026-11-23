@@ -87,9 +87,9 @@ const ENV = [
   {id: 'env-mountain', label: 'Núi', icon: '⛰️'}, {id: 'env-rock', label: 'Đá', icon: '🪨'}, {id: 'env-building', label: 'Nhà & công trình', icon: '🏠'},
   {id: 'env-prop', label: 'Đồ vật khác', icon: '📦'}
 ].map(c => ({...c, kind: 'model', accept: '.glb,.fbx,.obj', env: true}));
-const CHAR_CAT = {id: 'character', label: 'Nhân vật', icon: '🧍', kind: 'character'};
+const CHAR_CAT = {id: 'character', label: 'Nhân vật (.fbx → characters/)', icon: '🧍', kind: 'character', accept: '.fbx'};
 const CATS = [...MEDIA, ...ENV, ...WEAR], catOf = id => id === CHAR_CAT.id ? CHAR_CAT : CATS.find(c => c.id === id);
-const S = {items: [], chars: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: []};
+const S = {items: [], chars: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: [], pendingChars: [], newChars: []};
 const allItems = () => S.items.concat(S.chars);
 if (S.cat && !catOf(S.cat)) S.cat = '';
 
@@ -271,22 +271,50 @@ async function thumbModel(file) {
   return {data};
 }
 async function makeThumb(c, file) {
-  try { return await ({image: thumbImage, video: thumbVideo, audio: thumbAudio, model: thumbModel}[c.kind])(file); }
+  try { return await ({image: thumbImage, video: thumbVideo, audio: thumbAudio, model: thumbModel, character: thumbModel}[c.kind])(file); }
   catch (e) { console.warn('Thumbnail dự phòng:', e); return iconThumb(c.icon); }
 }
 
 /* ---------------- Thêm item + đồng bộ GitHub ---------------- */
 function fillUpCat() {
   const opt = c => '<option value="' + c.id + '">' + c.icon + ' ' + esc(c.label) + '</option>';
-  $('upCat').innerHTML = '<optgroup label="Nền &amp; âm thanh">' + MEDIA.map(opt).join('') + '</optgroup><optgroup label="Bối cảnh 3D (mô hình .glb/.fbx/.obj)">' + ENV.map(opt).join('') + '</optgroup><optgroup label="Trang phục &amp; phụ kiện (mô hình .glb/.fbx/.obj)">' + WEAR.map(opt).join('') + '</optgroup>';
+  $('upCat').innerHTML = '<optgroup label="Nhân vật gốc (lưu vào thư mục characters/)">' + opt(CHAR_CAT) + '</optgroup><optgroup label="Nền &amp; âm thanh">' + MEDIA.map(opt).join('') + '</optgroup><optgroup label="Bối cảnh 3D (mô hình .glb/.fbx/.obj)">' + ENV.map(opt).join('') + '</optgroup><optgroup label="Trang phục &amp; phụ kiện (mô hình .glb/.fbx/.obj)">' + WEAR.map(opt).join('') + '</optgroup>';
 }
-$('upCat').onchange = () => { $('upFile').accept = catOf($('upCat').value).accept; };
-$('upFile').onchange = () => { $('nameRow').classList.toggle('hide', $('upFile').files.length > 1); };
+const isCharCat = () => catOf($('upCat').value).kind === 'character';
+const syncNameRow = () => $('nameRow').classList.toggle('hide', isCharCat() || $('upFile').files.length > 1);   // nhân vật: tên = tên file
+const upHint = () => isCharCat() ? 'Nhân vật: chọn file .fbx — sẽ được lưu vào thư mục characters/ trên GitHub và hiện ở “Nhân vật gốc” bên trang Custom.' : 'Chọn danh mục và file rồi bấm tải lên.';
+$('upCat').onchange = () => { $('upFile').accept = catOf($('upCat').value).accept; $('upFile').value = ''; syncNameRow(); if (K.auth().token) say($('upStatus'), upHint()); };
+$('upFile').onchange = syncNameRow;
 $('addBtn').onclick = () => {
-  $('upCat').value = S.cat && S.cat !== CHAR_CAT.id ? S.cat : 'bgimage'; $('upFile').accept = catOf($('upCat').value).accept; $('upFile').value = ''; $('upName').value = ''; $('upList').innerHTML = '';
-  $('nameRow').classList.remove('hide'); say($('upStatus'), K.auth().token ? 'Chọn danh mục và file rồi bấm tải lên.' : 'Chưa có GitHub token — nhập ở Thư viện → ⚙ Cài đặt (index.html) trước khi tải lên.', K.auth().token ? '' : 'bad');
+  $('upCat').value = S.cat || 'bgimage'; $('upFile').accept = catOf($('upCat').value).accept; $('upFile').value = ''; $('upName').value = ''; $('upList').innerHTML = '';
+  syncNameRow(); say($('upStatus'), K.auth().token ? upHint() : 'Chưa có GitHub token — nhập ở Thư viện → ⚙ Cài đặt (index.html) trước khi tải lên.', K.auth().token ? '' : 'bad');
   $('upModal').classList.add('open');
 };
+/** Nhân vật gốc: đưa file .fbx vào characters/ (+ thumbnail), danh sách tự nhận qua K.listModels(). */
+async function addCharacter(f, st) {
+  const fname = f.name.replace(/[\\/:*?"<>|#%]+/g, '_').replace(/\s+/g, '_'), base = fname.replace(/\.[^.]+$/, '');
+  if (S.chars.some(x => x.ref && x.ref.type === 'base' && x.ref.file.toLowerCase() === fname.toLowerCase())) throw Error('đã có “' + fname + '” trong characters/ — hãy đổi tên file');
+  st('Đang tạo thumbnail…');
+  const th = await makeThumb(CHAR_CAT, f), path = 'characters/' + fname, tp = 'library/thumbnails/characters/' + K.slug(base) + (th.data.startsWith('data:image/jpeg') ? '.jpg' : '.png');
+  st('Đang tải lên characters/ trên GitHub…');
+  await K.ghPutBytes(path, new Uint8Array(await f.arrayBuffer()), 'Add character ' + fname);
+  st('Đang lưu thumbnail…');
+  await K.ghPutDataUrl(tp, th.data, 'Add character thumbnail ' + fname);
+  const createdAt = new Date().toISOString(), id = 'char:' + fname;
+  S.pendingChars.push({file: fname, tp, createdAt});
+  S.newChars = S.newChars.filter(x => x.id !== id);
+  S.newChars.push({id, name: base, category: CHAR_CAT.id, kind: 'character', ext: 'fbx', size: f.size, thumbPath: tp, createdAt, ref: {type: 'base', file: fname}});
+  S.fresh.set(id, {thumb: th.data});
+  st('✓ Đã vào ' + path);
+}
+async function flushCharManifest() {
+  if (!S.pendingChars.length) return;
+  const m = (await K.readJSON('library/manifest.json', {})) || {}, n = S.pendingChars.length;
+  m.characters = m.characters || {};
+  for (const x of S.pendingChars) m.characters[x.file] = {...(m.characters[x.file] || {}), thumbnail: './' + x.tp, updatedAt: x.createdAt};
+  await K.ghPutText('library/manifest.json', JSON.stringify(m, null, 2), 'Update character manifest (' + n + ')');
+  S.pendingChars = [];
+}
 async function flushIndex() {
   if (!S.pending.length) return;
   const latest = (await K.readJSON(INDEX, {version: 1, items: []})) || {}, ids = new Set(S.pending.map(x => x.id));
@@ -297,7 +325,7 @@ async function flushIndex() {
 $('upGo').onclick = async () => {
   if (!K.auth().token) { say($('upStatus'), 'Chưa có GitHub token. Nhập ở trang Thư viện → ⚙ Cài đặt.', 'bad'); return; }
   const c = catOf($('upCat').value), files = [...$('upFile').files];
-  if (!files.length && !S.pending.length) { say($('upStatus'), 'Hãy chọn ít nhất một file.', 'bad'); return; }
+  if (!files.length && !S.pending.length && !S.pendingChars.length) { say($('upStatus'), 'Hãy chọn ít nhất một file.', 'bad'); return; }
   $('upGo').disabled = true; $('upList').innerHTML = '';
   const rows = files.map(f => { const d = document.createElement('div'); d.innerHTML = '<span>' + esc(f.name) + '</span><span>Đang chờ…</span>'; $('upList').appendChild(d); return d.lastChild; });
   let ok = 0;
@@ -306,7 +334,9 @@ $('upGo').onclick = async () => {
     try {
       const ext = (f.name.split('.').pop() || '').toLowerCase();
       if (c.kind === 'model' && !['glb', 'fbx', 'obj'].includes(ext)) throw Error('chỉ nhận .glb/.fbx/.obj');
+      if (c.kind === 'character' && ext !== 'fbx') throw Error('nhân vật chỉ nhận file .fbx');
       if (f.size > MAX_BYTES) throw Error('file quá lớn (> 90 MB)');
+      if (c.kind === 'character') { await addCharacter(f, st); ok++; continue; }
       st('Đang tạo thumbnail…');
       const th = await makeThumb(c, f);
       const base = f.name.replace(/\.[^.]+$/, ''), name = (files.length === 1 && $('upName').value.trim()) || base.replace(/[_-]+/g, ' ').trim() || 'Item';
@@ -323,9 +353,16 @@ $('upGo').onclick = async () => {
   }
   try {
     say($('upStatus'), 'Đang cập nhật danh mục trên GitHub…');
-    const n = S.pending.length; await flushIndex();
-    say($('upStatus'), n ? 'Đã đồng bộ ' + n + ' item. Trang Custom sẽ tự thấy các item trang phục trong danh mục tương ứng.' : 'Không có item nào được tải lên.', n ? 'good' : 'bad');
-    if (n) { S.cat = c.id; S.page = 1; render(); }
+    const n = S.pending.length, nc = S.pendingChars.length; await flushIndex();
+    let note = '';
+    if (nc) {
+      try { await flushCharManifest(); } catch (e) { note = ' (chưa ghi được thumbnail vào library/manifest.json: ' + e.message + ')'; }
+      S.chars = S.chars.filter(x => !S.newChars.some(y => y.id === x.id)).concat(S.newChars);
+      await loadChars();
+    }
+    const total = n + nc;
+    say($('upStatus'), total ? (nc ? 'Đã thêm ' + nc + ' nhân vật vào thư mục characters/ trên GitHub — trang Custom sẽ thấy trong “Nhân vật gốc”.' : 'Đã đồng bộ ' + n + ' item. Trang Custom sẽ tự thấy các item trang phục trong danh mục tương ứng.') + note : 'Không có item nào được tải lên.', total ? 'good' : 'bad');
+    if (total) { S.cat = c.id; S.page = 1; render(); }
   } catch (e) { say($('upStatus'), 'File đã lên GitHub nhưng chưa cập nhật được danh mục: ' + e.message + ' — bấm “Tải lên” lần nữa để thử lại.', 'bad'); }
   $('upGo').disabled = false;
 };
@@ -337,6 +374,7 @@ async function loadChars() {
     const mc = (m && m.characters) || {}, names = models.length ? models : Object.keys(mc), out = [];
     for (const n of names) { const e = mc[n] || {}; out.push({id: 'char:' + n, name: n.replace(/\.fbx$/i, ''), category: CHAR_CAT.id, kind: 'character', ext: 'fbx', size: 0, thumbPath: String(e.thumbnail || '').replace(/^\.\//, ''), createdAt: e.updatedAt || '', ref: {type: 'base', file: n}}); }
     for (const c of (ci && ci.characters) || []) out.push({id: 'char:custom:' + c.id, name: c.name, category: CHAR_CAT.id, kind: 'character', ext: 'custom', size: 0, thumbPath: String(c.thumbnail || '').replace(/^\.\//, ''), createdAt: c.updatedAt || '', ref: {type: 'custom', id: c.id, base: c.base, items: c.items || 0}});
+    for (const x of S.newChars) if (!out.some(o => o.id === x.id)) out.unshift(x);
     S.chars = out; render();
   } catch (e) { console.warn('Không nạp được danh sách nhân vật:', e); }
 }
