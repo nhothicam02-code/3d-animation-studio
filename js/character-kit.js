@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import {norm} from './retarget.js';
+import {CHAR_EXTS, extRegex} from './model-loader.js';
+export {CHAR_EXTS, CHAR_EXTS as CHARACTER_EXTS, extOf, stripExt, loadModelUrl, parseModel, acceptOf, listText} from './model-loader.js';
+export const CHAR_RE = extRegex(CHAR_EXTS);
 
 /* ============================================================
    GitHub (dùng chung token/repo đã lưu ở trang Cài đặt)
@@ -69,7 +72,7 @@ export async function listModels() {
   try {
     const {token} = auth();
     const r = await fetch('https://api.github.com/repos/' + repo + '/contents/characters?ref=main', token ? {headers: {Authorization: 'Bearer ' + token}} : undefined);
-    if (r.ok) return (await r.json()).filter(x => x.type === 'file' && /\.fbx$/i.test(x.name)).map(x => x.name);
+    if (r.ok) return (await r.json()).filter(x => x.type === 'file' && CHAR_RE.test(x.name)).map(x => x.name);
   } catch (e) { /* dùng manifest */ }
   const m = await readJSON('library/manifest.json', {characters: {}});
   return Object.keys(m.characters || {});

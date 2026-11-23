@@ -49,11 +49,9 @@ dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);bo
 <dialog id="dExp"><h3>Xuất video</h3><div class="hint">Dựng từng khung hình ngoài thời gian thực → không lag, khựng hay rớt/nhảy frame (có thể lâu hơn thời lượng phim). Lưới, gizmo và khung chọn tự tắt khi xuất.</div><label>Định dạng</label><select id="xf"><option value="mp4">MP4 (H.264 + AAC)</option><option value="webm">WebM (VP9 + Opus)</option></select><progress id="xp" max="1" value="0" style="width:100%;margin-top:12px"></progress><div class="hint" id="xs"></div><div class="r" style="margin-top:10px"><button id="xGo" class="pri">Bắt đầu xuất</button><button id="xX">Đóng / Huỷ</button></div></dialog>
 <script type="module">
 import * as THREE from 'three';
-import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
+import * as M from './js/model-loader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {clone as skClone} from 'three/addons/utils/SkeletonUtils.js';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 import * as K from './js/character-kit.js';
 const $=id=>document.getElementById(id),KEY='3dis.projects',LW=130,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').toLowerCase().replace(/^.*:/,'').replace(/^mixamorig/,'').replace(/[^a-z0-9]/g,'');
@@ -162,21 +160,17 @@ function route(){const m=location.hash.match(/#p=(\w+)/),p=m&&projects.find(x=>x
 addEventListener('hashchange',route);$('back').onclick=e=>{e.preventDefault();location.hash=''};
 
 /* ---------- Khung + 3D ---------- */
-let renderer,tscene,camera,controls,GRID,SG;const R={},AU={},OV={},clock=new THREE.Clock(),loader=new FBXLoader(),fbx={},jc={};let tok=0;
+let renderer,tscene,camera,controls,GRID,SG;const R={},AU={},OV={},clock=new THREE.Clock(),fbx={},jc={};let tok=0;
 function initThree(){if(renderer)return;renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('vp').appendChild(renderer.domElement);tscene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,16/9,.01,500);const hl=new THREE.HemisphereLight(0xffffff,0x666070,2),l=new THREE.DirectionalLight(0xffffff,2.2);l.position.set(3,6,5);BL.push(hl,l);tscene.add(hl,l);SG=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:.45}));SG.rotation.x=-Math.PI/2;SG.position.y=.002;SG.receiveShadow=true;SG.visible=false;tscene.add(SG);tscene.add(GRID=new THREE.GridHelper(20,20,0x444a60,0x2a2e3e));controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;buildGiz();new ResizeObserver(layout).observe($('stage'));tick()}
 function layout(){if(!P||!renderer||EXP)return;const st=$('stage'),W=st.clientWidth-28,H=st.clientHeight-28,f=P.fmt,ar=f.w/f.h;if(W<60||H<60)return;let w=W,h=w/ar;if(h>H){h=H;w=h*ar}const fr=$('frame');fr.style.width=w+'px';fr.style.height=h+'px';fr.style.setProperty('--k',h/f.h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);camera.aspect=ar;camera.updateProjectionMatrix();$('flab').textContent=f.w+'×'+f.h+' · '+f.aspect+' · '+f.fps+'fps'}
 function autoCam(){const s=sc(),xs=s.chars.map(c=>c.x),a=Math.min(...xs,0),b=Math.max(...xs,0),cx=(a+b)/2,th=Math.tan(camera.fov*Math.PI/360),d=Math.max(1/th,((b-a)/2+.9)/(th*camera.aspect))*1.2;camera.position.set(cx,1.3,d);controls.target.set(cx,.9,0);controls.update()}
-const getF=f=>fbx[f]||(fbx[f]=loader.loadAsync('./characters/'+encodeURIComponent(f)).catch(()=>loader.loadAsync('./'+encodeURIComponent(f))));
+const getF=f=>fbx[f]||(fbx[f]=M.loadModelUrl('./characters/'+encodeURIComponent(f),f).catch(()=>M.loadModelUrl('./'+encodeURIComponent(f),f)));
 function place(ch){const r=R[ch.id];if(!r)return;const D=Math.PI/180;r.g.scale.set(r.fit*(+(ch.sx??ch.scale)||1),r.fit*(+(ch.sy??ch.scale)||1),r.fit*(+(ch.sz??ch.scale)||1));r.g.position.set(+ch.x||0,+ch.y||0,+ch.z||0);r.g.rotation.order='YXZ';r.g.rotation.set((+ch.rx||0)*D,(+ch.rot||0)*D,(+ch.rz||0)*D);const op=ch.opacity??1;for(const m of r.mats){m.transparent=op<1||!!m.userData.t0;m.opacity=op*(m.userData.o0??1)}}
 /* ---------- Nhân vật Custom: dựng lại đồ đã lưu ở trang Custom lên model gốc ---------- */
 let custom=[];const CC={},IB={};
 const getCustom=e=>CC[e.id]||(CC[e.id]=K.readJSON(e.dataPath).then(d=>{if(!d||!Array.isArray(d.items))throw Error('không đọc được dữ liệu '+e.dataPath);return d}).catch(x=>{delete CC[e.id];throw x}));
 const getItemBytes=p=>IB[p]||(IB[p]=K.fetchRepoBytes(p).catch(x=>{delete IB[p];throw x}));
-async function parseItem(ext,buf){
- if(ext==='glb')return(await new Promise((res,rej)=>new GLTFLoader().parse(buf,'',res,rej))).scene;
- if(ext==='fbx')return new FBXLoader().parse(buf,'');
- if(ext==='obj')return new OBJLoader().parse(new TextDecoder().decode(buf));
- throw Error('định dạng .'+ext+' chưa hỗ trợ')}
+const parseItem=(ext,buf)=>M.parseModel(ext,buf);
 async function dressCustom(o,ch,mats,my){
  const doc=await getCustom(ch.custom),warn=[],wrap=K.normalizeModel(o,1.8);          // giống hệt trang Custom: cao 1.8, quay mặt +Z
  o.traverse(n=>{if(n.isSkinnedMesh)n.frustumCulled=false});
@@ -416,7 +410,7 @@ addEventListener('pointerup',e=>{
 /* ---------- Bối cảnh: mô hình 3D đặt vào cảnh (kéo / xoay / đổi cỡ bằng gizmo) ---------- */
 const ENVCAT=[['','Tất cả'],['env-ground','Đất & mặt nền'],['env-table','Bàn'],['env-chair','Ghế'],['env-tree','Cây'],['env-room','Phòng học & nội thất'],['env-cloud','Mây'],['env-mountain','Núi'],['env-rock','Đá'],['env-building','Nhà & công trình'],['env-prop','Đồ vật khác']];
 const ENVSIZE={'env-ground':12,'env-mountain':8,'env-cloud':3,'env-tree':3,'env-building':5,'env-room':6,'env-table':1.2,'env-chair':.9,'env-rock':.8,'env-prop':1},PM={};
-const isModelFile=f=>/\.(glb|fbx|obj)$/i.test(f.name),isProp=id=>!!(P&&sc().props.some(p=>p.id===id));
+const isModelFile=f=>M.isItemFile(f.name),isProp=id=>!!(P&&sc().props.some(p=>p.id===id));
 function getPropModel(p){
  const key=p.src==='loc'?'loc:'+p.ref:p.path;
  return PM[key]||(PM[key]=(async()=>{let buf;
@@ -436,13 +430,13 @@ async function addProp(p,my){
 function addPropDef(ref,pos){
  const s=sc(),k=ref.slice(0,3),id=ref.slice(4),m=k==='lib'?envLib.find(x=>x.id===id):lmodels.find(x=>x.id===id);if(!m)return;
  const n=s.props.length,cat=m.cat||'',gr=cat==='env-ground',
-  p={id:uid(),name:m.name.replace(/\.(glb|fbx|obj)$/i,''),src:k,ref:id,cat,path:m.path||'',ext:m.ext,
+  p={id:uid(),name:M.stripExt(m.name),src:k,ref:id,cat,path:m.path||'',ext:m.ext,
    x:pos?pos.x:gr?0:((n%5)-2)*1.2,y:gr?-.02:0,z:pos?pos.z:gr?0:-1.5-Math.floor(n/5)*1.2,
    rx:0,rot:0,rz:0,sx:1,sy:1,sz:1,lock:true,fixed:false,opacity:1};
  s.props.push(p);sel={id:p.id};tab='env';touch();renderTabs();renderPanel();renderTL();renderOv();
  addProp(p,tok).catch(x=>say('Lỗi mô hình “'+p.name+'”: '+x.message))}
 async function importModels(fs){const out=[];
- for(const f of fs){if(!isModelFile(f)){say('Bỏ qua '+f.name+': chỉ nhận .glb / .fbx / .obj');continue}
+ for(const f of fs){if(!isModelFile(f)){say('Bỏ qua '+f.name+': chỉ nhận '+M.listText(M.ITEM_EXTS,' ')+'');continue}
   const rec={id:uid(),name:f.name,type:'mdl',ext:f.name.split('.').pop().toLowerCase(),blob:f};await idb('readwrite',st=>st.put(rec));lmodels.push(rec);out.push(rec)}
  if(out.length)say('Đã nhập '+out.length+' mô hình — bấm thẻ hoặc kéo vào khung để đặt vào cảnh.');
  if(tab==='env'&&P)renderPanel();return out}
@@ -459,7 +453,7 @@ function envPanel(s){
  let h='<div class="hint">Bấm một mô hình để đặt vào cảnh “'+esc(s.name)+'”, hoặc kéo thẻ thả thẳng vào khung (vật rơi đúng chỗ thả trên mặt đất). Bấm vào vật trong khung để chọn; kéo thân vật để dời; dùng tay cầm 3 trục để dời ✥ / xoay ⟳ / đổi cỡ ⤢ (phím G / R / S, giữ Shift để xoay theo bước 15°).</div>';
  if(isP)h+='<label>Đang chọn: '+esc(it.name)+'</label>'+SCH.prop.map(([k,l,y])=>field(k,l,y,it[k])).join('')+'<div class="r" style="margin-top:8px"><button data-pre="rot">Đặt lại xoay</button><button data-pre="scl">Đặt lại cỡ</button><button data-pre="gnd">Đặt xuống đất</button></div>';
  h+='<label>Trong cảnh ('+s.props.length+')</label>'+(s.props.map(p=>'<div class="li'+onc(p.id)+'" data-psel="'+p.id+'"><span>📦 '+esc(p.name)+'</span><button data-plock="'+p.id+'" title="'+(p.fixed?'Đang khóa — bấm để mở khóa kéo thả':'Bấm để khóa, không kéo nhầm')+'">'+(p.fixed?'🔒':'🔓')+'</button><button data-pdup="'+p.id+'" title="Nhân bản">⧉</button><button class="del" data-prm="'+p.id+'" title="Xóa">✕</button></div>').join('')||'<div class="hint">Chưa có mô hình nào.</div>');
- h+='<label>Mô hình của bạn</label><input type="file" id="fm" accept=".glb,.fbx,.obj" multiple hidden><button id="fmb" class="pri" style="width:100%">+ Nhập mô hình từ máy (.glb .fbx .obj)…</button><div class="grid">'+lmodels.map(m=>'<div class="cd" draggable="true" data-addp="loc:'+m.id+'" title="'+esc(m.name)+'"><div class="ic">📦</div><b>'+esc(m.name)+'</b><button class="del x" data-delmdl="'+m.id+'">✕</button></div>').join('')+'</div><div class="hint">Mô hình nhập từ máy chỉ lưu trong trình duyệt này; nếu muốn dùng lâu dài và trên máy khác, hãy tải lên Kho tài nguyên.</div>';
+ h+='<label>Mô hình của bạn</label><input type="file" id="fm" accept="'+M.acceptOf(M.ITEM_EXTS)+'" multiple hidden><button id="fmb" class="pri" style="width:100%">+ Nhập mô hình từ máy (.glb .gltf .fbx .obj .dae .stl .ply .vrm)…</button><div class="grid">'+lmodels.map(m=>'<div class="cd" draggable="true" data-addp="loc:'+m.id+'" title="'+esc(m.name)+'"><div class="ic">📦</div><b>'+esc(m.name)+'</b><button class="del x" data-delmdl="'+m.id+'">✕</button></div>').join('')+'</div><div class="hint">Mô hình nhập từ máy chỉ lưu trong trình duyệt này; nếu muốn dùng lâu dài và trên máy khác, hãy tải lên Kho tài nguyên.</div>';
  return h+'<label>Thư viện GitHub</label>'+envHtml()}
 function envClick(el,s){
  const q=a=>el.closest('['+a+']');let b;
@@ -498,7 +492,7 @@ function field(k,l,ty,v){const a='data-k="'+k+'" ',g=x=>'<label>'+l+'</label>'+x
 function renderPanel(){const s=sc();let h='';
  if(tab==='light')h=lightPanel(s);
  if(tab==='src'){h='<div class="r"><button data-q="txt">+ Văn bản</button><button data-q="dlg">+ Phụ đề</button><button data-q="tts">+ Giọng đọc</button><button data-q="face">+ Biểu cảm</button><button data-q="bg">+ Nền màu</button></div><label>Tệp của bạn</label><input type="file" id="fi" multiple accept="image/*,video/*,audio/*" hidden><button id="fib" class="pri" style="width:100%">+ Nhập file từ máy…</button><div class="hint">Kéo file từ máy thả vào đây, hoặc kéo thẻ vào khung video / timeline. Bấm thẻ để thêm tại đường đỏ. Mỗi lần thả sẽ tạo một track mới (thả đúng vào track có sẵn để dùng chung).</div><div class="grid">'+media.filter(m=>!m.lib).map(m=>'<div class="cd" draggable="true" data-mid="'+m.id+'" data-use="'+m.id+'">'+(m.type==='img'?'<img alt="" src="'+murl[m.id]+'">':m.type==='vid'?'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>':'<div class="ic">🎵</div>')+'<b>'+esc(m.name)+'</b><button class="del x" data-delm="'+m.id+'">✕</button></div>').join('')+'</div><label>Thư viện GitHub (ảnh, video, nhạc nền, âm thanh hiệu ứng)</label>'+libHtml('src',['img','vid','aud'])}
- if(tab==='chars'){h='<div class="hint">Bấm nhân vật để thêm vào cảnh “'+esc(s.name)+'”. Vừa tạo/lưu nhân vật mới? Bấm “↻ Làm mới thư viện” ở thanh trên.</div><label>✦ Nhân vật Custom ('+custom.length+')</label><div class="grid">'+(custom.map(customCard).join('')||'<div class="hint">Chưa có nhân vật nào lưu ở trang Custom.</div>')+'</div><label>Nhân vật gốc (FBX)</label><div class="grid">'+Object.entries(manifest.characters).map(([f,c])=>'<button class="cd" data-add="'+esc(f)+'"><img alt="" src="'+esc(c.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(f.replace(/\.fbx$/i,''))+'</b></button>').join('')+'</div><label>Trong cảnh</label>'+(s.chars.map(c=>'<div class="li'+onc(c.id)+'" data-sel="'+c.id+'"><span>'+(c.custom?'✦':'🧍')+' '+esc(c.name)+'</span><button class="del" data-rm="'+c.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có nhân vật.</div>')}
+ if(tab==='chars'){h='<div class="hint">Bấm nhân vật để thêm vào cảnh “'+esc(s.name)+'”. Vừa tạo/lưu nhân vật mới? Bấm “↻ Làm mới thư viện” ở thanh trên.</div><label>✦ Nhân vật Custom ('+custom.length+')</label><div class="grid">'+(custom.map(customCard).join('')||'<div class="hint">Chưa có nhân vật nào lưu ở trang Custom.</div>')+'</div><label>Nhân vật gốc</label><div class="grid">'+Object.entries(manifest.characters).map(([f,c])=>'<button class="cd" data-add="'+esc(f)+'"><img alt="" src="'+esc(c.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(M.stripExt(f))+'</b></button>').join('')+'</div><label>Trong cảnh</label>'+(s.chars.map(c=>'<div class="li'+onc(c.id)+'" data-sel="'+c.id+'"><span>'+(c.custom?'✦':'🧍')+' '+esc(c.name)+'</span><button class="del" data-rm="'+c.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có nhân vật.</div>')}
  if(tab==='env')h=envPanel(s);
  if(tab==='clip'){const ch=chOf();if(!ch)h='<div class="hint">Chọn một nhân vật (bấm tên ở timeline hoặc click vào nhân vật trong khung) để thêm clip.</div>';else{const k=cq.toLowerCase();h='<b>Clip cho '+esc(ch.name)+'</b><div class="hint">Bấm clip để thêm vào timeline tại đường đỏ.</div><input id="cq" type="text" placeholder="Tìm clip…" value="'+esc(cq)+'" style="margin-top:6px"><div class="grid">'+manifest.animations.filter(a=>!k||a.name.toLowerCase().includes(k)).map(a=>'<button class="cd" data-clip="'+esc(a.id)+'"><img alt="" src="'+esc(a.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(a.name)+' · '+(+a.duration).toFixed(1)+'s</b></button>').join('')+'</div>'}}
  if(tab==='props'){const it=cur(),ty=stype();h=it?(ty==='light'?lightFields(it):SCH[ty]).map(([k,l,y])=>field(k,l,y,it[k])).join('')+(ty==='txt'||ty==='dlg'?'<div class="r" style="margin-top:12px"><button class="pri" data-act="t2a">🔊 Chuyển thành audio</button><button data-act="test">▶ Nghe thử</button></div>':'')+(ty==='tts'?'<div class="hint">'+(srcOf(it)?'✓ Đã có file giọng (wav/mp3)'+(it.baked&&(it.baked.eng==='edge'?(it.baked.rate!==(+it.rate||1)||it.baked.pitch!==(+it.pitch||1)):it.baked.pitch!==(+it.pitch||1))?(it.baked.eng==='edge'?' — đã đổi tốc độ/cao độ: bấm ⚡ Tạo lại giọng':' — Piper không chỉnh được cao độ'):''):'Chưa có file giọng')+'</div><div class="r" style="margin-top:8px"><button class="pri" data-act="vgen">⚡ Tự tạo giọng (Edge → Piper)</button><button data-act="vup">⬆ Tải wav/mp3</button><button data-act="test">▶ Nghe thử</button></div>':'')+'<button class="del" style="margin-top:12px;width:100%" data-act="del">Xóa mục này (Delete)</button>':'<div class="hint">Bấm một đối tượng trong khung video hoặc một khối trên timeline. Kéo đối tượng để dời, kéo chấm tím để xoay (giữ Shift để xoay theo bước 15°), kéo ô vuông góc dưới phải để phóng to/thu nhỏ. Giá trị chỉnh ở đây cập nhật ngay.</div>'}
@@ -522,7 +516,7 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
  if(d.rm){if(R[d.rm]){tscene.remove(R[d.rm].g);delete R[d.rm]}s.chars.splice(s.chars.findIndex(c=>c.id===d.rm),1);sel=null;touch();renderPanel();renderTL();return}
  if(d.sel){sel={id:d.sel};renderPanel();renderTL();return}
  const b=el.closest('[data-add],[data-addc],[data-clip]');
- if(b&&(b.dataset.add||b.dataset.addc)){const cc=b.dataset.addc?custom.find(x=>x.id===b.dataset.addc):null;if(b.dataset.addc&&!cc)return;const f=cc?cc.base:b.dataset.add,n=s.chars.length,ch={id:uid(),file:f,name:cc?cc.name:f.replace(/\.fbx$/i,''),...(cc?{custom:{id:cc.id,dataPath:cc.dataPath,name:cc.name}}:{}),x:n?(n%2?1:-1)*Math.ceil(n/2)*1.2:0,z:0,rot:0,scale:1,opacity:1,y:0,rx:0,rz:0,sx:1,sy:1,sz:1,lock:true,fixed:true,clips:[]};s.chars.push(ch);sel={id:ch.id};touch();renderPanel();renderTL();addRt(ch,tok).then(()=>{if(!s.cam)autoCam();apply()}).catch(x=>say('Lỗi '+f+': '+x.message))}
+ if(b&&(b.dataset.add||b.dataset.addc)){const cc=b.dataset.addc?custom.find(x=>x.id===b.dataset.addc):null;if(b.dataset.addc&&!cc)return;const f=cc?cc.base:b.dataset.add,n=s.chars.length,ch={id:uid(),file:f,name:cc?cc.name:M.stripExt(f),...(cc?{custom:{id:cc.id,dataPath:cc.dataPath,name:cc.name}}:{}),x:n?(n%2?1:-1)*Math.ceil(n/2)*1.2:0,z:0,rot:0,scale:1,opacity:1,y:0,rx:0,rz:0,sx:1,sy:1,sz:1,lock:true,fixed:true,clips:[]};s.chars.push(ch);sel={id:ch.id};touch();renderPanel();renderTL();addRt(ch,tok).then(()=>{if(!s.cam)autoCam();apply()}).catch(x=>say('Lỗi '+f+': '+x.message))}
  if(b&&b.dataset.clip){const ch=chOf(),a=manifest.animations.find(x=>x.id===b.dataset.clip),c={id:uid(),clip:a.id,start:snap(t),dur:r2(a.duration||2),loop:a.loop!==false};ch.clips.push(c);sel={id:c.id};if(c.start+c.dur>s.duration)s.duration=Math.ceil(c.start+c.dur);touch();renderTL();renderPanel();apply()}
  if(d.act==='del')remove();
  if(d.act==='test')speak(cur());if(d.act==='vgen')genVoice(cur());if(d.act==='vup')$('fVoice').click();

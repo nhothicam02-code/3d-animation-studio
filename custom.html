@@ -83,7 +83,7 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
 <main>
 <aside class="left">
  <h2>Nhân vật</h2>
- <div class="field"><label>Nhân vật gốc (characters/*.fbx)</label><select id="baseSel"></select></div>
+ <div class="field"><label>Nhân vật gốc (thư mục characters/)</label><select id="baseSel"></select></div>
  <div class="field"><label>Nhân vật đã lưu</label><div class="row"><select id="savedSel"><option value="">— chưa chọn —</option></select><button id="loadSaved">Tải</button><button id="delSaved" class="danger" title="Gỡ khỏi danh sách (file vẫn giữ trên GitHub)">✕</button></div></div>
  <div class="field"><label>Tên nhân vật</label><input id="charName" placeholder="Ví dụ: Mina - đồ mùa đông" maxlength="60"></div>
  <div class="row"><button class="primary" id="saveBtn" style="flex:1">☁ Lưu &amp; đồng bộ GitHub</button></div>
@@ -99,8 +99,8 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
  <div class="libgrid" id="libGrid"></div>
  <div class="pgr"><button id="libPrev">‹</button><span id="libInfo"></span><button id="libNext">›</button></div>
  <div class="note">Item lấy từ <a href="./library.html">Kho tài nguyên</a> (đồng bộ GitHub). <a href="./library.html">＋ Thêm item mới</a></div>
- <label>Nhập mô hình riêng (.glb, .fbx, .obj) vào mục đang chọn</label>
- <input type="file" id="importFile" accept=".glb,.fbx,.obj">
+ <label>Nhập mô hình riêng (.glb, .gltf, .fbx, .obj, .dae, .stl, .ply, .vrm) vào mục đang chọn</label>
+ <input type="file" id="importFile" accept=".glb,.gltf,.fbx,.obj,.dae,.stl,.ply,.vrm">
  <div class="status" id="importStatus">Mô hình nhập sẽ gắn cứng vào một xương. Đơn vị: mét (file cm được tự giảm 0.01).</div>
 
  <h2>Bối cảnh xem trước</h2>
@@ -178,9 +178,7 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
 
 <script type="module">
 import * as THREE from 'three';
-import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import * as M from './js/model-loader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {mapClip} from './js/retarget.js';
 import * as K from './js/character-kit.js';
@@ -269,7 +267,7 @@ function clearModel() {
 async function loadBase(name) {
   const my = ++loadSeq;
   tag('Đang tải ' + name + '…');
-  const obj = await new FBXLoader().loadAsync('./characters/' + encodeURIComponent(name));
+  const obj = await M.loadModelUrl('./characters/' + encodeURIComponent(name), name);
   if (my !== loadSeq) { disposeObj(obj); return; }
   clearModel();
   obj.traverse(o => { if (o.isSkinnedMesh) o.frustumCulled = false; });
@@ -367,12 +365,7 @@ $('presetList').onclick = e => {
   S.groups.push(g); g.pieces.forEach(p => K.mountPiece(g, p, S.rig));
   dirty(); select(g.id, g.pieces[0].uid);
 };
-async function parseItem(ext, buf) {
-  if (ext === 'glb') return (await new Promise((res, rej) => new GLTFLoader().parse(buf, '', res, rej))).scene;
-  if (ext === 'fbx') return new FBXLoader().parse(buf, '');
-  if (ext === 'obj') return new OBJLoader().parse(new TextDecoder().decode(buf));
-  throw Error('Định dạng .' + ext + ' chưa được hỗ trợ (dùng .glb, .fbx hoặc .obj).');
-}
+const parseItem = (ext, buf) => M.parseModel(ext, buf);
 $('importFile').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -1573,7 +1566,7 @@ async function init() {
   $('clipSel').innerHTML = '<option value="">— T-pose (đứng yên) —</option>' + S.clips.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + ' · ' + Number(c.duration || 0).toFixed(1) + 's</option>').join('');
   renderSaved();
   $('baseSel').innerHTML = models.map(m => '<option value="' + esc(m) + '">' + esc(m) + '</option>').join('');
-  if (!models.length) { tag('Không tìm thấy FBX trong thư mục characters/.', true); return; }
+  if (!models.length) { tag('Không tìm thấy model nhân vật (.fbx/.glb/.gltf/.vrm/.dae) trong thư mục characters/.', true); return; }
   const wantChar = params.get('char'), wantModel = params.get('model');
   if (wantChar && S.saved.some(c => c.id === wantChar)) { $('savedSel').value = wantChar; await loadSaved(wantChar); return; }
   await loadBase(wantModel && models.includes(wantModel) ? wantModel : models[0]);
