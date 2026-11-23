@@ -61,6 +61,18 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
 .lane{height:36px;background:#151720;border-radius:6px;touch-action:none;cursor:crosshair}
 @media(max-width:1000px){.rulerrow,.trk{grid-template-columns:minmax(0,1fr);gap:4px}.rulerrow .rsp{display:none}.dock{max-height:none}}
 details.how{margin:8px 0;font-size:11px;color:var(--muted);line-height:1.55}details.how summary{cursor:pointer;color:#c2b5ff}details.how code{background:#151720;padding:1px 5px;border-radius:5px;color:#dfe2ee;font-size:11px}
+details.pc{border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:var(--panel2)}
+details.pc>summary{cursor:pointer;padding:9px 10px;display:flex;gap:8px;align-items:center;list-style:none}
+details.pc>summary::-webkit-details-marker{display:none}
+details.pc>summary b{flex:1}
+details.pc>summary::after{content:'▾';color:var(--muted)}details.pc[open]>summary::after{content:'▴'}
+details.pc[open]>summary{border-bottom:1px solid var(--line)}
+.pcb{padding:9px 10px}.pcb label{margin-top:8px}.pcb .row{margin-top:8px}.pcb .row>label{margin-top:0}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}.seg button{padding:6px}.seg button.on{background:var(--accent);border-color:var(--accent);color:#171322}
+.vp{margin:8px 0;padding:8px;border:1px dashed #444a5c;border-radius:9px}
+.vp canvas{display:block;max-width:100%;margin:6px auto;border-radius:6px;cursor:crosshair}
+.thumbs{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;align-items:center}.thumbs img{width:40px;height:40px;object-fit:contain;border-radius:6px;border:1px solid var(--line)}
+.ck{display:flex;gap:6px;align-items:center;margin:0}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head><body>
@@ -135,11 +147,11 @@ details.how{margin:8px 0;font-size:11px;color:var(--muted);line-height:1.55}deta
   <div class="editor off" id="exEd">
    <div class="field"><label>Tên biểu cảm</label><input id="exName" maxlength="40" placeholder="Ví dụ: Vui, Buồn, Cười ngượng…"></div>
    <canvas id="exCv" class="chk" width="512" height="512"></canvas>
-   <div class="row"><button id="exPlay" title="Chạy / dừng">Ⅱ</button><button id="exRestart" title="Chạy lại từ đầu">⟲</button><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exLoop" checked> <span id="exLoopTxt">Lặp chuỗi ảnh</span></label><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exShow" checked> Hiện trên đầu</label></div>
+   <div class="row"><button id="exPlay" title="Chạy / dừng">Ⅱ</button><button id="exRestart" title="Chạy lại từ đầu">⟲</button><label id="exLoopLbl" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exLoop" checked> <span id="exLoopTxt">Lặp chuỗi ảnh</span></label><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exShow" checked> Hiện trên đầu</label></div>
    <div id="exTime" class="hide">
     <div class="row" style="margin-top:10px"><div><label>Thời lượng (giây)</label><input type="number" id="ksDur" min="0.1" step="0.1" value="1.5"></div><div><label>Nội suy giữa keyframe</label><select id="ksEase"><option value="linear">Tuyến tính</option><option value="smooth">Mượt</option><option value="step">Bậc thang</option></select></div></div>
    </div>
-   <div id="exTex"><h2 style="margin-top:14px">7 bộ phận</h2><div class="note" style="margin-top:-2px">Mặt nạ là lớp nền, nằm dưới cùng.</div><div id="exParts"></div></div>
+   <div id="exTex"><h2 style="margin-top:14px">7 danh mục</h2><div class="note" style="margin-top:-2px">Mỗi danh mục tự chọn nguồn (tệp máy / video / thư mục GitHub), FPS, vị trí X·Y·Z, xoay X·Y·Z và lặp. Nền da nằm dưới cùng, rồi tới mày, mắt, mũi, miệng.</div><div id="exParts"></div></div>
    <div id="exKey" class="hide">
     <h2 style="margin-top:14px">Mặt nạ nền <small>(chuỗi texture, nằm dưới cùng)</small></h2><div id="ksMask"></div>
     <div class="note" id="ksNote"></div>
@@ -149,10 +161,12 @@ details.how{margin:8px 0;font-size:11px;color:var(--muted);line-height:1.55}deta
   <h2>Vị trí mặt trên đầu</h2>
   <div class="grid3"><div><div class="axis">Cao</div><input type="number" id="fitY" step="0.01" value="0.45"></div><div><div class="axis">Ra trước</div><input type="number" id="fitZ" step="0.01" value="0.5"></div><div><div class="axis">Cỡ</div><input type="number" id="fitS" step="0.02" min="0.05" value="0.9"></div></div>
   <div class="note">Tính theo chiều cao đầu; áp dụng cho mọi biểu cảm của nhân vật này và được lưu cùng nhân vật. Với biểu cảm Keyshape, tấm mặt nạ nền cũng dùng vị trí này và bị che bởi các bộ phận 3D nằm phía trước nó — chỉnh “Ra trước” sao cho nó sát mặt.</div>
-  <details class="how"><summary>Cách thêm ảnh biểu cảm trên GitHub</summary>
-   Tạo thư mục <code>faces/&lt;bộ phận&gt;/&lt;tên biểu cảm&gt;/</code> rồi bỏ các ảnh PNG nền trong suốt vào, đặt tên theo thứ tự <code>01.png</code>, <code>02.png</code>… (1 ảnh = biểu cảm tĩnh, nhiều ảnh = hoạt hình theo khung/giây).<br>
-   Bộ phận: <code>browL</code> mày trái · <code>browR</code> mày phải · <code>eyeL</code> mắt trái · <code>eyeR</code> mắt phải · <code>nose</code> mũi · <code>mouth</code> miệng · <code>mask</code> mặt nạ.<br>
-   Mọi ảnh dùng <b>cùng một khung vuông</b> (khuyên dùng 512×512), vẽ bộ phận đúng chỗ của nó trong khung — các lớp chồng lên nhau, <b>mặt nạ nằm dưới cùng</b>, rồi tới mày, mắt, mũi, miệng. Xong bấm “↻ Quét ảnh”.</details>
+  <details class="how"><summary>Cách dùng tab Texture</summary>
+   Mở một danh mục (Nền da, Lông mày trái/phải, Mắt trái/phải, Mũi, Miệng) rồi chọn nguồn:<br>
+   • <b>Tệp máy</b>: chọn nhiều ảnh PNG nền trong suốt, hoặc 1 video. Với video: đặt <b>FPS tách</b>, chọn cách <b>xóa nền</b> (tự nhận màu 4 góc, hoặc bấm vào ảnh xem thử để nhỏ giọt màu nền) rồi bấm “Tách thành ảnh PNG”. Nên quay trên nền phẳng một màu (xanh lá, trắng, đen…); video webm có sẵn kênh trong suốt thì chọn “Không xóa”.<br>
+   • <b>GitHub</b>: chọn thư mục có sẵn trong <code>faces/&lt;danh mục&gt;/&lt;tên biểu cảm&gt;/</code> (ảnh <code>01.png</code>, <code>02.png</code>…).<br>
+   Sau đó đặt <b>FPS phát</b>, <b>Lặp</b>, <b>vị trí X·Y·Z</b> (đơn vị = cỡ mặt), <b>xoay X·Y·Z</b> (độ) và tỉ lệ, rồi bấm <b>▶ Lưu &amp; chạy</b> để thấy chuỗi ảnh chạy tại vị trí đó trên mặt. Khi ưng ý bấm <b>☁ Lưu biểu cảm</b>: các ảnh vừa tạo sẽ được tải lên <code>faces/&lt;danh mục&gt;/&lt;mã biểu cảm&gt;/</code> và cấu hình lưu cùng nhân vật.<br>
+   Ô vuông xem trước chỉ hiện X, Y, xoay Z và tỉ lệ; xoay X/Y chỉ thấy trên mặt 3D.</details>
   <details class="how"><summary>Cách dùng tab Keyshape</summary>
    Dùng khi model 3D có keyshape (shape key / morph target) cho từng bộ phận. Khung <b>Timeline keyshape</b> dưới cảnh 3D liệt kê mọi keyshape của model, mỗi keyshape một hàng: thanh trượt cường độ 0→1 (số thập phân) và một timeline riêng. Cách làm giống Blender: bấm thước hoặc chạm/kéo chỗ trống trên lane để đặt <b>đầu đọc</b>, rồi <b>kéo thanh trượt</b> (hoặc nhập số) để đặt key tại đầu đọc; nút ◆ thêm key giữ nguyên giá trị hiện tại, ◇✕ xóa key tại đầu đọc. Trên lane: <b>chạm đúp chỗ trống</b> = thêm key, <b>kéo ◆</b> = đổi thời điểm, <b>chạm đúp vào ◆</b> = xóa. Nhiều giai đoạn (đóng mắt → mở → hé nửa) = nhiều key, ví dụ 1 → 0 → 0.5. Dùng ô tìm, nhóm bộ phận và “Chỉ keyshape có key” để lọc danh sách dài. Mặt nạ nền vẫn chọn từ chuỗi texture.</details>
   <div class="status" id="exStatus">Biểu cảm được lưu cùng nhân vật (characters/custom/…json) để dùng lại về sau.</div>
@@ -243,6 +257,7 @@ function disposeObj(o) { o.traverse(n => { if (n.geometry) n.geometry.dispose();
 function clearModel() {
   stopClip(true);
   if (S.face) { S.face.dispose(); S.face = null; }
+  if (TF) { TF.dispose(); TF = null; }
   SH.clear();
   for (const g of S.groups) for (const p of g.pieces) K.unmountPiece(p);
   if (S.wrap) { spinG.remove(S.wrap); disposeObj(S.wrap); }
@@ -265,6 +280,7 @@ async function loadBase(name) {
   fillBoneSelect();
   for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, rig);
   S.face = F.mountFaceOverlay(rig, S.fit);
+  TF = mountTexFace(rig); if (TF) TF.setFit(S.fit);
   onMorphs(SH.setModel(obj));
   setBodyVisible($('showBody').checked);
   tag(name + ' · ' + rig.bones.length + ' xương' + (rig.missing.length ? ' · thiếu: ' + rig.missing.map(k => K.BONE_LABELS[k]).join(', ') : ''));
@@ -547,8 +563,8 @@ async function loadSaved(id) {
   // dọn đồ cũ
   S.groups.forEach(g => g.pieces.forEach(K.unmountPiece));
   S.groups = doc.items; S.sel = null; S.charId = doc.id || id;
-  S.expr = Array.isArray(doc.expressions) ? doc.expressions.map(F.upgradeExpr) : []; S.fit = {...F.FACE_FIT, ...(doc.face || {})};
-  EX.cur = null; fitUI(); if (S.face) S.face.setFit(S.fit); exRender();
+  S.expr = Array.isArray(doc.expressions) ? doc.expressions.map(upExpr) : []; S.fit = {...F.FACE_FIT, ...(doc.face || {})};
+  EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
   for (const g of S.groups) for (const p of g.pieces) {
     p.pos = p.pos || [0, 0, 0]; p.rot = p.rot || [0, 0, 0]; p.scale = p.scale || 1;
     if (p.file && p.file.path) {
@@ -579,7 +595,7 @@ $('delSaved').onclick = async () => {
 $('newBtn').onclick = () => {
   if (S.dirty && !confirm('Bỏ các thay đổi chưa lưu?')) return;
   S.groups.forEach(g => g.pieces.forEach(K.unmountPiece)); S.groups = []; S.sel = null; S.charId = ''; S.dirty = false;
-  S.expr = []; S.fit = {...F.FACE_FIT}; EX.cur = null; fitUI(); if (S.face) S.face.setFit(S.fit); exRender();
+  S.expr = []; S.fit = {...F.FACE_FIT}; EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
   $('charName').value = ''; $('savedSel').value = ''; renderOutfit(); fillEditor(); updateSelBox(); say($('saveStatus'), 'Đã tạo mới.');
 };
 $('baseSel').onchange = () => loadBase($('baseSel').value).catch(e => tag('Lỗi tải nhân vật: ' + e.message, true));
@@ -620,14 +636,14 @@ function ksSync() { const c = EX.cur; if (c) $('ksDur').value = r2(c.duration ||
 
 function exRender() {
   const e = EX.cur, ks = EX.mode === 'keyshape';
-  const list = S.expr.filter(x => F.exprMode(x) === EX.mode);
+  const list = S.expr.filter(x => modeOf(x) === EX.mode);
   $('tabTex').classList.toggle('on', !ks); $('tabKey').classList.toggle('on', ks);
   $('exCount').textContent = '(' + list.length + ')';
   $('exSel').innerHTML = '<option value="">— chọn biểu cảm —</option>' + list.map(x => '<option value="' + esc(x.id) + '"' + (e && e.id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') +
     (e && EX.isNew ? '<option value="' + esc(e.id) + '" selected>' + esc(e.name || 'Biểu cảm mới') + ' (chưa lưu)</option>' : '');
   $('exEd').classList.toggle('off', !e);
   $('exTex').classList.toggle('hide', ks); $('exKey').classList.toggle('hide', !ks); $('exTime').classList.toggle('hide', !ks);
-  $('exLoopTxt').textContent = ks ? 'Lặp biểu cảm' : 'Lặp chuỗi ảnh';
+  $('exLoopTxt').textContent = 'Lặp biểu cảm'; $('exLoopLbl').classList.toggle('hide', !ks);
   EX.sig = null;
   if (!e) {
     $('exParts').innerHTML = ''; $('ksMask').innerHTML = '';
@@ -636,7 +652,8 @@ function exRender() {
   $('exName').value = e.name; $('exLoop').checked = e.loop !== false;
   const noImg = !F.libCount(EX.lib) ? '<div class="note">Chưa thấy ảnh nào trong thư mục <b>faces/</b> trên GitHub — xem “Cách thêm ảnh biểu cảm” bên dưới, rồi bấm “↻ Quét ảnh”.</div>' : '';
   if (!ks) {
-    $('exParts').innerHTML = noImg + F.FACE_PARTS.map(p => partRow(p, e)).join('');
+    prepTex(e);
+    $('exParts').innerHTML = PARTS.map(p => partCard(p, e)).join('');
     $('ksMask').innerHTML = '';
   } else {
     $('exParts').innerHTML = '';
@@ -647,6 +664,7 @@ function exRender() {
     ksSync();
   }
   $('exEd').querySelectorAll('img[data-path]').forEach(im => K.setSrc(im, im.dataset.path));
+  if (!ks) Object.keys(EX.vid).forEach(vidPreview);
   renderDock();
 }
 
@@ -772,9 +790,10 @@ function dkTick(vals) {
 /** Chạy mỗi khung hình của vòng lặp 3D: vẽ bản xem trước + cập nhật mặt trên đầu + đẩy keyshape vào model. */
 function faceTick(dt) {
   if (!EX.paused) EX.t += dt;
-  const e = EX.cur, ks = !!e && F.exprMode(e) === 'keyshape', on = !!e && $('exShow').checked;
-  if (e) EX.sig = F.renderFace($('exCv'), e, EX.lib, EX.t, EX.sig);
-  if (S.face) S.face.update(on ? e : null, EX.lib, EX.t);
+  const e = EX.cur, v2 = !!e && e.v === 2, ks = !!e && !v2 && F.exprMode(e) === 'keyshape', on = !!e && $('exShow').checked;
+  if (v2) drawTexPreview(e); else if (e) EX.sig = F.renderFace($('exCv'), e, EX.lib, EX.t, EX.sig);
+  if (S.face) S.face.update(on && !v2 ? e : null, EX.lib, EX.t);
+  if (TF) TF.update(on && v2 ? e : null, EX.t);
   const vals = ks ? F.shapeValues(e, EX.t) : null;
   if (ks && on) SH.apply(vals); else SH.release();
   if (ks) dkTick(vals);
@@ -864,6 +883,372 @@ $('dkRuler').addEventListener('pointerdown', ev => { ev.preventDefault(); try { 
 $('dkRuler').addEventListener('pointermove', ev => { if (RS) rulerSeek(ev); });
 $('dkRuler').addEventListener('pointerup', () => { RS = false; }); $('dkRuler').addEventListener('pointercancel', () => { RS = false; });
 
+/* ================= Texture v2: 7 danh mục — mỗi danh mục có nguồn, FPS, vị trí & xoay riêng ================= */
+// Biểu cảm texture (v:2): {v:2, mode:'texture', loop, parts:{}, layers:{ skin|browL|browR|eyeL|eyeR|nose|mouth :
+//     {src:'file'|'git', set, frames:[đường dẫn PNG trên GitHub], fps, loop, show, scale, pos:{x,y,z}, rot:{x,y,z}} }}
+// Đơn vị vị trí & tỉ lệ = cỡ mặt (ô “Cỡ” ở mục “Vị trí mặt trên đầu”). X ngang (+ = bên phải màn hình) · Y lên · Z ra trước. Xoay tính bằng độ.
+const PARTS = [
+  {id: 'skin',  label: 'Nền da',         folder: 'mask'},
+  {id: 'browL', label: 'Lông mày trái',  folder: 'browL', dx: 0.15,  dy: 0.14},
+  {id: 'browR', label: 'Lông mày phải',  folder: 'browR', dx: -0.15, dy: 0.14},
+  {id: 'eyeL',  label: 'Mắt trái',       folder: 'eyeL',  dx: 0.15,  dy: 0.07},
+  {id: 'eyeR',  label: 'Mắt phải',       folder: 'eyeR',  dx: -0.15, dy: 0.07},
+  {id: 'nose',  label: 'Mũi',            folder: 'nose',  dy: -0.05},
+  {id: 'mouth', label: 'Miệng',          folder: 'mouth', dy: -0.17}
+];
+const PART = Object.fromEntries(PARTS.map(p => [p.id, p]));
+Object.assign(EX, {local: {}, t0: {}, vid: {}, open: new Set(['skin']), srcTab: {}});
+const FPS0 = F.DEFAULT_FPS || 12;
+const modeOf = e => (e && e.v === 2) ? 'texture' : F.exprMode(e);
+const upExpr = x => (x && x.v === 2) ? x : F.upgradeExpr(x);
+const mkLayer = (id, o = {}) => ({src: '', set: '', frames: [], fps: FPS0, loop: true, show: true, scale: 1, pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0}, ...o});
+const defPlace = id => ({pos: {x: PART[id].dx || 0, y: PART[id].dy || 0, z: 0}, scale: id === 'skin' ? 1 : 0.35});
+const libSets = id => EX.lib[PART[id].folder] || {};
+const framesOf = (id, L) => EX.local[id] || ((L.frames && L.frames.length) ? L.frames : (libSets(id)[L.set] || []));
+/** Biểu cảm texture đời cũ (parts:{set,fps}) → dạng v2. Chỉ đổi bản đang sửa, không đụng bản đã lưu cho tới khi bấm Lưu. */
+function prepTex(c) {
+  if (!c || c.v === 2 || F.exprMode(c) === 'keyshape') return c;
+  const layers = {};
+  for (const [id, cfg] of Object.entries(c.parts || {})) {
+    const nid = id === 'mask' ? 'skin' : id;
+    if (PART[nid] && cfg && cfg.set) layers[nid] = mkLayer(nid, {src: 'git', set: cfg.set, fps: cfg.fps || FPS0, loop: c.loop !== false});
+  }
+  c.v = 2; c.mode = 'texture'; c.layers = layers; c.parts = {};
+  return c;
+}
+function frameIdx(id, L, n, t) {
+  if (n <= 1) return 0;
+  const k = Math.floor(Math.max(0, t - (EX.t0[id] || 0)) * (L.fps || FPS0));
+  return L.loop === false ? Math.min(n - 1, k) : k % n;
+}
+function exReset() {
+  for (const id of Object.keys(EX.vid)) closeVideo(id);
+  EX.local = {}; EX.t0 = {}; EX.srcTab = {}; EX.t = 0;
+}
+
+/* ----- Texture cho khung hình (ảnh trên GitHub hoặc canvas vừa tách) ----- */
+const TEXC = new Map(), CVT = new WeakMap(), THU = new WeakMap();
+function texOf(it) {
+  if (typeof it === 'string') {
+    let e = TEXC.get(it);
+    if (!e) {
+      e = {tex: null, img: null, aspect: 1, failed: false}; TEXC.set(it, e);
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = () => { const t = new THREE.Texture(im); t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true; e.tex = t; e.img = im; e.aspect = (im.naturalWidth || 1) / (im.naturalHeight || 1); };
+      K.setSrc(im, it, () => { e.failed = true; });
+    }
+    return e;
+  }
+  let e = CVT.get(it);
+  if (!e) { const t = new THREE.CanvasTexture(it); t.colorSpace = THREE.SRGBColorSpace; e = {tex: t, img: it, aspect: it.width / it.height}; CVT.set(it, e); }
+  return e;
+}
+function thumbURL(cv) {
+  let u = THU.get(cv);
+  if (!u) {
+    const s = 64 / Math.max(cv.width, cv.height), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(cv.width * s)); c.height = Math.max(1, Math.round(cv.height * s));
+    c.getContext('2d').drawImage(cv, 0, 0, c.width, c.height); u = c.toDataURL(); THU.set(cv, u);
+  }
+  return u;
+}
+
+/* ----- Khuôn mặt 3D: mỗi danh mục là một tấm phẳng gắn vào xương đầu ----- */
+let TF = null;
+function findHead(rig) {
+  let b = null;
+  try { b = rig.bone('head'); } catch (err) { /* thử cách khác */ }
+  if (b && !b.isObject3D) b = b.bone || b.node || b.object || null;
+  if (!b && S.model) S.model.traverse(o => { if (!b && o.isBone && /head/i.test(o.name) && !/top|end|nub/i.test(o.name)) b = o; });
+  return b;
+}
+function mountTexFace(rig) {
+  const head = findHead(rig); if (!head || !S.wrap) return null;
+  spinG.updateMatrixWorld(true);
+  const bw = head.matrixWorld.clone(), bp = new THREE.Vector3().setFromMatrixPosition(bw);
+  // chiều cao đầu: từ xương đầu tới xương “HeadTop” nếu có, không thì ước lượng theo mô hình đã chuẩn hóa 1.8 m
+  let H = 0.24;
+  head.traverse(o => { if (o !== head && o.isBone && /top|end/i.test(o.name)) { const h = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld).y - bp.y; if (h > 0.1 && h < 0.5) H = h; } });
+  // holder: gốc tại xương đầu, trục & tỉ lệ khớp thế giới lúc T-pose → 1 đơn vị = 1 mét, X ngang, Y lên, Z ra trước
+  const wp = new THREE.Vector3(), wq = new THREE.Quaternion(), ws = new THREE.Vector3();
+  S.wrap.matrixWorld.decompose(wp, wq, ws);
+  const desired = new THREE.Matrix4().compose(bp, wq, new THREE.Vector3(1, 1, 1));
+  const local = bw.clone().invert().multiply(desired);
+  const group = new THREE.Group(); group.name = 'holder_face';   // tên “holder_” để nút ẩn thân không ẩn mặt
+  local.decompose(group.position, group.quaternion, group.scale);
+  const anchor = new THREE.Group(); group.add(anchor); head.add(group);
+  const meshes = PARTS.map((p, i) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2}));
+    m.renderOrder = 20 + i; m.visible = false; m.rotation.order = 'YXZ'; anchor.add(m); return m;
+  });
+  return {
+    setFit(f) { anchor.position.set(0, f.y * H, f.z * H); anchor.scale.setScalar(Math.max(0.01, f.s * H)); },
+    update(e, t) {
+      const layers = e && e.v === 2 ? e.layers : null;
+      group.visible = !!layers; if (!layers) return;
+      PARTS.forEach((p, i) => {
+        const m = meshes[i], L = layers[p.id], fr = L && L.show !== false ? framesOf(p.id, L) : [];
+        if (!fr.length) { m.visible = false; return; }
+        const te = texOf(fr[frameIdx(p.id, L, fr.length, t)]);
+        if (!te.tex) return;                                  // ảnh chưa tải xong: giữ khung cũ
+        if (m.material.map !== te.tex) { m.material.map = te.tex; m.material.needsUpdate = true; }
+        const sc = L.scale || 1;
+        m.scale.set(sc, sc / te.aspect, 1);
+        m.position.set(L.pos.x, L.pos.y, L.pos.z);
+        m.rotation.set(L.rot.x * D2R, L.rot.y * D2R, L.rot.z * D2R);
+        m.visible = true;
+      });
+    },
+    dispose() { head.remove(group); for (const m of meshes) { m.geometry.dispose(); m.material.dispose(); } }
+  };
+}
+/** Xem trước phẳng trên ô vuông: tính X, Y, Z-xoay và tỉ lệ (xoay X/Y chỉ thấy trên mặt 3D). */
+function drawTexPreview(e) {
+  const cv = $('exCv'), g = cv.getContext('2d'); g.clearRect(0, 0, 512, 512);
+  if (!e || e.v !== 2) return;
+  for (const p of PARTS) {
+    const L = e.layers[p.id]; if (!L || L.show === false) continue;
+    const fr = framesOf(p.id, L); if (!fr.length) continue;
+    const te = texOf(fr[frameIdx(p.id, L, fr.length, EX.t)]); if (!te.img) continue;
+    const w = (L.scale || 1) * 512, h = w / te.aspect;
+    g.save(); g.translate(256 + L.pos.x * 512, 256 - L.pos.y * 512); g.rotate(-L.rot.z * D2R); g.drawImage(te.img, -w / 2, -h / 2, w, h); g.restore();
+  }
+}
+
+/* ----- Tách nền trong suốt cho video ----- */
+/** d = mảng RGBA. Xóa màu nền (góc ảnh / màu chọn). flood = chỉ xóa vùng nền nối với mép ảnh, giữ lại tròng trắng, răng… bên trong. */
+function keyData(d, w, h, V) {
+  if (V.key === 'none') return;
+  let kr, kg, kb;
+  if (V.key === 'color') {
+    const m = /^#?([0-9a-f]{6})$/i.exec(V.color || ''), n = m ? parseInt(m[1], 16) : 0x00ff00;
+    kr = (n >> 16) & 255; kg = (n >> 8) & 255; kb = n & 255;
+  } else {
+    let r = 0, g = 0, b = 0, c = 0;
+    for (const [sx, sy] of [[0, 0], [w - 3, 0], [0, h - 3], [w - 3, h - 3]]) for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) {
+      const px = Math.max(0, sx + x), py = Math.max(0, sy + y), i = (py * w + px) * 4;
+      if (d[i + 3] > 8) { r += d[i]; g += d[i + 1]; b += d[i + 2]; c++; }
+    }
+    if (!c) return;                                          // video đã có sẵn nền trong suốt
+    kr = r / c; kg = g / c; kb = b / c;
+  }
+  const lo = V.tol, hi = V.tol + Math.max(1, V.soft), N = w * h;
+  const dist = i => Math.hypot(d[i] - kr, d[i + 1] - kg, d[i + 2] - kb);
+  const cut = i => { const dd = dist(i); d[i + 3] = Math.round(d[i + 3] * (dd <= lo ? 0 : (dd - lo) / (hi - lo))); };
+  if (!V.flood) { for (let p = 0; p < N; p++) { const i = p * 4; if (dist(i) < hi) cut(i); } return; }
+  const seen = new Uint8Array(N), stack = new Int32Array(N); let sp = 0;
+  const push = p => { if (!seen[p] && dist(p * 4) < hi) { seen[p] = 1; stack[sp++] = p; } };
+  for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+  while (sp) {
+    const p = stack[--sp], x = p % w, y = (p / w) | 0;
+    if (x > 0) push(p - 1); if (x < w - 1) push(p + 1); if (y > 0) push(p - w); if (y < h - 1) push(p + w);
+  }
+  for (let p = 0; p < N; p++) if (seen[p]) cut(p * 4);
+}
+function keyOut(g, w, h, V) {
+  if (V.key === 'none') return;
+  const im = g.getImageData(0, 0, w, h); keyData(im.data, w, h, V); g.putImageData(im, 0, 0);
+}
+const seekTo = (v, t) => new Promise(res => {
+  if (Math.abs(v.currentTime - t) < 1e-3) { requestAnimationFrame(() => res()); return; }
+  let done = false;
+  const f = () => { if (done) return; done = true; v.removeEventListener('seeked', f); res(); };
+  v.addEventListener('seeked', f); v.currentTime = t; setTimeout(f, 4000);
+});
+function closeVideo(id) {
+  const V = EX.vid[id]; if (!V) return;
+  try { URL.revokeObjectURL(V.url); V.el.removeAttribute('src'); V.el.load(); } catch (err) { /* bỏ qua */ }
+  delete EX.vid[id];
+}
+async function setupVideo(id, file) {
+  closeVideo(id);
+  const el = document.createElement('video'); el.muted = true; el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
+  const url = URL.createObjectURL(file); el.src = url;
+  try {
+    await new Promise((res, rej) => { el.onloadedmetadata = res; el.onerror = () => rej(new Error('Trình duyệt không đọc được video này (thử mp4 H.264 hoặc webm).')); });
+    if (!Number.isFinite(el.duration) || el.duration <= 0 || !el.videoWidth) throw new Error('Video không có hình hoặc độ dài không hợp lệ.');
+  } catch (err) { URL.revokeObjectURL(url); throw err; }
+  EX.vid[id] = {file, url, el, name: file.name, dur: el.duration, w: el.videoWidth, h: el.videoHeight, fps: 12, max: 48, size: 512, key: 'auto', color: '#00ff00', tol: 60, soft: 40, flood: true, pt: Math.min(0.1, el.duration / 2), busy: false, raw: null};
+}
+async function vidPreview(id) {
+  const V = EX.vid[id], cv = document.querySelector('[data-vprev="' + id + '"]'); if (!V || !cv || V.busy) return;
+  const seq = V.pseq = (V.pseq || 0) + 1;
+  await seekTo(V.el, Math.min(V.dur - 0.001, V.pt));
+  if (seq !== V.pseq || !document.body.contains(cv)) return;
+  const sc = Math.min(1, 220 / Math.max(V.w, V.h)), w = Math.max(1, Math.round(V.w * sc)), h = Math.max(1, Math.round(V.h * sc));
+  const raw = document.createElement('canvas'); raw.width = w; raw.height = h;
+  raw.getContext('2d').drawImage(V.el, 0, 0, w, h); V.raw = raw;
+  cv.width = w; cv.height = h;
+  const g = cv.getContext('2d', {willReadFrequently: true}); g.clearRect(0, 0, w, h); g.drawImage(raw, 0, 0); keyOut(g, w, h, V);
+}
+async function extractFrames(id) {
+  const V = EX.vid[id], c = EX.cur; if (!V || V.busy || !c) return;
+  V.busy = true;
+  const prog = () => document.querySelector('[data-prog="' + id + '"]');
+  try {
+    const n = Math.max(1, Math.min(V.max, Math.floor(V.dur * V.fps) || 1)), sc = Math.min(1, V.size / Math.max(V.w, V.h));
+    const w = Math.max(1, Math.round(V.w * sc)), h = Math.max(1, Math.round(V.h * sc)), frames = [];
+    for (let i = 0; i < n; i++) {
+      await seekTo(V.el, Math.min(V.dur - 0.001, i / V.fps));
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const g = cv.getContext('2d', {willReadFrequently: true}); g.drawImage(V.el, 0, 0, w, h); keyOut(g, w, h, V);
+      frames.push(cv);
+      const p = prog(); if (p) p.textContent = 'Đang tách ' + (i + 1) + '/' + n + '…';
+    }
+    V.busy = false;
+    setLocal(id, frames, V.fps);
+    exSay('✓ Đã tách ' + n + ' khung PNG nền trong suốt cho “' + PART[id].label + '”. Chỉnh vị trí rồi bấm “Lưu & chạy”.', 'good');
+  } catch (err) { V.busy = false; const p = prog(); if (p) p.textContent = ''; exSay('Không tách được video: ' + err.message, 'bad'); }
+}
+async function loadImages(id, files) {
+  const list = [...files].filter(f => /^image\//.test(f.type) || /\.(png|webp|jpe?g|gif)$/i.test(f.name)).sort((a, b) => natCmp(a.name, b.name));
+  if (!list.length) { exSay('Không có ảnh hợp lệ trong lựa chọn.', 'bad'); return; }
+  const frames = [];
+  for (const f of list) {
+    const bmp = await createImageBitmap(f), sc = Math.min(1, 1024 / Math.max(bmp.width, bmp.height));
+    const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(bmp.width * sc)); cv.height = Math.max(1, Math.round(bmp.height * sc));
+    cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height); if (bmp.close) bmp.close(); frames.push(cv);
+  }
+  closeVideo(id);
+  setLocal(id, frames, null);
+  exSay('Đã nạp ' + frames.length + ' ảnh cho “' + PART[id].label + '”.', 'good');
+}
+/** Đặt chuỗi khung vừa tạo (chưa lên GitHub) cho một danh mục, giữ lại vị trí/xoay cũ nếu đã có. */
+function setLocal(id, frames, fps) {
+  const prev = EX.cur.layers[id];
+  EX.local[id] = frames;
+  EX.cur.layers[id] = mkLayer(id, {...(prev ? {pos: prev.pos, rot: prev.rot, scale: prev.scale, loop: prev.loop, show: prev.show} : defPlace(id)), src: 'file', set: '', frames: [], fps: fps || (prev && prev.fps) || FPS0});
+  EX.t0[id] = EX.t; EX.open.add(id); exEdited(); exRender();
+}
+
+/* ----- Giao diện từng danh mục ----- */
+const nf = (id, k, v, step) => '<input type="number" data-k="' + id + '|' + k + '" step="' + step + '" value="' + (Math.round(v * 1000) / 1000) + '">';
+const vf = (id, k, v, attrs) => '<input ' + (attrs || 'type="number"') + ' data-v="' + id + '|' + k + '" value="' + esc(v) + '">';
+function vidPanel(id, V) {
+  return '<div class="vp"><b>🎞 ' + esc(V.name) + '</b> <small>' + V.dur.toFixed(2) + 's · ' + V.w + '×' + V.h + '</small>' +
+    '<canvas class="chk" data-vprev="' + id + '" width="16" height="16" title="Bấm vào nền để chọn màu cần xóa"></canvas>' +
+    '<label>Xem thử tại giây thứ</label>' + vf(id, 'pt', V.pt, 'type="range" min="0" max="' + V.dur.toFixed(2) + '" step="0.05"') +
+    '<div class="grid3"><div><div class="axis">FPS tách</div>' + vf(id, 'fps', V.fps, 'type="number" min="1" max="60" step="1"') + '</div>' +
+    '<div><div class="axis">Tối đa khung</div>' + vf(id, 'max', V.max, 'type="number" min="1" max="120" step="1"') + '</div>' +
+    '<div><div class="axis">Cỡ lớn nhất px</div>' + vf(id, 'size', V.size, 'type="number" min="64" max="1024" step="32"') + '</div></div>' +
+    '<div class="row"><div style="flex:2"><label>Xóa nền</label><select data-v="' + id + '|key"><option value="auto"' + (V.key === 'auto' ? ' selected' : '') + '>Tự nhận màu ở 4 góc</option><option value="color"' + (V.key === 'color' ? ' selected' : '') + '>Theo màu chọn</option><option value="none"' + (V.key === 'none' ? ' selected' : '') + '>Không xóa (video đã trong suốt)</option></select></div>' +
+    '<div><label>Màu</label>' + vf(id, 'color', V.color, 'type="color"') + '</div></div>' +
+    '<label>Độ nhạy: ' + V.tol + '</label>' + vf(id, 'tol', V.tol, 'type="range" min="0" max="200" step="1"') +
+    '<label>Độ mượt viền: ' + V.soft + '</label>' + vf(id, 'soft', V.soft, 'type="range" min="1" max="120" step="1"') +
+    '<label class="ck"><input type="checkbox" data-v="' + id + '|flood"' + (V.flood ? ' checked' : '') + '> Chỉ xóa nền nối với mép ảnh (giữ tròng trắng mắt, răng…)</label>' +
+    '<div class="row"><button class="primary" data-act="extract" data-id="' + id + '" ' + (V.busy ? 'disabled' : '') + '>✂ Tách thành ảnh PNG</button><span class="muted" data-prog="' + id + '"></span></div></div>';
+}
+function partCard(p, e) {
+  const id = p.id, L = e.layers[id], V = EX.vid[id], fr = L ? framesOf(id, L) : [];
+  const tab = EX.srcTab[id] || (L && L.src === 'git' ? 'git' : 'file'), sets = libSets(id), names = Object.keys(sets);
+  let h = '<details class="pc" data-pc="' + id + '"' + (EX.open.has(id) ? ' open' : '') + '><summary><b>' + p.label + '</b><small>' + (L ? fr.length + ' khung · ' + (L.fps || FPS0) + ' fps' : 'chưa chọn') + '</small></summary><div class="pcb">';
+  h += '<div class="seg"><button data-act="tab" data-id="' + id + '" data-v="file" class="' + (tab === 'file' ? 'on' : '') + '">📁 Tệp máy</button><button data-act="tab" data-id="' + id + '" data-v="git" class="' + (tab === 'git' ? 'on' : '') + '">☁ GitHub</button></div>';
+  if (tab === 'file') {
+    h += '<input type="file" data-pfile="' + id + '" accept="image/*,video/*" multiple><div class="note">Chọn 1 video (mp4 / webm / mov) để tách khung, hoặc nhiều ảnh PNG nền trong suốt (01.png, 02.png…).</div>';
+    if (V) h += vidPanel(id, V);
+  } else {
+    h += '<select data-pset="' + id + '"><option value="">— chọn thư mục biểu cảm —</option>' + names.map(n => '<option value="' + esc(n) + '"' + (L && L.src === 'git' && L.set === n ? ' selected' : '') + '>' + esc(n) + ' (' + sets[n].length + ')</option>').join('') + '</select>' +
+      (names.length ? '' : '<div class="note">Chưa thấy thư mục nào trong <code>faces/' + p.folder + '/</code> — bấm “↻ Quét ảnh” ở trên.</div>');
+  }
+  if (L) {
+    h += '<div class="thumbs">' + fr.slice(0, 6).map(it => '<img class="chk" alt="" ' + (typeof it === 'string' ? 'data-path="' + esc(it) + '"' : 'src="' + thumbURL(it) + '"') + '>').join('') + (fr.length > 6 ? '<small>+' + (fr.length - 6) + ' khung</small>' : '') + (fr.length ? '' : '<small>Chưa có khung hình.</small>') + '</div>';
+    h += '<div class="row"><div><label>FPS phát</label>' + nf(id, 'fps', L.fps || FPS0, 1) + '</div><label class="ck"><input type="checkbox" data-k="' + id + '|loop"' + (L.loop !== false ? ' checked' : '') + '> Lặp</label><label class="ck"><input type="checkbox" data-k="' + id + '|show"' + (L.show !== false ? ' checked' : '') + '> Hiện</label></div>';
+    h += '<label>Vị trí (theo cỡ mặt) — X ngang · Y lên · Z ra trước</label><div class="grid3"><div><div class="axis">X</div>' + nf(id, 'px', L.pos.x, 0.01) + '</div><div><div class="axis">Y</div>' + nf(id, 'py', L.pos.y, 0.01) + '</div><div><div class="axis">Z</div>' + nf(id, 'pz', L.pos.z, 0.01) + '</div></div>';
+    h += '<label>Xoay — độ</label><div class="grid3"><div><div class="axis">X</div>' + nf(id, 'rx', L.rot.x, 1) + '</div><div><div class="axis">Y</div>' + nf(id, 'ry', L.rot.y, 1) + '</div><div><div class="axis">Z</div>' + nf(id, 'rz', L.rot.z, 1) + '</div></div>';
+    h += '<div class="row"><div><label>Tỉ lệ (bề rộng so với mặt)</label>' + nf(id, 'sc', L.scale || 1, 0.01) + '</div></div>';
+    h += '<div class="row"><button class="primary" data-act="run" data-id="' + id + '" style="flex:2">▶ Lưu &amp; chạy</button><button data-act="reset" data-id="' + id + '" title="Vị trí 0, xoay 0, tỉ lệ 1">↺ Đặt lại</button><button class="danger" data-act="clear" data-id="' + id + '">✕ Gỡ</button></div>';
+  }
+  return h + '</div></details>';
+}
+
+/* ----- Sự kiện ----- */
+$('exParts').addEventListener('toggle', e => { const d = e.target; if (d && d.dataset && d.dataset.pc) { if (d.open) EX.open.add(d.dataset.pc); else EX.open.delete(d.dataset.pc); } }, true);
+$('exParts').addEventListener('click', ev => {
+  const cvp = ev.target.closest && ev.target.closest('[data-vprev]');
+  if (cvp) {                                                   // nhỏ giọt màu: bấm vào ảnh xem thử để chọn màu nền
+    const id = cvp.dataset.vprev, V = EX.vid[id]; if (!V || !V.raw) return;
+    const r = cvp.getBoundingClientRect(), x = Math.min(V.raw.width - 1, Math.max(0, Math.floor((ev.clientX - r.left) / r.width * V.raw.width))), y = Math.min(V.raw.height - 1, Math.max(0, Math.floor((ev.clientY - r.top) / r.height * V.raw.height)));
+    const px = V.raw.getContext('2d').getImageData(x, y, 1, 1).data;
+    V.color = '#' + [px[0], px[1], px[2]].map(n => n.toString(16).padStart(2, '0')).join(''); V.key = 'color';
+    exRender(); return;
+  }
+  const b = ev.target.closest && ev.target.closest('button[data-act]'); if (!b || !EX.cur) return;
+  const id = b.dataset.id, act = b.dataset.act, L = EX.cur.layers[id];
+  if (act === 'tab') { EX.srcTab[id] = b.dataset.v; exRender(); }
+  else if (act === 'extract') extractFrames(id);
+  else if (act === 'run') {
+    if (!L) return;
+    EX.t0[id] = EX.t; if (EX.paused) { EX.paused = false; syncPlayBtn(); }
+    $('exShow').checked = true; exEdited();
+    exSay('▶ “' + PART[id].label + '” đang chạy trên mặt tại vị trí vừa đặt. Hài lòng thì bấm “Lưu biểu cảm” ở dưới.', 'good');
+  } else if (act === 'reset') { if (L) { L.pos = {x: 0, y: 0, z: 0}; L.rot = {x: 0, y: 0, z: 0}; L.scale = 1; exEdited(); exRender(); } }
+  else if (act === 'clear') { delete EX.cur.layers[id]; delete EX.local[id]; closeVideo(id); exEdited(); exRender(); }
+});
+function onLayerInput(el) {
+  const [id, k] = el.dataset.k.split('|'), L = EX.cur && EX.cur.layers[id]; if (!L) return;
+  if (el.type === 'checkbox') { if (k === 'loop') { L.loop = el.checked; EX.t0[id] = EX.t; } else L.show = el.checked; exEdited(); return; }
+  const v = parseFloat(el.value); if (!Number.isFinite(v)) return;
+  if (k === 'px') L.pos.x = v; else if (k === 'py') L.pos.y = v; else if (k === 'pz') L.pos.z = v;
+  else if (k === 'rx') L.rot.x = v; else if (k === 'ry') L.rot.y = v; else if (k === 'rz') L.rot.z = v;
+  else if (k === 'sc') L.scale = Math.max(0.01, v); else if (k === 'fps') L.fps = Math.min(60, Math.max(1, v));
+  exEdited();
+}
+function onVideoInput(el, final) {
+  const [id, k] = el.dataset.v.split('|'), V = EX.vid[id]; if (!V) return;
+  if (el.type === 'checkbox') V[k] = el.checked;
+  else if (el.type === 'color' || el.tagName === 'SELECT') { V[k] = el.value; if (k === 'color') V.key = 'color'; }
+  else { const v = parseFloat(el.value); if (!Number.isFinite(v)) return; V[k] = v; }
+  if (final && (k === 'key' || k === 'color')) { exRender(); return; }
+  if (k === 'tol' || k === 'soft') { const lb = el.previousElementSibling; if (lb && lb.tagName === 'LABEL') lb.textContent = (k === 'tol' ? 'Độ nhạy: ' : 'Độ mượt viền: ') + V[k]; }
+  vidPreview(id);
+}
+$('exParts').addEventListener('input', ev => { const t = ev.target; if (t.dataset && t.dataset.k) onLayerInput(t); else if (t.dataset && t.dataset.v && t.type !== 'color' && t.tagName !== 'SELECT') onVideoInput(t, false); });
+$('exParts').addEventListener('change', async ev => {
+  const t = ev.target, c = EX.cur; if (!c) return;
+  if (t.dataset.k) { onLayerInput(t); return; }
+  if (t.dataset.v) { onVideoInput(t, true); return; }
+  if (t.dataset.pset !== undefined) {
+    const id = t.dataset.pset, name = t.value, prev = c.layers[id];
+    delete EX.local[id];
+    if (!name) delete c.layers[id];
+    else c.layers[id] = mkLayer(id, {...(prev ? {pos: prev.pos, rot: prev.rot, scale: prev.scale, fps: prev.fps || FPS0, loop: prev.loop, show: prev.show} : {}), src: 'git', set: name, frames: (libSets(id)[name] || []).slice()});
+    EX.t0[id] = EX.t; exEdited(); exRender(); return;
+  }
+  if (t.dataset.pfile) {
+    const id = t.dataset.pfile, files = [...t.files]; t.value = ''; if (!files.length) return;
+    try {
+      const f = files[0];
+      if (/^video\//.test(f.type) || /\.(mp4|webm|mov|m4v|mkv)$/i.test(f.name)) {
+        exSay('Đang mở video…'); await setupVideo(id, f); EX.open.add(id); EX.srcTab[id] = 'file'; exRender();
+        exSay('Đã mở video. Chọn FPS, cách xóa nền rồi bấm “Tách thành ảnh PNG”.', 'good');
+      } else { exSay('Đang nạp ảnh…'); await loadImages(id, files); }
+    } catch (err) { exSay('Không nạp được tệp: ' + err.message, 'bad'); }
+  }
+});
+
+/* ----- Lưu: đẩy ảnh vừa tạo lên faces/<danh mục>/<id biểu cảm>/NN.png ----- */
+async function uploadLocal(c) {
+  const todo = PARTS.filter(p => EX.local[p.id] && c.layers[p.id]);
+  if (!todo.length) return true;
+  if (!K.auth().token) { exSay('Chưa có GitHub token — không tải được các ảnh vừa tạo lên GitHub. Nhập token ở trang Cài đặt rồi thử lại.', 'bad'); return false; }
+  $('exSave').disabled = true;
+  try {
+    for (const p of todo) {
+      const fr = EX.local[p.id], paths = [];
+      for (let i = 0; i < fr.length; i++) {
+        const path = 'faces/' + p.folder + '/' + c.id + '/' + String(i + 1).padStart(2, '0') + '.png';
+        exSay('Đang tải lên ' + p.label + ' ' + (i + 1) + '/' + fr.length + '…');
+        await K.ghPutDataUrl(path, fr[i].toDataURL('image/png'), 'Add face frame ' + c.name + ' / ' + p.label);
+        paths.push(path);
+      }
+      const L = c.layers[p.id]; L.frames = paths; L.set = c.id; L.src = 'git'; delete EX.local[p.id];
+    }
+    return true;
+  } catch (err) { exSay('Tải ảnh lên chưa xong: ' + err.message, 'bad'); return false; }
+  finally { $('exSave').disabled = false; }
+}
+
 /* ----- Điều khiển chung ----- */
 $('exReload').onclick = () => exScan().catch(err => exSay('Không quét được: ' + err.message, 'bad'));
 async function exScan() {
@@ -880,28 +1265,29 @@ function fitUI() { $('fitY').value = S.fit.y; $('fitZ').value = S.fit.z; $('fitS
 document.querySelector('.extabs').onclick = e => {
   const b = e.target.closest('[data-extab]'); if (!b || b.dataset.extab === EX.mode) return;
   if (!exGuard()) return;
-  EX.mode = b.dataset.extab; EX.cur = null; EX.isNew = false; EX.edited = false; EX.t = 0; exRender();
+  EX.mode = b.dataset.extab; EX.cur = null; exReset(); EX.isNew = false; EX.edited = false; exRender();
 };
 $('exSel').onchange = e => {
   const id = e.target.value;
   if (EX.cur && id === EX.cur.id) return;
   if (!exGuard()) { exRender(); return; }
   const f = S.expr.find(x => x.id === id);
-  EX.cur = f ? F.upgradeExpr(exClone(f)) : null; EX.isNew = false; EX.edited = false; EX.t = 0;
-  if (EX.cur && F.exprMode(EX.cur) === 'keyshape') EX.cur.duration = F.exprDuration(EX.cur);
+  exReset();
+  EX.cur = f ? prepTex(upExpr(exClone(f))) : null; EX.isNew = false; EX.edited = false;
+  if (EX.cur && modeOf(EX.cur) === 'keyshape') EX.cur.duration = F.exprDuration(EX.cur);
   exRender();
 };
 $('exNew').onclick = () => {
   if (!exGuard()) return;
   EX.cur = EX.mode === 'keyshape'
     ? {id: exNewId(), name: '', mode: 'keyshape', loop: true, duration: F.DEFAULT_DURATION, ease: 'smooth', parts: {}, tracks: {}}
-    : {id: exNewId(), name: '', mode: 'texture', loop: true, parts: {}};
-  EX.isNew = true; EX.edited = false; EX.t = 0; exRender(); $('exName').focus();
+    : {id: exNewId(), name: '', mode: 'texture', v: 2, loop: true, parts: {}, layers: {}};
+  exReset(); EX.isNew = true; EX.edited = false; exRender(); $('exName').focus();
 };
 $('exName').oninput = e => { if (EX.cur) { EX.cur.name = e.target.value; exEdited(); } };
 $('exLoop').onchange = e => { if (EX.cur) { EX.cur.loop = e.target.checked; EX.t = 0; exEdited(); } };
 $('exPlay').onclick = togglePlay; $('dkPlay').onclick = togglePlay;
-$('exRestart').onclick = () => { EX.t = 0; }; $('dkRestart').onclick = () => { EX.t = 0; };
+$('exRestart').onclick = () => { EX.t = 0; EX.t0 = {}; }; $('dkRestart').onclick = () => { EX.t = 0; };
 function onPartChange(e) {
   const c = EX.cur; if (!c) return;
   const part = e.target.dataset.part, fp = e.target.dataset.fps;
@@ -912,7 +1298,7 @@ function onPartChange(e) {
     EX.t = 0; exEdited(); exRender();
   } else if (fp && c.parts[fp]) { c.parts[fp].fps = Math.min(60, Math.max(1, +e.target.value || F.DEFAULT_FPS)); exEdited(); }
 }
-$('exParts').onchange = onPartChange; $('ksMask').onchange = onPartChange;
+$('ksMask').onchange = onPartChange;
 $('ksDur').onchange = e => {
   const c = EX.cur; if (!c) return;
   const v = parseFloat(e.target.value);
@@ -925,14 +1311,23 @@ window.addEventListener('resize', () => { if (EX.cur) dkMeasure(); });
 /* ----- Chỉnh vị trí mặt, lưu, nhân bản, xóa ----- */
 for (const [id, k] of [['fitY', 'y'], ['fitZ', 'z'], ['fitS', 's']]) $(id).oninput = e => {
   const v = parseFloat(e.target.value); if (!Number.isFinite(v)) return;
-  S.fit[k] = v; if (S.face) S.face.setFit(S.fit); dirty();
+  S.fit[k] = v; if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); dirty();
 };
 $('exSave').onclick = async () => {
   const c = EX.cur; if (!c) return;
   c.name = (c.name || '').trim();
   if (!c.name) { exSay('Hãy đặt tên biểu cảm (ví dụ: Vui, Buồn).', 'bad'); $('exName').focus(); return; }
   if (!c.parts) c.parts = {};
-  if (F.exprMode(c) === 'keyshape') {
+  const v2 = c.v === 2;
+  if (v2) {
+    c.mode = 'texture'; c.parts = {}; if (!c.layers) c.layers = {};
+    for (const p of PARTS) {
+      const L = c.layers[p.id]; if (!L) continue;
+      if (!EX.local[p.id] && !(L.frames || []).length) { const fr = libSets(p.id)[L.set] || []; if (fr.length) L.frames = fr.slice(); }
+      if (!framesOf(p.id, L).length) delete c.layers[p.id];
+    }
+    if (!Object.keys(c.layers).length) { exSay('Hãy chọn ít nhất một danh mục có ảnh hoặc video cho biểu cảm.', 'bad'); return; }
+  } else if (F.exprMode(c) === 'keyshape') {
     c.mode = 'keyshape'; if (!c.tracks) c.tracks = {}; delete c.shapes;
     for (const [n, tr] of Object.entries(c.tracks)) {
       tr.keys = (tr.keys || []).map(k => ({t: r2(Math.max(0, +k.t || 0)), v: r3(c01(+k.v || 0))})).sort((a, b) => a.t - b.t);
@@ -945,6 +1340,7 @@ $('exSave').onclick = async () => {
     if (!Object.keys(c.parts).length) { exSay('Hãy chọn ít nhất một bộ phận cho biểu cảm.', 'bad'); return; }
   }
   if (S.expr.some(x => x.id !== c.id && x.name.trim().toLowerCase() === c.name.toLowerCase())) { exSay('Nhân vật đã có biểu cảm tên “' + c.name + '”. Hãy đặt tên khác.', 'bad'); return; }
+  if (v2 && !(await uploadLocal(c))) return;
   const backup = S.expr.slice(), i = S.expr.findIndex(x => x.id === c.id);
   if (i >= 0) S.expr[i] = exClone(c); else S.expr.push(exClone(c));
   $('exSave').disabled = true;
@@ -953,7 +1349,8 @@ $('exSave').onclick = async () => {
   if (!ok) { S.expr = backup; return; }
   EX.isNew = false; EX.edited = false; exRender();
   exSay('✓ Đã lưu biểu cảm “' + c.name + '” vào nhân vật “' + $('charName').value.trim() + '” trên GitHub.', 'good');
-  if (EX.src === 'git') F.syncManifest(EX.lib).catch(() => {});
+  F.clearFaceCache();
+  F.scanFaces().then(r => { EX.lib = r.lib; EX.src = r.source; exRender(); if (EX.src === 'git') F.syncManifest(EX.lib).catch(() => {}); }).catch(() => {});
 };
 $('exDup').onclick = () => {
   const c = EX.cur; if (!c) return;
@@ -962,12 +1359,12 @@ $('exDup').onclick = () => {
 };
 $('exDel').onclick = async () => {
   const c = EX.cur; if (!c) return;
-  if (EX.isNew || !S.expr.some(x => x.id === c.id)) { EX.cur = null; EX.isNew = false; EX.edited = false; exRender(); return; }
+  if (EX.isNew || !S.expr.some(x => x.id === c.id)) { EX.cur = null; exReset(); EX.isNew = false; EX.edited = false; exRender(); return; }
   if (!confirm('Xóa biểu cảm “' + c.name + '” khỏi nhân vật này?')) return;
   const backup = S.expr.slice(); S.expr = S.expr.filter(x => x.id !== c.id);
   const ok = await saveCharacter($('exStatus'));
   if (!ok) { S.expr = backup; return; }
-  EX.cur = null; EX.edited = false; exRender(); exSay('✓ Đã xóa “' + c.name + '”.', 'good');
+  EX.cur = null; exReset(); EX.edited = false; exRender(); exSay('✓ Đã xóa “' + c.name + '”.', 'good');
 };
 F.onFaceImage(() => { EX.sig = null; if (S.face) S.face.sig = null; });
 exRender(); fitUI();
