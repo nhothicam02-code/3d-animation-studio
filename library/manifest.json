@@ -15,6 +15,10 @@
       "model": "Walking.fbx",
       "thumbnail": "./library/thumbnails/characters/walking-fbx.png",
       "updatedAt": "2026-11-22T05:49:32.112Z"
+    },
+    "chibi2.glb": {
+      "thumbnail": "./library/thumbnails/characters/chibi2.png",
+      "updatedAt": "2026-11-23T13:41:58.463Z"
     }
   },
   "animations": [
