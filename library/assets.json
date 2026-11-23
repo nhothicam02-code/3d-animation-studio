@@ -2,6 +2,18 @@
   "version": 1,
   "items": [
     {
+      "id": "vay1-mwtgx2d5xxr",
+      "name": "vay1",
+      "category": "skirt",
+      "kind": "model",
+      "ext": "fbx",
+      "size": 300332,
+      "path": "library/assets/skirt/vay1-mwtgx2d5xxr.fbx",
+      "thumbPath": "library/thumbnails/assets/vay1-mwtgx2d5xxr.png",
+      "thumbnail": "./library/thumbnails/assets/vay1-mwtgx2d5xxr.png",
+      "createdAt": "2026-11-23T16:16:26.395Z"
+    },
+    {
       "id": "vay1-mwtgrjedcro",
       "name": "vay1",
       "category": "skirt",
