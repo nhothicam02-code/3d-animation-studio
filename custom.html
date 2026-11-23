@@ -73,6 +73,7 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
 .vp canvas{display:block;max-width:100%;margin:6px auto;border-radius:6px;cursor:crosshair}
 .thumbs{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0;align-items:center}.thumbs img{width:40px;height:40px;object-fit:contain;border-radius:6px;border:1px solid var(--line)}
 .ck{display:flex;gap:6px;align-items:center;margin:0}
+.crinfo{font-size:11px;color:var(--gold);margin:4px 0}.cropbox{margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:8px;background:#151720}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head><body>
@@ -163,9 +164,9 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
   <div class="note">Tính theo chiều cao đầu; áp dụng cho mọi biểu cảm của nhân vật này và được lưu cùng nhân vật. Với biểu cảm Keyshape, tấm mặt nạ nền cũng dùng vị trí này và bị che bởi các bộ phận 3D nằm phía trước nó — chỉnh “Ra trước” sao cho nó sát mặt.</div>
   <details class="how"><summary>Cách dùng tab Texture</summary>
    Mở một danh mục (Nền da, Lông mày trái/phải, Mắt trái/phải, Mũi, Miệng) rồi chọn nguồn:<br>
-   • <b>Tệp máy</b>: chọn nhiều ảnh PNG nền trong suốt, hoặc 1 video. Với video: đặt <b>FPS tách</b>, chọn cách <b>xóa nền</b> (tự nhận màu 4 góc, hoặc bấm vào ảnh xem thử để nhỏ giọt màu nền) rồi bấm “Tách thành ảnh PNG”. Nên quay trên nền phẳng một màu (xanh lá, trắng, đen…); video webm có sẵn kênh trong suốt thì chọn “Không xóa”.<br>
+   • <b>Tệp máy</b>: chọn nhiều ảnh PNG nền trong suốt, hoặc 1 video. Với video: bấm <b>✂ Chọn vùng cắt</b> rồi kéo khung trên ảnh xem thử để chỉ lấy phần cần dùng, đặt <b>FPS tách</b>, chọn cách <b>xóa nền</b> (tự nhận màu 4 góc, hoặc bấm vào ảnh xem thử để nhỏ giọt màu nền) rồi bấm “Tách thành ảnh PNG”. Nên quay trên nền phẳng một màu (xanh lá, trắng, đen…); video webm có sẵn kênh trong suốt thì chọn “Không xóa”.<br>
    • <b>GitHub</b>: chọn thư mục có sẵn trong <code>faces/&lt;danh mục&gt;/&lt;tên biểu cảm&gt;/</code> (ảnh <code>01.png</code>, <code>02.png</code>…).<br>
-   Sau đó đặt <b>FPS phát</b>, <b>Lặp</b>, <b>vị trí X·Y·Z</b> (đơn vị = cỡ mặt), <b>xoay X·Y·Z</b> (độ) và tỉ lệ, rồi bấm <b>▶ Lưu &amp; chạy</b> để thấy chuỗi ảnh chạy tại vị trí đó trên mặt. Khi ưng ý bấm <b>☁ Lưu biểu cảm</b>: các ảnh vừa tạo sẽ được tải lên <code>faces/&lt;danh mục&gt;/&lt;mã biểu cảm&gt;/</code> và cấu hình lưu cùng nhân vật.<br>
+   Sau đó đặt <b>FPS phát</b>, <b>Lặp</b>, <b>vị trí X·Y·Z</b> (đơn vị = cỡ mặt), <b>xoay X·Y·Z</b> (độ) và tỉ lệ, rồi bấm <b>▶ Lưu &amp; chạy</b> để thấy chuỗi ảnh chạy tại vị trí đó trên mặt. Muốn đẩy ảnh lên GitHub ngay thì bấm <b>☁ Lưu khung lên GitHub</b> trong danh mục (ảnh vào <code>faces/&lt;danh mục&gt;/&lt;mã biểu cảm&gt;/</code>). Khi ưng ý bấm <b>☁ Lưu biểu cảm</b>: các ảnh vừa tạo sẽ được tải lên <code>faces/&lt;danh mục&gt;/&lt;mã biểu cảm&gt;/</code> và cấu hình lưu cùng nhân vật.<br>
    Ô vuông xem trước chỉ hiện X, Y, xoay Z và tỉ lệ; xoay X/Y chỉ thấy trên mặt 3D.</details>
   <details class="how"><summary>Cách dùng tab Keyshape</summary>
    Dùng khi model 3D có keyshape (shape key / morph target) cho từng bộ phận. Khung <b>Timeline keyshape</b> dưới cảnh 3D liệt kê mọi keyshape của model, mỗi keyshape một hàng: thanh trượt cường độ 0→1 (số thập phân) và một timeline riêng. Cách làm giống Blender: bấm thước hoặc chạm/kéo chỗ trống trên lane để đặt <b>đầu đọc</b>, rồi <b>kéo thanh trượt</b> (hoặc nhập số) để đặt key tại đầu đọc; nút ◆ thêm key giữ nguyên giá trị hiện tại, ◇✕ xóa key tại đầu đọc. Trên lane: <b>chạm đúp chỗ trống</b> = thêm key, <b>kéo ◆</b> = đổi thời điểm, <b>chạm đúp vào ◆</b> = xóa. Nhiều giai đoạn (đóng mắt → mở → hé nửa) = nhiều key, ví dụ 1 → 0 → 0.5. Dùng ô tìm, nhóm bộ phận và “Chỉ keyshape có key” để lọc danh sách dài. Mặt nạ nền vẫn chọn từ chuỗi texture.</details>
@@ -1066,7 +1067,41 @@ function keyOut(g, w, h, V) { keyOnly(g, w, h, V); applyStrokes(g, w, h, V); }
 /** Vẽ lại ảnh xem thử nhanh từ bản đã xóa nền (không tính lại nền) + các nét cọ. */
 function redrawPreview(id) {
   const V = EX.vid[id], cv = document.querySelector('[data-vprev="' + id + '"]'); if (!V || !cv || !V.keyed) return;
-  const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(V.keyed, 0, 0); applyStrokes(g, cv.width, cv.height, V);
+  const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height);
+  if (V.cropMode) { g.drawImage(V.raw, 0, 0); drawCropOverlay(g, cv.width, cv.height, V.cropDraft); return; }
+  g.drawImage(V.keyed, 0, 0); applyStrokes(g, cv.width, cv.height, V);
+}
+/* ----- Vùng cắt video: lưu theo tỉ lệ 0..1 của khung hình gốc nên dùng đúng cho mọi khung khi tách ----- */
+const CMIN = 0.03;
+function cropPx(V) {
+  const r = V.crop; if (!r) return {x: 0, y: 0, w: V.w, h: V.h};
+  const x = Math.min(V.w - 1, Math.max(0, Math.round(r.x * V.w))), y = Math.min(V.h - 1, Math.max(0, Math.round(r.y * V.h)));
+  return {x, y, w: Math.max(1, Math.min(V.w - x, Math.round(r.w * V.w))), h: Math.max(1, Math.min(V.h - y, Math.round(r.h * V.h)))};
+}
+function drawCropOverlay(g, w, h, r) {
+  if (!r) return;
+  const x = r.x * w, y = r.y * h, rw = r.w * w, rh = r.h * h;
+  g.save(); g.fillStyle = 'rgba(0,0,0,.55)';
+  g.fillRect(0, 0, w, y); g.fillRect(0, y + rh, w, h - y - rh); g.fillRect(0, y, x, rh); g.fillRect(x + rw, y, w - x - rw, rh);
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1; g.beginPath();
+  for (const k of [1, 2]) { g.moveTo(x + rw * k / 3, y); g.lineTo(x + rw * k / 3, y + rh); g.moveTo(x, y + rh * k / 3); g.lineTo(x + rw, y + rh * k / 3); }
+  g.stroke();
+  g.strokeStyle = '#9a83ff'; g.lineWidth = 2; g.strokeRect(x, y, rw, rh);
+  g.fillStyle = '#fff'; g.lineWidth = 1;
+  for (const [hx, hy] of [[x, y], [x + rw, y], [x, y + rh], [x + rw, y + rh], [x + rw / 2, y], [x + rw / 2, y + rh], [x, y + rh / 2], [x + rw, y + rh / 2]]) { g.fillRect(hx - 4, hy - 4, 8, 8); g.strokeRect(hx - 4, hy - 4, 8, 8); }
+  g.restore();
+}
+function updCropInfo(id) {
+  const V = EX.vid[id], el = document.querySelector('[data-crinfo="' + id + '"]'), r = V && V.cropDraft; if (!el || !r) return;
+  el.textContent = 'Khung: ' + Math.round(r.w * V.w) + '×' + Math.round(r.h * V.h) + ' px · từ (' + Math.round(r.x * V.w) + ', ' + Math.round(r.y * V.h) + ')';
+}
+/** Đổi tỉ lệ khung: giữ tâm, chỉnh lại khung đang chọn cho đúng tỉ lệ. */
+function fitDraftAR(V) {
+  const ar = parseFloat(V.cropAR) || 0, r = V.cropDraft; if (!ar || !r) return;
+  const k = V.w / V.h; let w = r.w, h = w * k / ar;
+  if (h > 1) { h = 1; w = h * ar / k; }
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  V.cropDraft = {x: Math.min(1 - w, Math.max(0, cx - w / 2)), y: Math.min(1 - h, Math.max(0, cy - h / 2)), w, h};
 }
 const seekTo = (v, t) => new Promise(res => {
   if (Math.abs(v.currentTime - t) < 1e-3) { requestAnimationFrame(() => res()); return; }
@@ -1087,32 +1122,34 @@ async function setupVideo(id, file) {
     await new Promise((res, rej) => { el.onloadedmetadata = res; el.onerror = () => rej(new Error('Trình duyệt không đọc được video này (thử mp4 H.264 hoặc webm).')); });
     if (!Number.isFinite(el.duration) || el.duration <= 0 || !el.videoWidth) throw new Error('Video không có hình hoặc độ dài không hợp lệ.');
   } catch (err) { URL.revokeObjectURL(url); throw err; }
-  EX.vid[id] = {file, url, el, name: file.name, dur: el.duration, w: el.videoWidth, h: el.videoHeight, fps: 12, max: 48, size: 512, key: 'auto', color: '#00ff00', tol: 60, soft: 40, flood: true, pt: Math.min(0.1, el.duration / 2), busy: false, raw: null, keyed: null, strokes: [], brush: false, bsize: 6};
+  EX.vid[id] = {file, url, el, name: file.name, dur: el.duration, w: el.videoWidth, h: el.videoHeight, fps: 12, max: 48, size: 512, key: 'auto', color: '#00ff00', tol: 60, soft: 40, flood: true, pt: Math.min(0.1, el.duration / 2), busy: false, raw: null, keyed: null, strokes: [], brush: false, bsize: 6, crop: null, cropMode: false, cropDraft: null, cropAR: '0'};
 }
 async function vidPreview(id) {
   const V = EX.vid[id], cv = document.querySelector('[data-vprev="' + id + '"]'); if (!V || !cv || V.busy) return;
   const seq = V.pseq = (V.pseq || 0) + 1;
   await seekTo(V.el, Math.min(V.dur - 0.001, V.pt));
   if (seq !== V.pseq || !document.body.contains(cv)) return;
-  const sc = Math.min(1, 280 / Math.max(V.w, V.h)), w = Math.max(1, Math.round(V.w * sc)), h = Math.max(1, Math.round(V.h * sc));
+  const area = V.cropMode ? {x: 0, y: 0, w: V.w, h: V.h} : cropPx(V);   // đang chọn vùng cắt → hiện cả khung hình
+  const sc = Math.min(1, 280 / Math.max(area.w, area.h)), w = Math.max(1, Math.round(area.w * sc)), h = Math.max(1, Math.round(area.h * sc));
   const raw = document.createElement('canvas'); raw.width = w; raw.height = h;
-  raw.getContext('2d').drawImage(V.el, 0, 0, w, h); V.raw = raw;
-  cv.width = w; cv.height = h; cv.style.touchAction = 'none'; cv.style.cursor = V.brush ? 'cell' : 'crosshair';
+  raw.getContext('2d').drawImage(V.el, area.x, area.y, area.w, area.h, 0, 0, w, h); V.raw = raw;
+  cv.width = w; cv.height = h; cv.style.touchAction = 'none'; cv.style.cursor = (V.brush && !V.cropMode) ? 'cell' : 'crosshair';
   const kc = document.createElement('canvas'); kc.width = w; kc.height = h;
   const kg = kc.getContext('2d', {willReadFrequently: true}); kg.drawImage(raw, 0, 0); keyOnly(kg, w, h, V); V.keyed = kc;
-  redrawPreview(id);
+  redrawPreview(id); updCropInfo(id);
 }
 async function extractFrames(id) {
   const V = EX.vid[id], c = EX.cur; if (!V || V.busy || !c) return;
+  if (V.cropMode) { exSay('Bấm “✓ Áp dụng” (hoặc “Hủy”) ở phần vùng cắt trước khi tách.', 'bad'); return; }
   V.busy = true;
   const prog = () => document.querySelector('[data-prog="' + id + '"]');
   try {
-    const n = Math.max(1, Math.min(V.max, Math.floor(V.dur * V.fps) || 1)), sc = Math.min(1, V.size / Math.max(V.w, V.h));
-    const w = Math.max(1, Math.round(V.w * sc)), h = Math.max(1, Math.round(V.h * sc)), frames = [];
+    const cp = cropPx(V), n = Math.max(1, Math.min(V.max, Math.floor(V.dur * V.fps) || 1)), sc = Math.min(1, V.size / Math.max(cp.w, cp.h));
+    const w = Math.max(1, Math.round(cp.w * sc)), h = Math.max(1, Math.round(cp.h * sc)), frames = [];
     for (let i = 0; i < n; i++) {
       await seekTo(V.el, Math.min(V.dur - 0.001, i / V.fps));
       const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      const g = cv.getContext('2d', {willReadFrequently: true}); g.drawImage(V.el, 0, 0, w, h); keyOut(g, w, h, V);
+      const g = cv.getContext('2d', {willReadFrequently: true}); g.drawImage(V.el, cp.x, cp.y, cp.w, cp.h, 0, 0, w, h); keyOut(g, w, h, V);
       frames.push(cv);
       const p = prog(); if (p) p.textContent = 'Đang tách ' + (i + 1) + '/' + n + '…';
     }
@@ -1145,10 +1182,20 @@ function setLocal(id, frames, fps) {
 /* ----- Giao diện từng danh mục ----- */
 const nf = (id, k, v, step) => '<input type="number" data-k="' + id + '|' + k + '" step="' + step + '" value="' + (Math.round(v * 1000) / 1000) + '">';
 const vf = (id, k, v, attrs) => '<input ' + (attrs || 'type="number"') + ' data-v="' + id + '|' + k + '" value="' + esc(v) + '">';
+const AR_OPTS = [['0', 'Tự do'], ['1', '1 : 1'], ['1.3333', '4 : 3'], ['0.75', '3 : 4'], ['1.7778', '16 : 9'], ['0.5625', '9 : 16']];
+function cropPanel(id, V) {
+  if (V.cropMode) return '<div class="cropbox"><b>✂ Vùng cắt</b><div class="note">Kéo trên ảnh để vẽ khung mới · kéo cạnh/góc để đổi cỡ · kéo bên trong để di chuyển. Áp dụng vùng cắt sẽ xóa các nét cọ đã vẽ.</div>' +
+    '<label>Tỉ lệ khung</label><select data-v="' + id + '|cropAR">' + AR_OPTS.map(o => '<option value="' + o[0] + '"' + (String(V.cropAR) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' +
+    '<div class="crinfo" data-crinfo="' + id + '"></div>' +
+    '<div class="row"><button class="primary" data-act="cropok" data-id="' + id + '">✓ Áp dụng</button><button data-act="cropcancel" data-id="' + id + '">Hủy</button></div></div>';
+  const cp = cropPx(V);
+  return '<div class="row" style="margin-top:8px"><button data-act="crop" data-id="' + id + '">✂ ' + (V.crop ? 'Sửa' : 'Chọn') + ' vùng cắt</button>' + (V.crop ? '<button class="danger" data-act="cropclr" data-id="' + id + '">Bỏ cắt</button>' : '') + '</div>' +
+    '<div class="crinfo">' + (V.crop ? 'Đang cắt: ' + cp.w + '×' + cp.h + ' px (từ ' + cp.x + ', ' + cp.y + ')' : 'Chưa cắt — dùng toàn khung hình.') + '</div>';
+}
 function vidPanel(id, V) {
   return '<div class="vp"><b>🎞 ' + esc(V.name) + '</b> <small>' + V.dur.toFixed(2) + 's · ' + V.w + '×' + V.h + '</small>' +
     '<canvas class="chk" data-vprev="' + id + '" width="16" height="16" title="Bấm vào nền để chọn màu cần xóa"></canvas>' +
-    '<label>Xem thử tại giây thứ</label>' + vf(id, 'pt', V.pt, 'type="range" min="0" max="' + V.dur.toFixed(2) + '" step="0.05"') +
+    '<label>Xem thử tại giây thứ</label>' + vf(id, 'pt', V.pt, 'type="range" min="0" max="' + V.dur.toFixed(2) + '" step="0.05"') + cropPanel(id, V) +
     '<div class="grid3"><div><div class="axis">FPS tách</div>' + vf(id, 'fps', V.fps, 'type="number" min="1" max="60" step="1"') + '</div>' +
     '<div><div class="axis">Tối đa khung</div>' + vf(id, 'max', V.max, 'type="number" min="1" max="120" step="1"') + '</div>' +
     '<div><div class="axis">Cỡ lớn nhất px</div>' + vf(id, 'size', V.size, 'type="number" min="64" max="1024" step="32"') + '</div></div>' +
@@ -1161,7 +1208,7 @@ function vidPanel(id, V) {
     '<label>Cỡ cọ: ' + V.bsize + '%</label>' + vf(id, 'bsize', V.bsize, 'type="range" min="1" max="40" step="1"') +
     '<div class="row"><button data-act="undo" data-id="' + id + '">↶ Hoàn tác nét (' + V.strokes.length + ')</button><button class="danger" data-act="clrstrokes" data-id="' + id + '">Xóa hết nét</button></div>' +
     '<div class="note">Nét cọ nằm cố định theo vị trí trên khung nên được xóa ở mọi khung hình của video khi tách.</div>' +
-    '<div class="row"><button class="primary" data-act="extract" data-id="' + id + '" ' + (V.busy ? 'disabled' : '') + '>✂ Tách thành ảnh PNG</button><span class="muted" data-prog="' + id + '"></span></div></div>';
+    '<div class="row"><button class="primary" data-act="extract" data-id="' + id + '" ' + ((V.busy || V.cropMode) ? 'disabled' : '') + '>✂ Tách thành ảnh PNG</button><span class="muted" data-prog="' + id + '"></span></div></div>';
 }
 function partCard(p, e) {
   const id = p.id, L = e.layers[id], V = EX.vid[id], fr = L ? framesOf(id, L) : [];
@@ -1177,6 +1224,7 @@ function partCard(p, e) {
   }
   if (L) {
     h += '<div class="thumbs">' + fr.slice(0, 6).map(it => '<img class="chk" alt="" ' + (typeof it === 'string' ? 'data-path="' + esc(it) + '"' : 'src="' + thumbURL(it) + '"') + '>').join('') + (fr.length > 6 ? '<small>+' + (fr.length - 6) + ' khung</small>' : '') + (fr.length ? '' : '<small>Chưa có khung hình.</small>') + '</div>';
+    if (EX.local[id]) h += '<div class="row"><button class="primary" data-act="push" data-id="' + id + '" title="Tải các khung PNG lên thư mục của biểu cảm này trên GitHub">☁ Lưu khung lên GitHub</button></div><div class="note">Sẽ lưu vào <code>faces/' + p.folder + '/' + esc(e.id) + '/01.png, 02.png…</code> (thư mục của biểu cảm này).</div>';
     h += '<div class="row"><div><label>FPS phát</label>' + nf(id, 'fps', L.fps || FPS0, 1) + '</div><label class="ck"><input type="checkbox" data-k="' + id + '|loop"' + (L.loop !== false ? ' checked' : '') + '> Lặp</label><label class="ck"><input type="checkbox" data-k="' + id + '|show"' + (L.show !== false ? ' checked' : '') + '> Hiện</label></div>';
     h += '<label>Vị trí (theo cỡ mặt) — X ngang · Y lên · Z ra trước</label><div class="grid3"><div><div class="axis">X</div>' + nf(id, 'px', L.pos.x, 0.01) + '</div><div><div class="axis">Y</div>' + nf(id, 'py', L.pos.y, 0.01) + '</div><div><div class="axis">Z</div>' + nf(id, 'pz', L.pos.z, 0.01) + '</div></div>';
     h += '<label>Xoay — độ</label><div class="grid3"><div><div class="axis">X</div>' + nf(id, 'rx', L.rot.x, 1) + '</div><div><div class="axis">Y</div>' + nf(id, 'ry', L.rot.y, 1) + '</div><div><div class="axis">Z</div>' + nf(id, 'rz', L.rot.z, 1) + '</div></div>';
@@ -1191,7 +1239,7 @@ $('exParts').addEventListener('toggle', e => { const d = e.target; if (d && d.da
 $('exParts').addEventListener('click', ev => {
   const cvp = ev.target.closest && ev.target.closest('[data-vprev]');
   if (cvp) {                                                   // nhỏ giọt màu: bấm vào ảnh xem thử để chọn màu nền
-    const id = cvp.dataset.vprev, V = EX.vid[id]; if (!V || !V.raw || V.brush) return;
+    const id = cvp.dataset.vprev, V = EX.vid[id]; if (!V || !V.raw || V.brush || V.cropMode) return;
     const r = cvp.getBoundingClientRect(), x = Math.min(V.raw.width - 1, Math.max(0, Math.floor((ev.clientX - r.left) / r.width * V.raw.width))), y = Math.min(V.raw.height - 1, Math.max(0, Math.floor((ev.clientY - r.top) / r.height * V.raw.height)));
     const px = V.raw.getContext('2d').getImageData(x, y, 1, 1).data;
     V.color = '#' + [px[0], px[1], px[2]].map(n => n.toString(16).padStart(2, '0')).join(''); V.key = 'color';
@@ -1201,6 +1249,8 @@ $('exParts').addEventListener('click', ev => {
   const id = b.dataset.id, act = b.dataset.act, L = EX.cur.layers[id];
   if (act === 'tab') { EX.srcTab[id] = b.dataset.v; exRender(); }
   else if (act === 'extract') extractFrames(id);
+  else if (act === 'push') pushPart(id);
+  else if (act === 'crop' || act === 'cropok' || act === 'cropcancel' || act === 'cropclr') cropAct(id, act);
   else if (act === 'undo' || act === 'clrstrokes') {
     const V = EX.vid[id]; if (!V) return;
     if (act === 'undo') V.strokes.pop(); else V.strokes = [];
@@ -1229,22 +1279,102 @@ function onVideoInput(el, final) {
   if (el.type === 'checkbox') V[k] = el.checked;
   else if (el.type === 'color' || el.tagName === 'SELECT') { V[k] = el.value; if (k === 'color') V.key = 'color'; }
   else { const v = parseFloat(el.value); if (!Number.isFinite(v)) return; V[k] = v; }
+  if (k === 'cropAR') { fitDraftAR(V); redrawPreview(id); updCropInfo(id); return; }
   if (final && (k === 'key' || k === 'color')) { exRender(); return; }
   if (k === 'tol' || k === 'soft' || k === 'bsize') { const lb = el.previousElementSibling; if (lb && lb.tagName === 'LABEL') lb.textContent = (k === 'tol' ? 'Độ nhạy: ' : k === 'soft' ? 'Độ mượt viền: ' : 'Cỡ cọ: ') + V[k] + (k === 'bsize' ? '%' : ''); }
   if (k === 'bsize') return;
   if (k === 'brush') { const cv = document.querySelector('[data-vprev="' + id + '"]'); if (cv) cv.style.cursor = V.brush ? 'cell' : 'crosshair'; return; }
   vidPreview(id);
 }
+let CR = null;   // thao tác kéo vùng cắt
+/** Vị trí con trỏ so với khung cắt: 'move' (bên trong), 't|b|l|r|tl|tr|bl|br' (cạnh/góc), 'new' (ngoài khung). */
+function cropHit(V, cv, p) {
+  const r = V.cropDraft; if (!r) return 'new';
+  const tx = 9 / (cv.clientWidth || 1), ty = 9 / (cv.clientHeight || 1);
+  const inX = p[0] > r.x - tx && p[0] < r.x + r.w + tx, inY = p[1] > r.y - ty && p[1] < r.y + r.h + ty;
+  let m = '';
+  if (inX && Math.abs(p[1] - r.y) < ty) m += 't'; else if (inX && Math.abs(p[1] - (r.y + r.h)) < ty) m += 'b';
+  if (inY && Math.abs(p[0] - r.x) < tx) m += 'l'; else if (inY && Math.abs(p[0] - (r.x + r.w)) < tx) m += 'r';
+  if (m) return m;
+  return (p[0] > r.x && p[0] < r.x + r.w && p[1] > r.y && p[1] < r.y + r.h) ? 'move' : 'new';
+}
+function startCrop(ev, cv, id, V) {
+  ev.preventDefault(); try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* bỏ qua */ }
+  const p = brushPt(cv, ev), mode = cropHit(V, cv, p);
+  CR = {id, cv, V, mode, p0: p, r0: V.cropDraft ? {...V.cropDraft} : null, prev: V.cropDraft ? {...V.cropDraft} : null};
+  if (mode === 'new') V.cropDraft = {x: p[0], y: p[1], w: 0, h: 0};
+}
+function moveCrop(ev) {
+  const {id, cv, V, mode, p0, r0} = CR, p = brushPt(cv, ev), ar = parseFloat(V.cropAR) || 0, k = V.w / V.h;
+  let n;
+  if (mode === 'move') {
+    n = {x: Math.min(1 - r0.w, Math.max(0, r0.x + p[0] - p0[0])), y: Math.min(1 - r0.h, Math.max(0, r0.y + p[1] - p0[1])), w: r0.w, h: r0.h};
+  } else if (mode === 'new') {
+    const w = Math.abs(p[0] - p0[0]); let h = Math.abs(p[1] - p0[1]);
+    if (ar) h = w * k / ar;
+    n = {x: p[0] >= p0[0] ? p0[0] : p0[0] - w, y: p[1] >= p0[1] ? p0[1] : p0[1] - h, w, h};
+  } else {
+    let l = r0.x, rr = r0.x + r0.w, t = r0.y, b = r0.y + r0.h;
+    if (mode.includes('l')) l = Math.max(0, Math.min(p[0], rr - CMIN));
+    if (mode.includes('r')) rr = Math.min(1, Math.max(p[0], l + CMIN));
+    if (mode.includes('t')) t = Math.max(0, Math.min(p[1], b - CMIN));
+    if (mode.includes('b')) b = Math.min(1, Math.max(p[1], t + CMIN));
+    if (ar) {
+      if (/[lr]/.test(mode)) { const h = (rr - l) * k / ar; if (mode.includes('t')) t = b - h; else b = t + h; }
+      else rr = l + (b - t) * ar / k;
+    }
+    n = {x: l, y: t, w: rr - l, h: b - t};
+  }
+  if (n.x < -1e-6 || n.y < -1e-6 || n.x + n.w > 1 + 1e-6 || n.y + n.h > 1 + 1e-6) return;   // vượt khung hình → giữ nguyên
+  V.cropDraft = n; redrawPreview(id); updCropInfo(id);
+}
+function cropAct(id, act) {
+  const V = EX.vid[id]; if (!V || V.busy) return;
+  if (act === 'crop') { V.cropMode = true; V.cropDraft = V.crop ? {...V.crop} : {x: 0.1, y: 0.1, w: 0.8, h: 0.8}; fitDraftAR(V); }
+  else if (act === 'cropok') {
+    const d = V.cropDraft;
+    V.crop = (d && d.w >= CMIN && d.h >= CMIN && !(d.w > 0.995 && d.h > 0.995)) ? {...d} : null;
+    V.cropMode = false; V.cropDraft = null; V.strokes = [];
+  }
+  else if (act === 'cropcancel') { V.cropMode = false; V.cropDraft = null; }
+  else { V.crop = null; V.strokes = []; }
+  exRender();
+}
+/** Nút “Lưu khung lên GitHub”: tải riêng các khung của một danh mục vào faces/<danh mục>/<mã biểu cảm>/NN.png. */
+async function pushPart(id) {
+  const c = EX.cur, p = PART[id]; if (!c || !p || !EX.local[id] || EX.pushing) return;
+  EX.pushing = true;
+  try {
+    const n = EX.local[id].length;
+    if (!(await uploadLocal(c, [id]))) return;
+    EX.srcTab[id] = 'git'; exEdited(); exRender();
+    exSay('✓ Đã lưu ' + n + ' khung “' + p.label + '” lên GitHub: faces/' + p.folder + '/' + c.id + '/. Bấm “☁ Lưu biểu cảm” để lưu cấu hình biểu cảm vào nhân vật.', 'good');
+    F.clearFaceCache();
+    F.scanFaces().then(r => { EX.lib = r.lib; EX.src = r.source; exRender(); if (EX.src === 'git') F.syncManifest(EX.lib).catch(() => {}); }).catch(() => {});
+  } finally { EX.pushing = false; }
+}
 let BR = null;   // nét cọ đang vẽ
 const brushPt = (cv, ev) => { const r = cv.getBoundingClientRect(); return [Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height))]; };
 $('exParts').addEventListener('pointerdown', ev => {
   const cv = ev.target.closest && ev.target.closest('[data-vprev]'); if (!cv) return;
-  const id = cv.dataset.vprev, V = EX.vid[id]; if (!V || !V.brush || V.busy || !V.keyed) return;
+  const id = cv.dataset.vprev, V = EX.vid[id];
+  if (V && V.cropMode && !V.busy && V.raw) { startCrop(ev, cv, id, V); return; }
+  if (!V || !V.brush || V.busy || !V.keyed) return;
   ev.preventDefault(); try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* bỏ qua */ }
   const st = {r: V.bsize / 200, pts: [brushPt(cv, ev)]}; V.strokes.push(st); BR = {id, cv, V, st}; redrawPreview(id);
 });
-$('exParts').addEventListener('pointermove', ev => { if (!BR) return; BR.st.pts.push(brushPt(BR.cv, ev)); redrawPreview(BR.id); });
+$('exParts').addEventListener('pointermove', ev => {
+  if (CR) { moveCrop(ev); return; }
+  const hc = !BR && ev.target.closest && ev.target.closest('[data-vprev]'), hv = hc && EX.vid[hc.dataset.vprev];
+  if (hv && hv.cropMode) hc.style.cursor = ({move: 'move', new: 'crosshair', t: 'ns-resize', b: 'ns-resize', l: 'ew-resize', r: 'ew-resize', tl: 'nwse-resize', br: 'nwse-resize', tr: 'nesw-resize', bl: 'nesw-resize'})[cropHit(hv, hc, brushPt(hc, ev))] || 'crosshair';
+  if (!BR) return; BR.st.pts.push(brushPt(BR.cv, ev)); redrawPreview(BR.id);
+});
 const brushEnd = () => {
+  if (CR) {
+    const V = CR.V, d = V.cropDraft;
+    if (d && (d.w < CMIN || d.h < CMIN)) V.cropDraft = CR.prev;      // chỉ bấm, không kéo → giữ khung cũ
+    const id = CR.id; CR = null; redrawPreview(id); updCropInfo(id); return;
+  }
   if (!BR) return;
   const bt = BR.cv.closest('.vp').querySelector('[data-act="undo"]'); if (bt) bt.textContent = '↶ Hoàn tác nét (' + BR.V.strokes.length + ')';
   BR = null;
@@ -1275,8 +1405,8 @@ $('exParts').addEventListener('change', async ev => {
 });
 
 /* ----- Lưu: đẩy ảnh vừa tạo lên faces/<danh mục>/<id biểu cảm>/NN.png ----- */
-async function uploadLocal(c) {
-  const todo = PARTS.filter(p => EX.local[p.id] && c.layers[p.id]);
+async function uploadLocal(c, only) {
+  const todo = PARTS.filter(p => EX.local[p.id] && c.layers[p.id] && (!only || only.includes(p.id)));
   if (!todo.length) return true;
   if (!K.auth().token) { exSay('Chưa có GitHub token — không tải được các ảnh vừa tạo lên GitHub. Nhập token ở trang Cài đặt rồi thử lại.', 'bad'); return false; }
   $('exSave').disabled = true;
