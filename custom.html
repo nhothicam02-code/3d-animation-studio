@@ -38,7 +38,29 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
 .lt{aspect-ratio:4/3;position:relative;border-radius:6px;overflow:hidden;background:linear-gradient(135deg,#34364a,#222431)}.lt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.lt .ph{position:absolute;inset:0;display:grid;place-items:center;font-size:24px;opacity:.7}
 .ln{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pgr{display:flex;align-items:center;gap:6px;margin-top:8px}.pgr span{flex:1;text-align:center;font-size:11px;color:var(--muted)}.pgr button{padding:4px 10px}
 #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-#exKeys button.on{outline:1px solid #8f7bff;background:#3a3558}#exKeys{display:flex;flex-wrap:wrap;gap:5px}#exKeys button{padding:4px 8px}
+.chk{background-color:#2b2f40;background-image:linear-gradient(45deg,#343849 25%,transparent 25%,transparent 75%,#343849 75%),linear-gradient(45deg,#343849 25%,transparent 25%,transparent 75%,#343849 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+#exCv{width:100%;max-width:230px;display:block;margin:0 auto 8px;border-radius:10px;aspect-ratio:1}
+.fprow{display:grid;grid-template-columns:62px minmax(0,1fr) 36px;gap:7px;align-items:center;margin-bottom:7px}.fprow>span{font-size:12px;color:#d7dae5}
+.fprow .mid{display:flex;gap:5px;min-width:0}.fprow .mid select{flex:1;min-width:0}.fprow .mid input{width:58px;flex:none;padding:7px 5px}
+.fprow .th{width:36px;height:36px;border-radius:7px;border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:10px;color:var(--muted)}.fprow .th img{width:100%;height:100%;object-fit:contain}
+.fprow.miss select{border-color:var(--gold)}
+.extabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 10px}.extabs button{padding:8px 6px}.extabs button.on{background:var(--accent);border-color:var(--accent);color:#171322}
+.center{grid-template-rows:minmax(0,1fr) auto auto}
+.dock{border-top:1px solid var(--line);background:var(--panel);max-height:46vh;overflow:auto;position:relative}
+.dkhead{position:sticky;top:0;z-index:4;background:var(--panel);padding:8px 12px 0;border-bottom:1px solid var(--line)}
+.dkbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.dkbar button{padding:5px 10px}.dkbar input[type=search]{width:150px;padding:6px 8px}.dkbar label{margin:0;display:flex;gap:5px;align-items:center;white-space:nowrap}
+.dkbar .chip{padding:4px 8px;font-size:11px}
+.rulerrow,.trk{display:grid;grid-template-columns:270px minmax(0,1fr);gap:0 10px}
+.rulerrow{margin-top:6px}.rulerrow canvas{height:26px;cursor:ew-resize;touch-action:none}
+#dkList{position:relative;padding:0 12px 8px}
+#dkHead{position:absolute;top:0;bottom:0;left:0;width:2px;margin-left:-1px;background:var(--green);opacity:.85;pointer-events:none;z-index:2}
+.trk{padding:6px 0;border-bottom:1px solid #2a2e3b;align-items:center}
+.th2{min-width:0}.l1{display:flex;gap:5px;align-items:center}.l1 b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#d7dae5}.trk.act .l1 b{color:var(--green)}.l1 b.miss{color:var(--gold);text-decoration:underline dotted}
+.l1 select{width:92px;flex:none;padding:3px 4px;font-size:11px}.l1 button,.l2 button{padding:2px 7px;font-size:12px}
+.l2{display:flex;gap:5px;align-items:center;margin-top:4px}.l2 input[type=range]{flex:1;min-width:0}.l2 input[type=number]{width:60px;flex:none;padding:4px}
+.lane{height:36px;background:#151720;border-radius:6px;touch-action:none;cursor:crosshair}
+@media(max-width:1000px){.rulerrow,.trk{grid-template-columns:minmax(0,1fr);gap:4px}.rulerrow .rsp{display:none}.dock{max-height:none}}
+details.how{margin:8px 0;font-size:11px;color:var(--muted);line-height:1.55}details.how summary{cursor:pointer;color:#c2b5ff}details.how code{background:#151720;padding:1px 5px;border-radius:5px;color:#dfe2ee;font-size:11px}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head><body>
@@ -79,6 +101,15 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
  <div id="stage"><video id="bgVideo" muted loop playsinline></video><div id="viewport"></div><div class="tag" id="stageTag">Đang khởi tạo…</div>
   <div class="spinbar"><label for="spin">Xoay 360°</label><input type="range" id="spin" min="0" max="360" step="0.1" value="0"><input class="num" type="number" id="spinNum" min="0" max="360" step="0.1" value="0"><label><input type="checkbox" id="auto"> Tự xoay</label><label><input type="checkbox" id="showBody" checked> Thân</label><button id="camReset" title="Đưa camera về chính diện">⌖</button></div></div>
  <div class="animbar"><b>Xem trước hoạt ảnh</b><select id="clipSel"><option value="">— T-pose (đứng yên) —</option></select><button id="playBtn" class="primary">▶ Phát</button><button id="pauseBtn">Ⅱ</button><button id="stopBtn">■ Dừng</button><label><input type="checkbox" id="loop" checked> Lặp</label><select class="sp" id="speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><span id="animStatus" class="muted"></span></div>
+ <div id="ksDock" class="dock hide">
+  <div class="dkhead">
+   <div class="dkbar"><b>Timeline keyshape</b><button id="dkPlay" class="primary" title="Chạy / dừng">Ⅱ</button><button id="dkRestart" title="Về đầu">⟲</button><span id="dkTime" class="muted">0.00 / 1.50s</span><input type="search" id="dkSearch" placeholder="Tìm keyshape…" autocomplete="off"><label><input type="checkbox" id="dkOnly"> Chỉ keyshape có key</label></div>
+   <div class="dkbar" style="margin-top:6px"><div class="chips" id="dkParts"></div></div>
+   <div class="dkbar" style="margin-top:6px"><input id="dkAddName" list="morphNames" placeholder="Thêm keyshape theo tên…" autocomplete="off" style="max-width:260px"><button id="dkAdd">＋ Thêm</button></div>
+   <div class="rulerrow"><div class="rsp"></div><canvas id="dkRuler"></canvas></div>
+  </div>
+  <div id="dkList"><div id="dkRows"></div><i id="dkHead"></i></div>
+ </div>
 </section>
 
 <aside class="right">
@@ -97,19 +128,34 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
   <div class="row" style="margin-top:10px"><button id="resetP" style="flex:1">↺ Đặt lại</button><button id="delP" class="danger" style="flex:1">Xóa mảnh</button><button id="delG" class="danger" style="flex:1">Xóa cả bộ</button></div>
   <div class="note">Mẹo: bấm trực tiếp vào món đồ trên màn hình để chọn nhanh. Màu áp dụng cho cả bộ.</div>
  </div>
-<h2>Biểu cảm <small id="exCount"></small> <button id="exReload" class="quiet" style="float:right;padding:3px 8px;font-size:11px;text-transform:none">↻ Làm mới</button></h2>
+<h2>Biểu cảm <small id="exCount"></small> <button id="exReload" class="quiet" style="float:right;padding:3px 8px;font-size:11px;text-transform:none" title="Quét lại thư mục faces/ trên GitHub">↻ Quét ảnh</button></h2>
+  <div class="extabs"><button id="tabTex" class="on" data-extab="texture">🖼 Texture</button><button id="tabKey" data-extab="keyshape">🦴 Keyshape</button></div>
   <div class="field"><div class="row"><select id="exSel"></select><button id="exNew">＋ Mới</button></div></div>
+  <datalist id="morphNames"></datalist>
   <div class="editor off" id="exEd">
-   <div class="field"><label>Tên biểu cảm</label><input id="exName" maxlength="40" placeholder="Ví dụ: Cười ngượng"></div>
-   <canvas id="exCv" width="256" height="256" style="width:100%;max-width:230px;display:block;margin:0 auto 8px;background:#2b2f40;border-radius:10px"></canvas>
-   <div class="row"><button id="exPlay" class="primary" style="flex:none">▶</button><input type="range" id="exT" min="0" max="1" step="0.01" value="0" style="flex:1"><span id="exTv" style="min-width:44px;text-align:right">0.00s</span></div>
-   <div class="row" style="margin-top:8px"><div><label>Độ dài (s)</label><input type="number" id="exDur" min="0.2" max="30" step="0.1" value="1.5"></div><label style="display:flex;gap:6px;align-items:center;margin:18px 0 0"><input type="checkbox" id="exLoop"> Lặp lại</label></div>
-   <label style="margin-top:10px">Các key (điểm mốc theo thời gian)</label><div class="chips" id="exKeys"></div>
-   <div class="row" style="margin-top:6px"><button id="exAddK" style="flex:1">＋ Key tại điểm này</button><button id="exDelK" class="danger" style="flex:1">✕ Xóa key</button></div>
-   <div id="exSl"></div>
+   <div class="field"><label>Tên biểu cảm</label><input id="exName" maxlength="40" placeholder="Ví dụ: Vui, Buồn, Cười ngượng…"></div>
+   <canvas id="exCv" class="chk" width="512" height="512"></canvas>
+   <div class="row"><button id="exPlay" title="Chạy / dừng">Ⅱ</button><button id="exRestart" title="Chạy lại từ đầu">⟲</button><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exLoop" checked> <span id="exLoopTxt">Lặp chuỗi ảnh</span></label><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exShow" checked> Hiện trên đầu</label></div>
+   <div id="exTime" class="hide">
+    <div class="row" style="margin-top:10px"><div><label>Thời lượng (giây)</label><input type="number" id="ksDur" min="0.1" step="0.1" value="1.5"></div><div><label>Nội suy giữa keyframe</label><select id="ksEase"><option value="linear">Tuyến tính</option><option value="smooth">Mượt</option><option value="step">Bậc thang</option></select></div></div>
+   </div>
+   <div id="exTex"><h2 style="margin-top:14px">7 bộ phận</h2><div class="note" style="margin-top:-2px">Mặt nạ là lớp nền, nằm dưới cùng.</div><div id="exParts"></div></div>
+   <div id="exKey" class="hide">
+    <h2 style="margin-top:14px">Mặt nạ nền <small>(chuỗi texture, nằm dưới cùng)</small></h2><div id="ksMask"></div>
+    <div class="note" id="ksNote"></div>
+   </div>
    <div class="row" style="margin-top:10px"><button id="exSave" class="primary" style="flex:2">☁ Lưu biểu cảm</button><button id="exDup" style="flex:1">Nhân bản</button><button id="exDel" class="danger" style="flex:1">Xóa</button></div>
   </div>
-  <div class="status" id="exStatus">Biểu cảm lưu ở library/expressions.json và dùng chung cho mọi dự án, mọi nhân vật.</div>
+  <h2>Vị trí mặt trên đầu</h2>
+  <div class="grid3"><div><div class="axis">Cao</div><input type="number" id="fitY" step="0.01" value="0.45"></div><div><div class="axis">Ra trước</div><input type="number" id="fitZ" step="0.01" value="0.5"></div><div><div class="axis">Cỡ</div><input type="number" id="fitS" step="0.02" min="0.05" value="0.9"></div></div>
+  <div class="note">Tính theo chiều cao đầu; áp dụng cho mọi biểu cảm của nhân vật này và được lưu cùng nhân vật. Với biểu cảm Keyshape, tấm mặt nạ nền cũng dùng vị trí này và bị che bởi các bộ phận 3D nằm phía trước nó — chỉnh “Ra trước” sao cho nó sát mặt.</div>
+  <details class="how"><summary>Cách thêm ảnh biểu cảm trên GitHub</summary>
+   Tạo thư mục <code>faces/&lt;bộ phận&gt;/&lt;tên biểu cảm&gt;/</code> rồi bỏ các ảnh PNG nền trong suốt vào, đặt tên theo thứ tự <code>01.png</code>, <code>02.png</code>… (1 ảnh = biểu cảm tĩnh, nhiều ảnh = hoạt hình theo khung/giây).<br>
+   Bộ phận: <code>browL</code> mày trái · <code>browR</code> mày phải · <code>eyeL</code> mắt trái · <code>eyeR</code> mắt phải · <code>nose</code> mũi · <code>mouth</code> miệng · <code>mask</code> mặt nạ.<br>
+   Mọi ảnh dùng <b>cùng một khung vuông</b> (khuyên dùng 512×512), vẽ bộ phận đúng chỗ của nó trong khung — các lớp chồng lên nhau, <b>mặt nạ nằm dưới cùng</b>, rồi tới mày, mắt, mũi, miệng. Xong bấm “↻ Quét ảnh”.</details>
+  <details class="how"><summary>Cách dùng tab Keyshape</summary>
+   Dùng khi model 3D có keyshape (shape key / morph target) cho từng bộ phận. Khung <b>Timeline keyshape</b> dưới cảnh 3D liệt kê mọi keyshape của model, mỗi keyshape một hàng: thanh trượt cường độ 0→1 (số thập phân) và một timeline riêng. Cách làm giống Blender: bấm thước hoặc chạm/kéo chỗ trống trên lane để đặt <b>đầu đọc</b>, rồi <b>kéo thanh trượt</b> (hoặc nhập số) để đặt key tại đầu đọc; nút ◆ thêm key giữ nguyên giá trị hiện tại, ◇✕ xóa key tại đầu đọc. Trên lane: <b>chạm đúp chỗ trống</b> = thêm key, <b>kéo ◆</b> = đổi thời điểm, <b>chạm đúp vào ◆</b> = xóa. Nhiều giai đoạn (đóng mắt → mở → hé nửa) = nhiều key, ví dụ 1 → 0 → 0.5. Dùng ô tìm, nhóm bộ phận và “Chỉ keyshape có key” để lọc danh sách dài. Mặt nạ nền vẫn chọn từ chuỗi texture.</details>
+  <div class="status" id="exStatus">Biểu cảm được lưu cùng nhân vật (characters/custom/…json) để dùng lại về sau.</div>
   </aside>
 </main>
 
@@ -121,6 +167,7 @@ import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {mapClip} from './js/retarget.js';
 import * as K from './js/character-kit.js';
+import * as F from './js/face-kit.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -129,7 +176,8 @@ const tag = (msg, bad) => { const t = $('stageTag'); t.textContent = msg; t.styl
 const D2R = Math.PI / 180;
 const DEFAULT_BONE = K.DEFAULT_BONE; // đồng bộ với danh mục ở Kho tài nguyên
 
-const S = {base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false, lib: [], libQ: '', libPage: 0};
+const S = {base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false, lib: [], libQ: '', libPage: 0, expr: [], fit: {...F.FACE_FIT}, face: null};
+const SH = F.createShapeDriver();   // điều khiển keyshape (morph target) của model
 let renderer, scene, camera, controls, spinG, selBox, loadSeq = 0;
 const clock = new THREE.Clock();
 const params = new URLSearchParams(location.search);
@@ -171,6 +219,7 @@ function setupScene() {
     requestAnimationFrame(tick);
     const dt = Math.min(clock.getDelta(), 0.06);
     if (S.mixer && S.playing) S.mixer.update(dt);
+    faceTick(dt);
     if ($('auto').checked) { S.spin = (S.spin + dt * 36) % 360; syncSpin(); }
     spinG.rotation.y = S.spin * D2R;
     controls.update();
@@ -193,6 +242,8 @@ window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault()
 function disposeObj(o) { o.traverse(n => { if (n.geometry) n.geometry.dispose(); if (n.material) for (const m of (Array.isArray(n.material) ? n.material : [n.material])) m.dispose(); }); }
 function clearModel() {
   stopClip(true);
+  if (S.face) { S.face.dispose(); S.face = null; }
+  SH.clear();
   for (const g of S.groups) for (const p of g.pieces) K.unmountPiece(p);
   if (S.wrap) { spinG.remove(S.wrap); disposeObj(S.wrap); }
   Object.assign(S, {model: null, wrap: null, rig: null, mixer: null, action: null, restSnap: []});
@@ -213,6 +264,8 @@ async function loadBase(name) {
   $('baseSel').value = name;
   fillBoneSelect();
   for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, rig);
+  S.face = F.mountFaceOverlay(rig, S.fit);
+  onMorphs(SH.setModel(obj));
   setBodyVisible($('showBody').checked);
   tag(name + ' · ' + rig.bones.length + ' xương' + (rig.missing.length ? ' · thiếu: ' + rig.missing.map(k => K.BONE_LABELS[k]).join(', ') : ''));
   renderOutfit(); fillEditor(); updateSelBox();
@@ -432,7 +485,7 @@ $('speed').onchange = () => { if (S.action) S.action.timeScale = parseFloat($('s
 const INDEX = 'characters/custom/index.json';
 function buildDoc() {
   const name = $('charName').value.trim();
-  return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups)};
+  return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups), expressions: JSON.parse(JSON.stringify(S.expr)), face: {...S.fit}};
 }
 function thumbData() {
   const wasSel = selBox.visible; selBox.visible = false;
@@ -444,11 +497,11 @@ function thumbData() {
   selBox.visible = wasSel;
   return c.toDataURL('image/png');
 }
-$('saveBtn').onclick = async () => {
+async function saveCharacter(st = $('saveStatus')) {
   const name = $('charName').value.trim();
-  if (!name) { say($('saveStatus'), 'Hãy đặt tên nhân vật trước khi lưu.', 'bad'); return; }
-  if (!S.base) { say($('saveStatus'), 'Chưa có nhân vật gốc.', 'bad'); return; }
-  if (!K.auth().token) { say($('saveStatus'), 'Chưa có GitHub token. Nhập ở trang Cài đặt rồi thử lại (hoặc dùng “Tải JSON”).', 'bad'); return; }
+  if (!name) { say(st, 'Hãy đặt tên nhân vật trước khi lưu.', 'bad'); return false; }
+  if (!S.base) { say(st, 'Chưa có nhân vật gốc.', 'bad'); return false; }
+  if (!K.auth().token) { say(st, 'Chưa có GitHub token. Nhập ở trang Cài đặt rồi thử lại (hoặc dùng “Tải JSON”).', 'bad'); return false; }
   $('saveBtn').disabled = true;
   try {
     const slugName = K.slug(name);
@@ -456,27 +509,28 @@ $('saveBtn').onclick = async () => {
     const id = S.charId;
     // 1) tải các mô hình nhập lên
     for (const g of S.groups) for (const p of g.pieces) if (p.file && p._bytes) {
-      say($('saveStatus'), 'Đang tải lên ' + p.file.name + '…');
+      say(st, 'Đang tải lên ' + p.file.name + '…');
       const path = 'characters/items/' + id + '-' + K.slug(p.file.name.replace(/\.[^.]+$/, '')) + '-' + p.uid + '.' + p.file.ext;
       await K.ghPutBytes(path, p._bytes, 'Add custom item ' + p.file.name);
       p.file.path = path; p._bytes = null;
     }
     // 2) thumbnail + dữ liệu nhân vật
-    say($('saveStatus'), 'Đang lưu dữ liệu nhân vật…');
+    say(st, 'Đang lưu dữ liệu nhân vật…');
     const doc = buildDoc(), dataPath = 'characters/custom/' + id + '.json', thumbPath = 'characters/custom/thumbs/' + id + '.png';
     await K.ghPutDataUrl(thumbPath, thumbData(), 'Add custom character thumbnail ' + name);
     await K.ghPutText(dataPath, JSON.stringify(doc, null, 2), 'Save custom character ' + name);
     // 3) cập nhật danh mục
     const idx = (await K.readJSON(INDEX, {version: 1, characters: []})) || {version: 1, characters: []};
     if (!Array.isArray(idx.characters)) idx.characters = [];
-    const entry = {id, name, base: S.base, items: S.groups.length, dataPath, thumbnail: './' + thumbPath, updatedAt: doc.updatedAt};
+    const entry = {id, name, base: S.base, items: S.groups.length, expressions: S.expr.length, dataPath, thumbnail: './' + thumbPath, updatedAt: doc.updatedAt};
     idx.characters = [entry, ...idx.characters.filter(x => x.id !== id)];
     await K.ghPutText(INDEX, JSON.stringify(idx, null, 2), 'Update custom character index');
     S.saved = idx.characters; S.dirty = false; renderSaved(); $('savedSel').value = id;
-    say($('saveStatus'), 'Đã lưu và đồng bộ GitHub: ' + dataPath, 'good');
-  } catch (err) { say($('saveStatus'), 'Lưu chưa hoàn tất: ' + err.message, 'bad'); }
+    say(st, 'Đã lưu và đồng bộ GitHub: ' + dataPath, 'good'); return true;
+  } catch (err) { say(st, 'Lưu chưa hoàn tất: ' + err.message, 'bad'); return false; }
   finally { $('saveBtn').disabled = false; }
-};
+}
+$('saveBtn').onclick = () => saveCharacter();
 $('dlBtn').onclick = () => {
   const doc = buildDoc(); doc.name = doc.name || 'character';
   const url = URL.createObjectURL(new Blob([JSON.stringify(doc, null, 2)], {type: 'application/json'})), a = document.createElement('a');
@@ -493,6 +547,8 @@ async function loadSaved(id) {
   // dọn đồ cũ
   S.groups.forEach(g => g.pieces.forEach(K.unmountPiece));
   S.groups = doc.items; S.sel = null; S.charId = doc.id || id;
+  S.expr = Array.isArray(doc.expressions) ? doc.expressions.map(F.upgradeExpr) : []; S.fit = {...F.FACE_FIT, ...(doc.face || {})};
+  EX.cur = null; fitUI(); if (S.face) S.face.setFit(S.fit); exRender();
   for (const g of S.groups) for (const p of g.pieces) {
     p.pos = p.pos || [0, 0, 0]; p.rot = p.rot || [0, 0, 0]; p.scale = p.scale || 1;
     if (p.file && p.file.path) {
@@ -523,10 +579,399 @@ $('delSaved').onclick = async () => {
 $('newBtn').onclick = () => {
   if (S.dirty && !confirm('Bỏ các thay đổi chưa lưu?')) return;
   S.groups.forEach(g => g.pieces.forEach(K.unmountPiece)); S.groups = []; S.sel = null; S.charId = ''; S.dirty = false;
+  S.expr = []; S.fit = {...F.FACE_FIT}; EX.cur = null; fitUI(); if (S.face) S.face.setFit(S.fit); exRender();
   $('charName').value = ''; $('savedSel').value = ''; renderOutfit(); fillEditor(); updateSelBox(); say($('saveStatus'), 'Đã tạo mới.');
 };
 $('baseSel').onchange = () => loadBase($('baseSel').value).catch(e => tag('Lỗi tải nhân vật: ' + e.message, true));
 $('charName').oninput = dirty;
+
+/* ---------------- Biểu cảm: 2 tab — Texture (chuỗi ảnh PNG) và Keyshape (timeline kiểu Blender) ---------------- */
+// Biểu cảm thuộc về nhân vật: lưu trong characters/custom/<id>.json → "expressions", dùng lại được về sau.
+//  • Texture : {mode:'texture',  parts:{mask, browL, … : {set, fps}}}            (mặt nạ vẽ dưới cùng)
+//  • Keyshape: {mode:'keyshape', duration, ease, loop, parts:{mask}, tracks:{<tên keyshape>:{part?, keys:[{t,v}…]}}}
+const EX = {lib: F.emptyLib(), src: '', cur: null, isNew: false, edited: false, t: 0, paused: false, sig: null, mode: 'texture', morphs: [],
+  rows: [], dkPart: 'all', dkQ: '', dkOnly: false, dirtyLanes: true, drawnT: -1, lx: 0, lw: 0, lwc: -1};
+const exSay = (m, t) => say($('exStatus'), m, t);
+const exEdited = () => { EX.edited = true; dirty(); };
+const exClone = e => JSON.parse(JSON.stringify(e));
+const exNewId = name => K.slug(name || 'bieu-cam') + '-' + Date.now().toString(36);
+const exGuard = () => !EX.cur || !EX.edited || confirm('Bỏ thay đổi chưa lưu của biểu cảm đang sửa?');
+const r2 = v => Math.round(v * 100) / 100;
+const r3 = v => Math.round(v * 1000) / 1000;
+const c01 = v => Math.min(1, Math.max(0, v));
+const syncPlayBtn = () => { $('exPlay').textContent = EX.paused ? '▶' : 'Ⅱ'; $('dkPlay').textContent = EX.paused ? '▶' : 'Ⅱ'; };
+const togglePlay = () => { EX.paused = !EX.paused; EX.dirtyLanes = true; syncPlayBtn(); };
+
+/** Model vừa nạp xong: cập nhật danh sách keyshape (gợi ý tên + danh sách track) rồi vẽ lại. */
+function onMorphs(names) {
+  EX.morphs = names || [];
+  $('morphNames').innerHTML = EX.morphs.map(n => '<option value="' + esc(n) + '"></option>').join('');
+  exRender();
+}
+function partRow(p, e) {
+  const cfg = (e.parts && e.parts[p.id]) || {}, sets = EX.lib[p.id] || {}, names = Object.keys(sets), frames = cfg.set ? (sets[cfg.set] || []) : [], miss = cfg.set && !sets[cfg.set];
+  return '<div class="fprow' + (miss ? ' miss' : '') + '"><span>' + p.label + '</span><div class="mid"><select data-part="' + p.id + '"><option value="">— không —</option>' +
+    names.map(n => '<option value="' + esc(n) + '"' + (n === cfg.set ? ' selected' : '') + '>' + esc(n) + ' (' + sets[n].length + ')</option>').join('') +
+    (miss ? '<option value="' + esc(cfg.set) + '" selected>' + esc(cfg.set) + ' — không thấy trên git</option>' : '') + '</select>' +
+    (frames.length > 1 ? '<input type="number" data-fps="' + p.id + '" min="1" max="60" step="1" value="' + (cfg.fps || F.DEFAULT_FPS) + '" title="Khung hình / giây">' : '') +
+    '</div><div class="th chk">' + (frames.length ? '<img data-path="' + esc(frames[0]) + '" alt="">' : '') + '</div></div>';
+}
+function ksSync() { const c = EX.cur; if (c) $('ksDur').value = r2(c.duration || F.exprDuration(c)); }
+
+function exRender() {
+  const e = EX.cur, ks = EX.mode === 'keyshape';
+  const list = S.expr.filter(x => F.exprMode(x) === EX.mode);
+  $('tabTex').classList.toggle('on', !ks); $('tabKey').classList.toggle('on', ks);
+  $('exCount').textContent = '(' + list.length + ')';
+  $('exSel').innerHTML = '<option value="">— chọn biểu cảm —</option>' + list.map(x => '<option value="' + esc(x.id) + '"' + (e && e.id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') +
+    (e && EX.isNew ? '<option value="' + esc(e.id) + '" selected>' + esc(e.name || 'Biểu cảm mới') + ' (chưa lưu)</option>' : '');
+  $('exEd').classList.toggle('off', !e);
+  $('exTex').classList.toggle('hide', ks); $('exKey').classList.toggle('hide', !ks); $('exTime').classList.toggle('hide', !ks);
+  $('exLoopTxt').textContent = ks ? 'Lặp biểu cảm' : 'Lặp chuỗi ảnh';
+  EX.sig = null;
+  if (!e) {
+    $('exParts').innerHTML = ''; $('ksMask').innerHTML = '';
+    $('exCv').getContext('2d').clearRect(0, 0, 512, 512); renderDock(); return;
+  }
+  $('exName').value = e.name; $('exLoop').checked = e.loop !== false;
+  const noImg = !F.libCount(EX.lib) ? '<div class="note">Chưa thấy ảnh nào trong thư mục <b>faces/</b> trên GitHub — xem “Cách thêm ảnh biểu cảm” bên dưới, rồi bấm “↻ Quét ảnh”.</div>' : '';
+  if (!ks) {
+    $('exParts').innerHTML = noImg + F.FACE_PARTS.map(p => partRow(p, e)).join('');
+    $('ksMask').innerHTML = '';
+  } else {
+    $('exParts').innerHTML = '';
+    $('ksMask').innerHTML = noImg + partRow(F.FACE_PARTS.find(p => p.id === 'mask'), e);
+    $('ksNote').textContent = (EX.morphs.length ? 'Model đang dùng có ' + EX.morphs.length + ' keyshape.' : 'Model hiện tại chưa có keyshape nào — vẫn thêm keyshape theo tên để dựng keyframe trước được.') +
+      ' Timeline từng keyshape nằm ở khung bên dưới cảnh 3D.';
+    $('ksEase').value = e.ease || 'smooth';
+    ksSync();
+  }
+  $('exEd').querySelectorAll('img[data-path]').forEach(im => K.setSrc(im, im.dataset.path));
+  renderDock();
+}
+
+/* ----- Keyshape: dữ liệu track ----- */
+const KP = 9, EPS = 0.015;
+const trk = (name, make) => { const c = EX.cur; if (!c) return null; if (!c.tracks) c.tracks = {}; return c.tracks[name] || (make ? (c.tracks[name] = {keys: []}) : null); };
+const trackKeys = name => { const t = EX.cur && EX.cur.tracks && EX.cur.tracks[name]; return t ? t.keys : []; };
+const partOf = name => { const t = EX.cur && EX.cur.tracks && EX.cur.tracks[name]; return (t && t.part) || F.guessPart(name); };
+const sortKeys = name => { const t = trk(name); if (t) t.keys.sort((a, b) => a.t - b.t); };
+const maxKeyT = c => { let m = 0; if (c.tracks) for (const t of Object.values(c.tracks)) for (const k of (t.keys || [])) m = Math.max(m, +k.t || 0); return m; };
+const natCmp = (a, b) => a.localeCompare(b, 'en', {numeric: true, sensitivity: 'base'});
+function trackNames() {
+  const s = new Set(EX.morphs);
+  if (EX.cur && EX.cur.tracks) Object.keys(EX.cur.tracks).forEach(n => s.add(n));
+  return [...s].sort(natCmp);
+}
+function growDur() { const c = EX.cur; if (!c) return; c.duration = F.exprDuration(c); ksSync(); }
+function keysChanged() { EX.dirtyLanes = true; growDur(); exEdited(); }
+/** Sau khi xóa key: nếu track hết key và không thuộc model thì bỏ luôn; vẽ lại danh sách khi bộ lọc “chỉ có key” bật. */
+function afterDelete(name) {
+  keysChanged();
+  if (!trackKeys(name).length) {
+    if (!EX.morphs.includes(name) && EX.cur.tracks) { delete EX.cur.tracks[name]; renderDock(); }
+    else if (EX.dkOnly) renderDock();
+  }
+}
+/** Đặt giá trị của keyshape tại đầu đọc: có key ở đó thì sửa, chưa có thì thêm (như tự động chèn key của Blender). */
+function setKeyAtPlayhead(name, v) {
+  const t = r2(F.localTime(EX.cur, EX.t)), tr = trk(name, true), k = tr.keys.find(x => Math.abs(x.t - t) < EPS);
+  v = r3(c01(v));
+  if (k) k.v = v; else { tr.keys.push({t, v}); sortKeys(name); }
+  keysChanged();
+}
+const valueAtPlayhead = name => { const v = F.evalKeys(trackKeys(name), F.localTime(EX.cur, EX.t), EX.cur.ease); return v == null ? 0 : v; };
+
+/* ----- Keyshape: khung timeline (dock) ----- */
+const partOpts = '<option value="">— chưa gán —</option>' + F.SHAPE_PARTS.map(p => '<option value="' + p.id + '">' + p.label + '</option>').join('');
+function renderDock() {
+  const show = EX.mode === 'keyshape' && !!EX.cur;
+  $('ksDock').classList.toggle('hide', !show);
+  EX.rows = [];
+  if (!show) { $('dkRows').innerHTML = ''; return; }
+  $('dkParts').innerHTML = [['all', 'Tất cả'], ...F.SHAPE_PARTS.map(p => [p.id, p.label]), ['none', 'Chưa gán']]
+    .map(([id, l]) => '<button class="chip' + (EX.dkPart === id ? ' active' : '') + '" data-dkp="' + id + '">' + esc(l) + '</button>').join('');
+  const q = fold(EX.dkQ).trim();
+  const all = trackNames();
+  const names = all.filter(n => {
+    if (q && !fold(n).includes(q)) return false;
+    if (EX.dkOnly && !trackKeys(n).length) return false;
+    const p = partOf(n);
+    return EX.dkPart === 'all' || (EX.dkPart === 'none' ? !p : p === EX.dkPart);
+  });
+  $('dkRows').innerHTML = names.length ? names.map(n => {
+    const ok = !EX.morphs.length || EX.morphs.includes(n);
+    return '<div class="trk"><div class="th2"><div class="l1"><b class="' + (ok ? '' : 'miss') + '" title="' + esc(n) + (ok ? '' : ' — không có trên model') + '">' + esc(n) + '</b><select data-tpart title="Bộ phận (để nhóm/lọc)">' + partOpts + '</select><button class="danger" data-tdel title="Xóa hết key của keyshape này">✕</button></div>' +
+      '<div class="l2"><input type="range" data-tr min="0" max="1" step="0.01" value="0" title="Cường độ 0–1 (kéo = đặt key tại đầu đọc)"><input type="number" data-tn min="0" max="1" step="0.01" value="0"><button data-tkey title="Thêm / cập nhật key tại đầu đọc">◆</button><button data-tkdel title="Xóa key tại đầu đọc">◇✕</button></div></div><canvas class="lane"></canvas></div>';
+  }).join('') : '<div class="empty" style="margin:10px 0">' + (all.length ? 'Không có keyshape nào khớp bộ lọc.' : 'Model hiện tại chưa có keyshape nào. Nhập tên ở ô “Thêm keyshape theo tên” để dựng keyframe trước.') + '</div>';
+  $('dkRows').querySelectorAll('.trk').forEach((el, i) => {
+    const r = {name: names[i], el, sl: el.querySelector('[data-tr]'), num: el.querySelector('[data-tn]'), cv: el.querySelector('canvas.lane'), ps: el.querySelector('[data-tpart]'), last: ''};
+    r.ps.value = partOf(r.name); r.cv._row = r; el._row = r; EX.rows.push(r);
+  });
+  dkMeasure();
+}
+function dkMeasure() {
+  const rc = $('dkRuler').getBoundingClientRect(), lc = $('dkList').getBoundingClientRect();
+  EX.lx = rc.left - lc.left; EX.lw = rc.width; EX.lwc = $('dkRuler').clientWidth; EX.dirtyLanes = true;
+}
+const kx = (cv, t, D) => KP + t / D * (cv.clientWidth - 2 * KP);
+const tOf = (cv, x, D) => r2(Math.min(D, Math.max(0, (x - KP) / Math.max(1, cv.clientWidth - 2 * KP) * D)));
+const gridStep = D => [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60].find(s => D / s <= 12) || 60;
+function fitCanvas(cv) {
+  const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return null;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {g, w, h};
+}
+function drawRuler(lt, D) {
+  const cv = $('dkRuler'), f = fitCanvas(cv); if (!f) return;
+  const {g, w, h} = f, step = gridStep(D), dec = step < 0.1 ? 2 : step < 1 ? 1 : 0;
+  g.clearRect(0, 0, w, h); g.fillStyle = '#9da3b4'; g.font = '10px system-ui,sans-serif'; g.strokeStyle = '#4a5066'; g.lineWidth = 1; g.beginPath();
+  for (let i = 0; i * step <= D + 1e-6; i++) { const x = Math.round(kx(cv, i * step, D)) + 0.5; g.moveTo(x, h - 7); g.lineTo(x, h); g.fillText((i * step).toFixed(dec) + 's', x + 3, h - 10); }
+  g.stroke();
+  const x = kx(cv, lt, D);
+  g.fillStyle = '#66d6a3'; g.beginPath(); g.moveTo(x - 5, 0); g.lineTo(x + 5, 0); g.lineTo(x, 8); g.closePath(); g.fill(); g.fillRect(x - 0.75, 0, 1.5, h);
+}
+function drawLane(r, lt) {
+  const f = fitCanvas(r.cv); if (!f) return;
+  const {g, w, h} = f, e = EX.cur, D = F.exprDuration(e), keys = trackKeys(r.name), step = gridStep(D);
+  g.clearRect(0, 0, w, h);
+  g.strokeStyle = '#242836'; g.lineWidth = 1; g.beginPath();
+  for (let i = 0; i * step <= D + 1e-6; i++) { const x = Math.round(kx(r.cv, i * step, D)) + 0.5; g.moveTo(x, 0); g.lineTo(x, h); }
+  g.stroke();
+  if (!keys.length) return;
+  g.strokeStyle = 'rgba(154,131,255,.6)'; g.lineWidth = 1.5; g.beginPath();
+  const N = Math.max(2, Math.floor((w - 2 * KP) / 3));
+  for (let i = 0; i <= N; i++) { const t = D * i / N, X = kx(r.cv, t, D), Y = h - 4 - F.evalKeys(keys, t, e.ease) * (h - 8); if (i) g.lineTo(X, Y); else g.moveTo(X, Y); }
+  g.stroke();
+  for (const k of keys) {
+    const X = kx(r.cv, k.t, D), Y = h / 2;
+    g.fillStyle = EX.paused && Math.abs(k.t - lt) < EPS ? '#ffffff' : '#ffd166';
+    g.beginPath(); g.moveTo(X, Y - 6); g.lineTo(X + 6, Y); g.lineTo(X, Y + 6); g.lineTo(X - 6, Y); g.closePath(); g.fill();
+  }
+}
+/** Mỗi khung hình: cập nhật thanh trượt/số, thước thời gian, đầu đọc và (khi cần) các lane. */
+function dkTick(vals) {
+  const e = EX.cur, D = F.exprDuration(e), lt = F.localTime(e, EX.t);
+  const tx = lt.toFixed(2) + ' / ' + D.toFixed(2) + 's';
+  if ($('dkTime').textContent !== tx) $('dkTime').textContent = tx;
+  if ($('dkRuler').clientWidth !== EX.lwc) dkMeasure();
+  for (const r of EX.rows) {
+    const v = vals[r.name] == null ? 0 : vals[r.name], vs = v.toFixed(2);
+    if (r.last === vs) continue;
+    r.last = vs;
+    if (document.activeElement !== r.sl) r.sl.value = v;
+    if (document.activeElement !== r.num) r.num.value = vs;
+    r.el.classList.toggle('act', v > 0.001);
+  }
+  drawRuler(lt, D);
+  $('dkHead').style.transform = 'translateX(' + (EX.lx + kx($('dkRuler'), lt, D)) + 'px)';
+  if (EX.dirtyLanes || (EX.paused && EX.drawnT !== lt)) { for (const r of EX.rows) drawLane(r, lt); EX.dirtyLanes = false; EX.drawnT = lt; }
+}
+/** Chạy mỗi khung hình của vòng lặp 3D: vẽ bản xem trước + cập nhật mặt trên đầu + đẩy keyshape vào model. */
+function faceTick(dt) {
+  if (!EX.paused) EX.t += dt;
+  const e = EX.cur, ks = !!e && F.exprMode(e) === 'keyshape', on = !!e && $('exShow').checked;
+  if (e) EX.sig = F.renderFace($('exCv'), e, EX.lib, EX.t, EX.sig);
+  if (S.face) S.face.update(on ? e : null, EX.lib, EX.t);
+  const vals = ks ? F.shapeValues(e, EX.t) : null;
+  if (ks && on) SH.apply(vals); else SH.release();
+  if (ks) dkTick(vals);
+}
+
+/* ----- Keyshape: thao tác trên danh sách ----- */
+$('dkRows').addEventListener('input', e => {
+  const t = e.target, r = t.closest && t.closest('.trk') && t.closest('.trk')._row; if (!r || !EX.cur) return;
+  if (!t.hasAttribute('data-tr') && !t.hasAttribute('data-tn')) return;
+  const v = parseFloat(t.value); if (!Number.isFinite(v)) return;
+  if (!EX.paused) { EX.paused = true; syncPlayBtn(); }
+  const cv = c01(v);
+  if (t.hasAttribute('data-tr')) r.num.value = r2(cv); else r.sl.value = cv;
+  r.last = cv.toFixed(2);
+  setKeyAtPlayhead(r.name, cv);
+});
+$('dkRows').addEventListener('change', e => {
+  const t = e.target, r = t.closest && t.closest('.trk') && t.closest('.trk')._row; if (!r || !EX.cur) return;
+  if (t.hasAttribute('data-tpart')) {
+    const tr = trk(r.name, true);
+    if (t.value) tr.part = t.value; else delete tr.part;
+    exEdited(); if (EX.dkPart !== 'all') renderDock();
+  } else if (t.hasAttribute('data-tn')) r.num.value = r2(c01(parseFloat(t.value) || 0));
+});
+$('dkRows').addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('button'), r = b && b.closest('.trk') && b.closest('.trk')._row; if (!r || !EX.cur) return;
+  if (b.hasAttribute('data-tkey')) { if (!EX.paused) { EX.paused = true; syncPlayBtn(); } setKeyAtPlayhead(r.name, valueAtPlayhead(r.name)); }
+  else if (b.hasAttribute('data-tkdel')) {
+    const tr = trk(r.name), t = F.localTime(EX.cur, EX.t), i = tr ? tr.keys.findIndex(k => Math.abs(k.t - t) < EPS) : -1;
+    if (i >= 0) { tr.keys.splice(i, 1); afterDelete(r.name); }
+  } else if (b.hasAttribute('data-tdel')) {
+    const n = trackKeys(r.name).length;
+    if (n > 1 && !confirm('Xóa hết ' + n + ' key của “' + r.name + '”?')) return;
+    if (EX.cur.tracks) delete EX.cur.tracks[r.name];
+    keysChanged(); renderDock();
+  }
+});
+$('dkParts').addEventListener('click', e => { const b = e.target.closest('[data-dkp]'); if (b) { EX.dkPart = b.dataset.dkp; renderDock(); } });
+$('dkSearch').oninput = e => { EX.dkQ = e.target.value; renderDock(); };
+$('dkOnly').onchange = e => { EX.dkOnly = e.target.checked; renderDock(); };
+function addTrackByName() {
+  const n = $('dkAddName').value.trim(); if (!n || !EX.cur) return;
+  trk(n, true); EX.dkOnly = false; $('dkOnly').checked = false; EX.dkPart = 'all'; EX.dkQ = ''; $('dkSearch').value = '';
+  $('dkAddName').value = ''; exEdited(); renderDock();
+}
+$('dkAdd').onclick = addTrackByName;
+$('dkAddName').onkeydown = e => { if (e.key === 'Enter') addTrackByName(); };
+
+/* ----- Keyshape: chạm/kéo trên lane và thước ----- */
+let KD = null, KTAP = null, RS = false;
+const kpos = (cv, ev) => { const r = cv.getBoundingClientRect(); return {x: ev.clientX - r.left, y: ev.clientY - r.top}; };
+function scrubTo(cv, x, D) { EX.paused = true; syncPlayBtn(); EX.t = Math.min(D - 0.001, tOf(cv, x, D)); }
+$('dkRows').addEventListener('pointerdown', ev => {
+  const cv = ev.target.closest && ev.target.closest('canvas.lane'), r = cv && cv._row; if (!r || !EX.cur) return;
+  ev.preventDefault();
+  const D = F.exprDuration(EX.cur), {x} = kpos(cv, ev), keys = trackKeys(r.name);
+  let hit = null, best = 10;
+  for (const k of keys) { const d = Math.abs(kx(cv, k.t, D) - x); if (d < best) { best = d; hit = k; } }
+  const now = performance.now(), dbl = !!KTAP && now - KTAP.at < 350 && KTAP.name === r.name && Math.abs(KTAP.x - x) < 14;
+  KTAP = dbl ? null : {at: now, x, name: r.name};
+  if (dbl) {                       // chạm đúp: xóa key đang trỏ vào, hoặc thêm key mới tại vị trí đó
+    const tr = trk(r.name, true);
+    if (hit) { tr.keys = tr.keys.filter(k => k !== hit); afterDelete(r.name); }
+    else {
+      const t = tOf(cv, x, D), cur = F.evalKeys(tr.keys, t, EX.cur.ease);
+      tr.keys.push({t, v: r3(cur == null ? 0 : cur)}); sortKeys(r.name); EX.paused = true; syncPlayBtn(); EX.t = Math.min(D - 0.001, t); keysChanged();
+    }
+    return;
+  }
+  try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* bỏ qua */ }
+  KD = {cv, r, key: hit, D, moved: false};
+  if (hit) { EX.paused = true; syncPlayBtn(); EX.t = Math.min(D - 0.001, hit.t); EX.dirtyLanes = true; } else scrubTo(cv, x, D);
+});
+$('dkRows').addEventListener('pointermove', ev => {
+  if (!KD) return;
+  const {cv, key, D} = KD, {x} = kpos(cv, ev);
+  if (key) { key.t = tOf(cv, x, D); KD.moved = true; EX.t = Math.min(D - 0.001, key.t); EX.dirtyLanes = true; } else scrubTo(cv, x, D);
+});
+const kEnd = () => {
+  if (!KD) return;
+  if (KD.key && KD.moved) { sortKeys(KD.r.name); keysChanged(); }
+  KD = null;
+};
+$('dkRows').addEventListener('pointerup', kEnd); $('dkRows').addEventListener('pointercancel', kEnd);
+const rulerSeek = ev => { const cv = $('dkRuler'); if (EX.cur) scrubTo(cv, kpos(cv, ev).x, F.exprDuration(EX.cur)); };
+$('dkRuler').addEventListener('pointerdown', ev => { ev.preventDefault(); try { $('dkRuler').setPointerCapture(ev.pointerId); } catch (err) { /* bỏ qua */ } RS = true; rulerSeek(ev); });
+$('dkRuler').addEventListener('pointermove', ev => { if (RS) rulerSeek(ev); });
+$('dkRuler').addEventListener('pointerup', () => { RS = false; }); $('dkRuler').addEventListener('pointercancel', () => { RS = false; });
+
+/* ----- Điều khiển chung ----- */
+$('exReload').onclick = () => exScan().catch(err => exSay('Không quét được: ' + err.message, 'bad'));
+async function exScan() {
+  exSay('Đang quét thư mục faces/…');
+  F.clearFaceCache();
+  const r = await F.scanFaces();
+  EX.lib = r.lib; EX.src = r.source;
+  exRender();
+  const n = F.libCount(r.lib);
+  if (!n) exSay('Chưa thấy ảnh nào trong faces/. Xem mục “Cách thêm ảnh biểu cảm trên GitHub”.', 'bad');
+  else exSay('Đã quét: ' + n + ' bộ ảnh (' + (r.source === 'git' ? 'từ GitHub' : 'từ faces/manifest.json') + ').' + (r.truncated ? ' Danh sách GitHub bị cắt bớt.' : ''), 'good');
+}
+function fitUI() { $('fitY').value = S.fit.y; $('fitZ').value = S.fit.z; $('fitS').value = S.fit.s; }
+document.querySelector('.extabs').onclick = e => {
+  const b = e.target.closest('[data-extab]'); if (!b || b.dataset.extab === EX.mode) return;
+  if (!exGuard()) return;
+  EX.mode = b.dataset.extab; EX.cur = null; EX.isNew = false; EX.edited = false; EX.t = 0; exRender();
+};
+$('exSel').onchange = e => {
+  const id = e.target.value;
+  if (EX.cur && id === EX.cur.id) return;
+  if (!exGuard()) { exRender(); return; }
+  const f = S.expr.find(x => x.id === id);
+  EX.cur = f ? F.upgradeExpr(exClone(f)) : null; EX.isNew = false; EX.edited = false; EX.t = 0;
+  if (EX.cur && F.exprMode(EX.cur) === 'keyshape') EX.cur.duration = F.exprDuration(EX.cur);
+  exRender();
+};
+$('exNew').onclick = () => {
+  if (!exGuard()) return;
+  EX.cur = EX.mode === 'keyshape'
+    ? {id: exNewId(), name: '', mode: 'keyshape', loop: true, duration: F.DEFAULT_DURATION, ease: 'smooth', parts: {}, tracks: {}}
+    : {id: exNewId(), name: '', mode: 'texture', loop: true, parts: {}};
+  EX.isNew = true; EX.edited = false; EX.t = 0; exRender(); $('exName').focus();
+};
+$('exName').oninput = e => { if (EX.cur) { EX.cur.name = e.target.value; exEdited(); } };
+$('exLoop').onchange = e => { if (EX.cur) { EX.cur.loop = e.target.checked; EX.t = 0; exEdited(); } };
+$('exPlay').onclick = togglePlay; $('dkPlay').onclick = togglePlay;
+$('exRestart').onclick = () => { EX.t = 0; }; $('dkRestart').onclick = () => { EX.t = 0; };
+function onPartChange(e) {
+  const c = EX.cur; if (!c) return;
+  const part = e.target.dataset.part, fp = e.target.dataset.fps;
+  if (!c.parts) c.parts = {};
+  if (part) {
+    const prev = c.parts[part];
+    if (e.target.value) c.parts[part] = {set: e.target.value, fps: (prev && prev.fps) || F.DEFAULT_FPS}; else delete c.parts[part];
+    EX.t = 0; exEdited(); exRender();
+  } else if (fp && c.parts[fp]) { c.parts[fp].fps = Math.min(60, Math.max(1, +e.target.value || F.DEFAULT_FPS)); exEdited(); }
+}
+$('exParts').onchange = onPartChange; $('ksMask').onchange = onPartChange;
+$('ksDur').onchange = e => {
+  const c = EX.cur; if (!c) return;
+  const v = parseFloat(e.target.value);
+  c.duration = r2(Math.max(0.1, Number.isFinite(v) ? v : F.DEFAULT_DURATION, maxKeyT(c)));
+  ksSync(); EX.dirtyLanes = true; exEdited();
+};
+$('ksEase').onchange = e => { if (EX.cur) { EX.cur.ease = e.target.value; EX.dirtyLanes = true; exEdited(); } };
+window.addEventListener('resize', () => { if (EX.cur) dkMeasure(); });
+
+/* ----- Chỉnh vị trí mặt, lưu, nhân bản, xóa ----- */
+for (const [id, k] of [['fitY', 'y'], ['fitZ', 'z'], ['fitS', 's']]) $(id).oninput = e => {
+  const v = parseFloat(e.target.value); if (!Number.isFinite(v)) return;
+  S.fit[k] = v; if (S.face) S.face.setFit(S.fit); dirty();
+};
+$('exSave').onclick = async () => {
+  const c = EX.cur; if (!c) return;
+  c.name = (c.name || '').trim();
+  if (!c.name) { exSay('Hãy đặt tên biểu cảm (ví dụ: Vui, Buồn).', 'bad'); $('exName').focus(); return; }
+  if (!c.parts) c.parts = {};
+  if (F.exprMode(c) === 'keyshape') {
+    c.mode = 'keyshape'; if (!c.tracks) c.tracks = {}; delete c.shapes;
+    for (const [n, tr] of Object.entries(c.tracks)) {
+      tr.keys = (tr.keys || []).map(k => ({t: r2(Math.max(0, +k.t || 0)), v: r3(c01(+k.v || 0))})).sort((a, b) => a.t - b.t);
+      if (!tr.keys.length) delete c.tracks[n];
+    }
+    c.duration = r2(F.exprDuration(c));
+    if (!Object.keys(c.tracks).length && !c.parts.mask) { exSay('Hãy dựng ít nhất một keyframe hoặc chọn mặt nạ nền.', 'bad'); return; }
+  } else {
+    c.mode = 'texture';
+    if (!Object.keys(c.parts).length) { exSay('Hãy chọn ít nhất một bộ phận cho biểu cảm.', 'bad'); return; }
+  }
+  if (S.expr.some(x => x.id !== c.id && x.name.trim().toLowerCase() === c.name.toLowerCase())) { exSay('Nhân vật đã có biểu cảm tên “' + c.name + '”. Hãy đặt tên khác.', 'bad'); return; }
+  const backup = S.expr.slice(), i = S.expr.findIndex(x => x.id === c.id);
+  if (i >= 0) S.expr[i] = exClone(c); else S.expr.push(exClone(c));
+  $('exSave').disabled = true;
+  const ok = await saveCharacter($('exStatus'));
+  $('exSave').disabled = false;
+  if (!ok) { S.expr = backup; return; }
+  EX.isNew = false; EX.edited = false; exRender();
+  exSay('✓ Đã lưu biểu cảm “' + c.name + '” vào nhân vật “' + $('charName').value.trim() + '” trên GitHub.', 'good');
+  if (EX.src === 'git') F.syncManifest(EX.lib).catch(() => {});
+};
+$('exDup').onclick = () => {
+  const c = EX.cur; if (!c) return;
+  EX.cur = Object.assign(exClone(c), {id: exNewId(c.name), name: (c.name || 'Biểu cảm') + ' (bản sao)'}); EX.isNew = true; EX.edited = true; exRender();
+  exSay('Đã nhân bản — đổi tên rồi bấm Lưu.');
+};
+$('exDel').onclick = async () => {
+  const c = EX.cur; if (!c) return;
+  if (EX.isNew || !S.expr.some(x => x.id === c.id)) { EX.cur = null; EX.isNew = false; EX.edited = false; exRender(); return; }
+  if (!confirm('Xóa biểu cảm “' + c.name + '” khỏi nhân vật này?')) return;
+  const backup = S.expr.slice(); S.expr = S.expr.filter(x => x.id !== c.id);
+  const ok = await saveCharacter($('exStatus'));
+  if (!ok) { S.expr = backup; return; }
+  EX.cur = null; EX.edited = false; exRender(); exSay('✓ Đã xóa “' + c.name + '”.', 'good');
+};
+F.onFaceImage(() => { EX.sig = null; if (S.face) S.face.sig = null; });
+exRender(); fitUI();
+exScan().catch(err => exSay('Không quét được faces/: ' + err.message, 'bad'));
 
 /* ---------------- Khởi động ---------------- */
 async function init() {
@@ -545,43 +990,4 @@ async function init() {
 }
 init().catch(e => { console.error(e); tag('Lỗi: ' + e.message, true); });
 
-/* ---------------- Biểu cảm dùng chung (library/expressions.json) ---------------- */
-const EXK=['smile','open','brow','eye','hp','hy','hr'];
-function evalEx(ex,k){const kf=ex.kf||[];if(!kf.length)return{};const d=Math.max(.1,+ex.dur||1);k=ex.loop?((k%d)+d)%d:Math.min(Math.max(k,0),d);let a=kf[0],b=kf[kf.length-1];
- if(k<=a.t)b=a;else if(k>=b.t)a=b;else for(let i=0;i<kf.length-1;i++)if(k>=kf[i].t&&k<=kf[i+1].t){a=kf[i];b=kf[i+1];break}
- const u=a===b||b.t===a.t?0:(k-a.t)/(b.t-a.t),e=u*u*(3-2*u),o={};for(const key of EXK)o[key]=(a[key]||0)+((b[key]||0)-(a[key]||0))*e;return o}
-function drawFace(c,F){const g=c.getContext('2d'),eo=Math.max(0,Math.min(1.3,F.eye));g.clearRect(0,0,256,256);g.lineCap='round';
- for(const sx of[-1,1]){const x=128+sx*52,y=100;g.fillStyle='#fff';g.beginPath();g.ellipse(x,y,26,Math.max(2,22*eo),0,0,7);g.fill();if(eo>.15){g.fillStyle='#222';g.beginPath();g.arc(x,y,Math.min(12,22*eo),0,7);g.fill()}
-  const by=y-42-F.brow*14,dn=Math.max(0,-F.brow);g.strokeStyle='#2a1a14';g.lineWidth=9;g.beginPath();g.moveTo(128+sx*22,by+dn*18);g.lineTo(128+sx*80,by-dn*4);g.stroke()}
- const s=F.smile,o=Math.max(0,F.open),w=62,y0=190-s*12;g.lineWidth=8;g.strokeStyle='#5a1c1c';g.beginPath();g.moveTo(128-w,y0);
- if(o>.06){g.quadraticCurveTo(128,190+s*36-o*4,128+w,y0);g.quadraticCurveTo(128,190+o*70+Math.max(0,s)*14,128-w,y0);g.fillStyle='#7a2a2a';g.fill()}else g.quadraticCurveTo(128,190+s*36,128+w,y0);g.stroke()}
-const EXP_PATH='library/expressions.json',EXS_=[['smile','Cười (− mếu, + cười)',-1,1,.05,1],['open','Mở miệng',0,1,.05,1],['brow','Lông mày (− cau, + nhướng)',-1,1,.05,1],['eye','Mắt (− nhắm, + trợn)',-1,1,.05,1],['hp','Cúi / ngẩng đầu (độ)',-30,30,1,Math.PI/180],['hy','Quay đầu trái / phải (độ)',-40,40,1,Math.PI/180],['hr','Nghiêng đầu (độ)',-30,30,1,Math.PI/180]];
-const EX={lib:[],cur:null,k:0,t:0,play:false,last:0};
-const exTry=async f=>{try{await f()}catch(e){say($('exStatus'),'Lỗi: '+e.message,'bad')}};
-async function exLoad(){const d=await K.readJSON(EXP_PATH,{items:[]});EX.lib=Array.isArray(d&&d.items)?d.items:[];exFill()}
-function exFill(){$('exCount').textContent='('+EX.lib.length+')';$('exSel').innerHTML='<option value="">— chọn biểu cảm —</option>'+EX.lib.map(e=>'<option value="'+esc(e.id)+'"'+(EX.cur&&EX.cur.id===e.id?' selected':'')+'>'+esc(e.name)+'</option>').join('');exUI()}
-function exNewDoc(name){return {id:K.slug(name||'bieu-cam')+'-'+Date.now().toString(36),name:name||'Biểu cảm mới',dur:1.5,loop:false,kf:[{t:0},{t:1.5}]}}
-function exUI(){const e=EX.cur;$('exEd').classList.toggle('off',!e);if(!e)return;$('exName').value=e.name;$('exDur').value=e.dur;$('exLoop').checked=!!e.loop;const T=$('exT');T.max=e.dur;
- $('exKeys').innerHTML=e.kf.map((k,i)=>'<button data-ek="'+i+'" class="'+(i===EX.k?'on':'')+'">'+(+k.t).toFixed(2)+'s</button>').join('');
- const k=e.kf[EX.k]||{};$('exSl').innerHTML=EXS_.map(([id,l,mn,mx,st,cv])=>'<label style="margin-top:8px">'+l+' <b data-ev="'+id+'">'+Math.round((k[id]||0)/cv*100)/100+'</b></label><input type="range" data-ex="'+id+'" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+(k[id]||0)/cv+'">').join('');exDraw()}
-function exDraw(){const e=EX.cur;if(!e)return;const p=evalEx(e,EX.t),F={smile:p.smile||0,open:p.open||0,brow:p.brow||0,eye:1+(p.eye||0)};drawFace($('exCv'),F);$('exT').value=EX.t;$('exTv').textContent=EX.t.toFixed(2)+'s'}
-function exTick(now){if(!EX.play||!EX.cur)return;const dt=(now-EX.last)/1000;EX.last=now;EX.t+=dt;if(EX.t>EX.cur.dur)EX.t=EX.cur.loop?EX.t-EX.cur.dur:EX.cur.dur;exDraw();if(!EX.cur.loop&&EX.t>=EX.cur.dur){EX.play=false;$('exPlay').textContent='▶';return}requestAnimationFrame(exTick)}
-const exSel=id=>{EX.cur=JSON.parse(JSON.stringify(EX.lib.find(e=>e.id===id)||null));EX.k=0;EX.t=0;EX.play=false;exFill()};
-$('exSel').onchange=e=>exSel(e.target.value);
-$('exNew').onclick=()=>{EX.cur=exNewDoc();EX.k=0;EX.t=0;exFill();$('exName').focus()};
-$('exReload').onclick=()=>exTry(async()=>{await exLoad();say($('exStatus'),'Đã làm mới: '+EX.lib.length+' biểu cảm.','good')});
-$('exName').oninput=e=>{if(EX.cur)EX.cur.name=e.target.value};
-$('exDur').onchange=e=>{const c=EX.cur;if(!c)return;c.dur=Math.max(.2,+e.target.value||1.5);c.kf.forEach(k=>k.t=Math.min(k.t,c.dur));EX.t=Math.min(EX.t,c.dur);exUI()};
-$('exLoop').onchange=e=>{if(EX.cur)EX.cur.loop=e.target.checked};
-$('exT').oninput=e=>{EX.t=+e.target.value;exDraw()};
-$('exPlay').onclick=()=>{if(!EX.cur)return;EX.play=!EX.play;$('exPlay').textContent=EX.play?'Ⅱ':'▶';if(EX.play){if(EX.t>=EX.cur.dur)EX.t=0;EX.last=performance.now();requestAnimationFrame(exTick)}};
-$('exKeys').onclick=e=>{const i=e.target.dataset.ek;if(i===undefined||!EX.cur)return;EX.k=+i;EX.t=EX.cur.kf[EX.k].t;exUI()};
-$('exAddK').onclick=()=>{const c=EX.cur;if(!c)return;const p=evalEx(c,EX.t),k={t:Math.round(EX.t*100)/100};EXK.forEach(id=>k[id]=Math.round((p[id]||0)*1000)/1000);const i=c.kf.findIndex(x=>Math.abs(x.t-k.t)<.005);if(i>=0)c.kf[i]=k;else c.kf.push(k);c.kf.sort((a,b)=>a.t-b.t);EX.k=c.kf.findIndex(x=>x===k);exUI()};
-$('exDelK').onclick=()=>{const c=EX.cur;if(!c||c.kf.length<=1)return;c.kf.splice(EX.k,1);EX.k=Math.min(EX.k,c.kf.length-1);exUI()};
-$('exSl').oninput=e=>{const id=e.target.dataset.ex,c=EX.cur;if(!id||!c)return;const cv=EXS_.find(x=>x[0]===id)[5],v=+e.target.value;c.kf[EX.k][id]=Math.round(v*cv*1000)/1000;e.target.previousElementSibling.querySelector('b').textContent=v;exDraw()};
-async function exPut(msg){await K.ghPutText(EXP_PATH,JSON.stringify({version:1,items:EX.lib},null,2),msg)}
-$('exSave').onclick=()=>exTry(async()=>{const c=EX.cur;if(!c)return;if(!c.name.trim())throw Error('Hãy đặt tên biểu cảm.');say($('exStatus'),'Đang lưu…');c.name=c.name.trim();const i=EX.lib.findIndex(e=>e.id===c.id),doc=JSON.parse(JSON.stringify(c));if(i>=0)EX.lib[i]=doc;else EX.lib.push(doc);await exPut('Save expression '+c.name);exFill();say($('exStatus'),'✓ Đã lưu “'+c.name+'”. Trong studio bấm “↻ Tải lại thư viện biểu cảm” để dùng.','good')});
-$('exDup').onclick=()=>{const c=EX.cur;if(!c)return;EX.cur=Object.assign(JSON.parse(JSON.stringify(c)),{id:K.slug(c.name)+'-'+Date.now().toString(36),name:c.name+' (bản sao)'});exFill();say($('exStatus'),'Đã nhân bản — bấm Lưu để thêm vào thư viện.')};
-$('exDel').onclick=()=>exTry(async()=>{const c=EX.cur;if(!c)return;if(!EX.lib.some(e=>e.id===c.id)){EX.cur=null;exFill();return}if(!confirm('Xóa biểu cảm “'+c.name+'”? Dự án đã dùng vẫn giữ bản sao trong dự án.'))return;EX.lib=EX.lib.filter(e=>e.id!==c.id);await exPut('Delete expression '+c.name);EX.cur=null;exFill();say($('exStatus'),'✓ Đã xóa.','good')});
-exLoad();
 </script></body></html>
