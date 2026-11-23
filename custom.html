@@ -38,6 +38,7 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
 .lt{aspect-ratio:4/3;position:relative;border-radius:6px;overflow:hidden;background:linear-gradient(135deg,#34364a,#222431)}.lt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.lt .ph{position:absolute;inset:0;display:grid;place-items:center;font-size:24px;opacity:.7}
 .ln{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pgr{display:flex;align-items:center;gap:6px;margin-top:8px}.pgr span{flex:1;text-align:center;font-size:11px;color:var(--muted)}.pgr button{padding:4px 10px}
 #bgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#exKeys button.on{outline:1px solid #8f7bff;background:#3a3558}#exKeys{display:flex;flex-wrap:wrap;gap:5px}#exKeys button{padding:4px 8px}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head><body>
@@ -96,7 +97,20 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
   <div class="row" style="margin-top:10px"><button id="resetP" style="flex:1">↺ Đặt lại</button><button id="delP" class="danger" style="flex:1">Xóa mảnh</button><button id="delG" class="danger" style="flex:1">Xóa cả bộ</button></div>
   <div class="note">Mẹo: bấm trực tiếp vào món đồ trên màn hình để chọn nhanh. Màu áp dụng cho cả bộ.</div>
  </div>
-</aside>
+<h2>Biểu cảm <small id="exCount"></small> <button id="exReload" class="quiet" style="float:right;padding:3px 8px;font-size:11px;text-transform:none">↻ Làm mới</button></h2>
+  <div class="field"><div class="row"><select id="exSel"></select><button id="exNew">＋ Mới</button></div></div>
+  <div class="editor off" id="exEd">
+   <div class="field"><label>Tên biểu cảm</label><input id="exName" maxlength="40" placeholder="Ví dụ: Cười ngượng"></div>
+   <canvas id="exCv" width="256" height="256" style="width:100%;max-width:230px;display:block;margin:0 auto 8px;background:#2b2f40;border-radius:10px"></canvas>
+   <div class="row"><button id="exPlay" class="primary" style="flex:none">▶</button><input type="range" id="exT" min="0" max="1" step="0.01" value="0" style="flex:1"><span id="exTv" style="min-width:44px;text-align:right">0.00s</span></div>
+   <div class="row" style="margin-top:8px"><div><label>Độ dài (s)</label><input type="number" id="exDur" min="0.2" max="30" step="0.1" value="1.5"></div><label style="display:flex;gap:6px;align-items:center;margin:18px 0 0"><input type="checkbox" id="exLoop"> Lặp lại</label></div>
+   <label style="margin-top:10px">Các key (điểm mốc theo thời gian)</label><div class="chips" id="exKeys"></div>
+   <div class="row" style="margin-top:6px"><button id="exAddK" style="flex:1">＋ Key tại điểm này</button><button id="exDelK" class="danger" style="flex:1">✕ Xóa key</button></div>
+   <div id="exSl"></div>
+   <div class="row" style="margin-top:10px"><button id="exSave" class="primary" style="flex:2">☁ Lưu biểu cảm</button><button id="exDup" style="flex:1">Nhân bản</button><button id="exDel" class="danger" style="flex:1">Xóa</button></div>
+  </div>
+  <div class="status" id="exStatus">Biểu cảm lưu ở library/expressions.json và dùng chung cho mọi dự án, mọi nhân vật.</div>
+  </aside>
 </main>
 
 <script type="module">
@@ -530,4 +544,44 @@ async function init() {
   await loadBase(wantModel && models.includes(wantModel) ? wantModel : models[0]);
 }
 init().catch(e => { console.error(e); tag('Lỗi: ' + e.message, true); });
+
+/* ---------------- Biểu cảm dùng chung (library/expressions.json) ---------------- */
+const EXK=['smile','open','brow','eye','hp','hy','hr'];
+function evalEx(ex,k){const kf=ex.kf||[];if(!kf.length)return{};const d=Math.max(.1,+ex.dur||1);k=ex.loop?((k%d)+d)%d:Math.min(Math.max(k,0),d);let a=kf[0],b=kf[kf.length-1];
+ if(k<=a.t)b=a;else if(k>=b.t)a=b;else for(let i=0;i<kf.length-1;i++)if(k>=kf[i].t&&k<=kf[i+1].t){a=kf[i];b=kf[i+1];break}
+ const u=a===b||b.t===a.t?0:(k-a.t)/(b.t-a.t),e=u*u*(3-2*u),o={};for(const key of EXK)o[key]=(a[key]||0)+((b[key]||0)-(a[key]||0))*e;return o}
+function drawFace(c,F){const g=c.getContext('2d'),eo=Math.max(0,Math.min(1.3,F.eye));g.clearRect(0,0,256,256);g.lineCap='round';
+ for(const sx of[-1,1]){const x=128+sx*52,y=100;g.fillStyle='#fff';g.beginPath();g.ellipse(x,y,26,Math.max(2,22*eo),0,0,7);g.fill();if(eo>.15){g.fillStyle='#222';g.beginPath();g.arc(x,y,Math.min(12,22*eo),0,7);g.fill()}
+  const by=y-42-F.brow*14,dn=Math.max(0,-F.brow);g.strokeStyle='#2a1a14';g.lineWidth=9;g.beginPath();g.moveTo(128+sx*22,by+dn*18);g.lineTo(128+sx*80,by-dn*4);g.stroke()}
+ const s=F.smile,o=Math.max(0,F.open),w=62,y0=190-s*12;g.lineWidth=8;g.strokeStyle='#5a1c1c';g.beginPath();g.moveTo(128-w,y0);
+ if(o>.06){g.quadraticCurveTo(128,190+s*36-o*4,128+w,y0);g.quadraticCurveTo(128,190+o*70+Math.max(0,s)*14,128-w,y0);g.fillStyle='#7a2a2a';g.fill()}else g.quadraticCurveTo(128,190+s*36,128+w,y0);g.stroke()}
+const EXP_PATH='library/expressions.json',EXS_=[['smile','Cười (− mếu, + cười)',-1,1,.05,1],['open','Mở miệng',0,1,.05,1],['brow','Lông mày (− cau, + nhướng)',-1,1,.05,1],['eye','Mắt (− nhắm, + trợn)',-1,1,.05,1],['hp','Cúi / ngẩng đầu (độ)',-30,30,1,Math.PI/180],['hy','Quay đầu trái / phải (độ)',-40,40,1,Math.PI/180],['hr','Nghiêng đầu (độ)',-30,30,1,Math.PI/180]];
+const EX={lib:[],cur:null,k:0,t:0,play:false,last:0};
+const exTry=async f=>{try{await f()}catch(e){say($('exStatus'),'Lỗi: '+e.message,'bad')}};
+async function exLoad(){const d=await K.readJSON(EXP_PATH,{items:[]});EX.lib=Array.isArray(d&&d.items)?d.items:[];exFill()}
+function exFill(){$('exCount').textContent='('+EX.lib.length+')';$('exSel').innerHTML='<option value="">— chọn biểu cảm —</option>'+EX.lib.map(e=>'<option value="'+esc(e.id)+'"'+(EX.cur&&EX.cur.id===e.id?' selected':'')+'>'+esc(e.name)+'</option>').join('');exUI()}
+function exNewDoc(name){return {id:K.slug(name||'bieu-cam')+'-'+Date.now().toString(36),name:name||'Biểu cảm mới',dur:1.5,loop:false,kf:[{t:0},{t:1.5}]}}
+function exUI(){const e=EX.cur;$('exEd').classList.toggle('off',!e);if(!e)return;$('exName').value=e.name;$('exDur').value=e.dur;$('exLoop').checked=!!e.loop;const T=$('exT');T.max=e.dur;
+ $('exKeys').innerHTML=e.kf.map((k,i)=>'<button data-ek="'+i+'" class="'+(i===EX.k?'on':'')+'">'+(+k.t).toFixed(2)+'s</button>').join('');
+ const k=e.kf[EX.k]||{};$('exSl').innerHTML=EXS_.map(([id,l,mn,mx,st,cv])=>'<label style="margin-top:8px">'+l+' <b data-ev="'+id+'">'+Math.round((k[id]||0)/cv*100)/100+'</b></label><input type="range" data-ex="'+id+'" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+(k[id]||0)/cv+'">').join('');exDraw()}
+function exDraw(){const e=EX.cur;if(!e)return;const p=evalEx(e,EX.t),F={smile:p.smile||0,open:p.open||0,brow:p.brow||0,eye:1+(p.eye||0)};drawFace($('exCv'),F);$('exT').value=EX.t;$('exTv').textContent=EX.t.toFixed(2)+'s'}
+function exTick(now){if(!EX.play||!EX.cur)return;const dt=(now-EX.last)/1000;EX.last=now;EX.t+=dt;if(EX.t>EX.cur.dur)EX.t=EX.cur.loop?EX.t-EX.cur.dur:EX.cur.dur;exDraw();if(!EX.cur.loop&&EX.t>=EX.cur.dur){EX.play=false;$('exPlay').textContent='▶';return}requestAnimationFrame(exTick)}
+const exSel=id=>{EX.cur=JSON.parse(JSON.stringify(EX.lib.find(e=>e.id===id)||null));EX.k=0;EX.t=0;EX.play=false;exFill()};
+$('exSel').onchange=e=>exSel(e.target.value);
+$('exNew').onclick=()=>{EX.cur=exNewDoc();EX.k=0;EX.t=0;exFill();$('exName').focus()};
+$('exReload').onclick=()=>exTry(async()=>{await exLoad();say($('exStatus'),'Đã làm mới: '+EX.lib.length+' biểu cảm.','good')});
+$('exName').oninput=e=>{if(EX.cur)EX.cur.name=e.target.value};
+$('exDur').onchange=e=>{const c=EX.cur;if(!c)return;c.dur=Math.max(.2,+e.target.value||1.5);c.kf.forEach(k=>k.t=Math.min(k.t,c.dur));EX.t=Math.min(EX.t,c.dur);exUI()};
+$('exLoop').onchange=e=>{if(EX.cur)EX.cur.loop=e.target.checked};
+$('exT').oninput=e=>{EX.t=+e.target.value;exDraw()};
+$('exPlay').onclick=()=>{if(!EX.cur)return;EX.play=!EX.play;$('exPlay').textContent=EX.play?'Ⅱ':'▶';if(EX.play){if(EX.t>=EX.cur.dur)EX.t=0;EX.last=performance.now();requestAnimationFrame(exTick)}};
+$('exKeys').onclick=e=>{const i=e.target.dataset.ek;if(i===undefined||!EX.cur)return;EX.k=+i;EX.t=EX.cur.kf[EX.k].t;exUI()};
+$('exAddK').onclick=()=>{const c=EX.cur;if(!c)return;const p=evalEx(c,EX.t),k={t:Math.round(EX.t*100)/100};EXK.forEach(id=>k[id]=Math.round((p[id]||0)*1000)/1000);const i=c.kf.findIndex(x=>Math.abs(x.t-k.t)<.005);if(i>=0)c.kf[i]=k;else c.kf.push(k);c.kf.sort((a,b)=>a.t-b.t);EX.k=c.kf.findIndex(x=>x===k);exUI()};
+$('exDelK').onclick=()=>{const c=EX.cur;if(!c||c.kf.length<=1)return;c.kf.splice(EX.k,1);EX.k=Math.min(EX.k,c.kf.length-1);exUI()};
+$('exSl').oninput=e=>{const id=e.target.dataset.ex,c=EX.cur;if(!id||!c)return;const cv=EXS_.find(x=>x[0]===id)[5],v=+e.target.value;c.kf[EX.k][id]=Math.round(v*cv*1000)/1000;e.target.previousElementSibling.querySelector('b').textContent=v;exDraw()};
+async function exPut(msg){await K.ghPutText(EXP_PATH,JSON.stringify({version:1,items:EX.lib},null,2),msg)}
+$('exSave').onclick=()=>exTry(async()=>{const c=EX.cur;if(!c)return;if(!c.name.trim())throw Error('Hãy đặt tên biểu cảm.');say($('exStatus'),'Đang lưu…');c.name=c.name.trim();const i=EX.lib.findIndex(e=>e.id===c.id),doc=JSON.parse(JSON.stringify(c));if(i>=0)EX.lib[i]=doc;else EX.lib.push(doc);await exPut('Save expression '+c.name);exFill();say($('exStatus'),'✓ Đã lưu “'+c.name+'”. Trong studio bấm “↻ Tải lại thư viện biểu cảm” để dùng.','good')});
+$('exDup').onclick=()=>{const c=EX.cur;if(!c)return;EX.cur=Object.assign(JSON.parse(JSON.stringify(c)),{id:K.slug(c.name)+'-'+Date.now().toString(36),name:c.name+' (bản sao)'});exFill();say($('exStatus'),'Đã nhân bản — bấm Lưu để thêm vào thư viện.')};
+$('exDel').onclick=()=>exTry(async()=>{const c=EX.cur;if(!c)return;if(!EX.lib.some(e=>e.id===c.id)){EX.cur=null;exFill();return}if(!confirm('Xóa biểu cảm “'+c.name+'”? Dự án đã dùng vẫn giữ bản sao trong dự án.'))return;EX.lib=EX.lib.filter(e=>e.id!==c.id);await exPut('Delete expression '+c.name);EX.cur=null;exFill();say($('exStatus'),'✓ Đã xóa.','good')});
+exLoad();
 </script></body></html>
