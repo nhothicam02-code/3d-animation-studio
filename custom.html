@@ -1046,9 +1046,27 @@ function keyData(d, w, h, V) {
   }
   for (let p = 0; p < N; p++) if (seen[p]) cut(p * 4);
 }
-function keyOut(g, w, h, V) {
+function keyOnly(g, w, h, V) {
   if (V.key === 'none') return;
   const im = g.getImageData(0, 0, w, h); keyData(im.data, w, h, V); g.putImageData(im, 0, 0);
+}
+/** Cọ xóa: mỗi nét lưu theo tỉ lệ (0..1) của khung nên áp dụng đúng cùng vị trí cho mọi khung hình, mọi độ phân giải. */
+function applyStrokes(g, w, h, V) {
+  if (!V.strokes || !V.strokes.length) return;
+  g.save(); g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#000';
+  for (const s of V.strokes) {
+    g.lineWidth = Math.max(1, s.r * 2 * w); g.beginPath();
+    const p = s.pts; g.moveTo(p[0][0] * w, p[0][1] * h);
+    if (p.length === 1) g.lineTo(p[0][0] * w + 0.01, p[0][1] * h); else for (let i = 1; i < p.length; i++) g.lineTo(p[i][0] * w, p[i][1] * h);
+    g.stroke();
+  }
+  g.restore();
+}
+function keyOut(g, w, h, V) { keyOnly(g, w, h, V); applyStrokes(g, w, h, V); }
+/** Vẽ lại ảnh xem thử nhanh từ bản đã xóa nền (không tính lại nền) + các nét cọ. */
+function redrawPreview(id) {
+  const V = EX.vid[id], cv = document.querySelector('[data-vprev="' + id + '"]'); if (!V || !cv || !V.keyed) return;
+  const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(V.keyed, 0, 0); applyStrokes(g, cv.width, cv.height, V);
 }
 const seekTo = (v, t) => new Promise(res => {
   if (Math.abs(v.currentTime - t) < 1e-3) { requestAnimationFrame(() => res()); return; }
@@ -1069,18 +1087,20 @@ async function setupVideo(id, file) {
     await new Promise((res, rej) => { el.onloadedmetadata = res; el.onerror = () => rej(new Error('Trình duyệt không đọc được video này (thử mp4 H.264 hoặc webm).')); });
     if (!Number.isFinite(el.duration) || el.duration <= 0 || !el.videoWidth) throw new Error('Video không có hình hoặc độ dài không hợp lệ.');
   } catch (err) { URL.revokeObjectURL(url); throw err; }
-  EX.vid[id] = {file, url, el, name: file.name, dur: el.duration, w: el.videoWidth, h: el.videoHeight, fps: 12, max: 48, size: 512, key: 'auto', color: '#00ff00', tol: 60, soft: 40, flood: true, pt: Math.min(0.1, el.duration / 2), busy: false, raw: null};
+  EX.vid[id] = {file, url, el, name: file.name, dur: el.duration, w: el.videoWidth, h: el.videoHeight, fps: 12, max: 48, size: 512, key: 'auto', color: '#00ff00', tol: 60, soft: 40, flood: true, pt: Math.min(0.1, el.duration / 2), busy: false, raw: null, keyed: null, strokes: [], brush: false, bsize: 6};
 }
 async function vidPreview(id) {
   const V = EX.vid[id], cv = document.querySelector('[data-vprev="' + id + '"]'); if (!V || !cv || V.busy) return;
   const seq = V.pseq = (V.pseq || 0) + 1;
   await seekTo(V.el, Math.min(V.dur - 0.001, V.pt));
   if (seq !== V.pseq || !document.body.contains(cv)) return;
-  const sc = Math.min(1, 220 / Math.max(V.w, V.h)), w = Math.max(1, Math.round(V.w * sc)), h = Math.max(1, Math.round(V.h * sc));
+  const sc = Math.min(1, 280 / Math.max(V.w, V.h)), w = Math.max(1, Math.round(V.w * sc)), h = Math.max(1, Math.round(V.h * sc));
   const raw = document.createElement('canvas'); raw.width = w; raw.height = h;
   raw.getContext('2d').drawImage(V.el, 0, 0, w, h); V.raw = raw;
-  cv.width = w; cv.height = h;
-  const g = cv.getContext('2d', {willReadFrequently: true}); g.clearRect(0, 0, w, h); g.drawImage(raw, 0, 0); keyOut(g, w, h, V);
+  cv.width = w; cv.height = h; cv.style.touchAction = 'none'; cv.style.cursor = V.brush ? 'cell' : 'crosshair';
+  const kc = document.createElement('canvas'); kc.width = w; kc.height = h;
+  const kg = kc.getContext('2d', {willReadFrequently: true}); kg.drawImage(raw, 0, 0); keyOnly(kg, w, h, V); V.keyed = kc;
+  redrawPreview(id);
 }
 async function extractFrames(id) {
   const V = EX.vid[id], c = EX.cur; if (!V || V.busy || !c) return;
@@ -1137,6 +1157,10 @@ function vidPanel(id, V) {
     '<label>Độ nhạy: ' + V.tol + '</label>' + vf(id, 'tol', V.tol, 'type="range" min="0" max="200" step="1"') +
     '<label>Độ mượt viền: ' + V.soft + '</label>' + vf(id, 'soft', V.soft, 'type="range" min="1" max="120" step="1"') +
     '<label class="ck"><input type="checkbox" data-v="' + id + '|flood"' + (V.flood ? ' checked' : '') + '> Chỉ xóa nền nối với mép ảnh (giữ tròng trắng mắt, răng…)</label>' +
+    '<label class="ck" style="margin-top:10px"><input type="checkbox" data-v="' + id + '|brush"' + (V.brush ? ' checked' : '') + '> ✏ Cọ xóa — vẽ lên ảnh xem thử để xóa thêm</label>' +
+    '<label>Cỡ cọ: ' + V.bsize + '%</label>' + vf(id, 'bsize', V.bsize, 'type="range" min="1" max="40" step="1"') +
+    '<div class="row"><button data-act="undo" data-id="' + id + '">↶ Hoàn tác nét (' + V.strokes.length + ')</button><button class="danger" data-act="clrstrokes" data-id="' + id + '">Xóa hết nét</button></div>' +
+    '<div class="note">Nét cọ nằm cố định theo vị trí trên khung nên được xóa ở mọi khung hình của video khi tách.</div>' +
     '<div class="row"><button class="primary" data-act="extract" data-id="' + id + '" ' + (V.busy ? 'disabled' : '') + '>✂ Tách thành ảnh PNG</button><span class="muted" data-prog="' + id + '"></span></div></div>';
 }
 function partCard(p, e) {
@@ -1167,7 +1191,7 @@ $('exParts').addEventListener('toggle', e => { const d = e.target; if (d && d.da
 $('exParts').addEventListener('click', ev => {
   const cvp = ev.target.closest && ev.target.closest('[data-vprev]');
   if (cvp) {                                                   // nhỏ giọt màu: bấm vào ảnh xem thử để chọn màu nền
-    const id = cvp.dataset.vprev, V = EX.vid[id]; if (!V || !V.raw) return;
+    const id = cvp.dataset.vprev, V = EX.vid[id]; if (!V || !V.raw || V.brush) return;
     const r = cvp.getBoundingClientRect(), x = Math.min(V.raw.width - 1, Math.max(0, Math.floor((ev.clientX - r.left) / r.width * V.raw.width))), y = Math.min(V.raw.height - 1, Math.max(0, Math.floor((ev.clientY - r.top) / r.height * V.raw.height)));
     const px = V.raw.getContext('2d').getImageData(x, y, 1, 1).data;
     V.color = '#' + [px[0], px[1], px[2]].map(n => n.toString(16).padStart(2, '0')).join(''); V.key = 'color';
@@ -1177,6 +1201,12 @@ $('exParts').addEventListener('click', ev => {
   const id = b.dataset.id, act = b.dataset.act, L = EX.cur.layers[id];
   if (act === 'tab') { EX.srcTab[id] = b.dataset.v; exRender(); }
   else if (act === 'extract') extractFrames(id);
+  else if (act === 'undo' || act === 'clrstrokes') {
+    const V = EX.vid[id]; if (!V) return;
+    if (act === 'undo') V.strokes.pop(); else V.strokes = [];
+    redrawPreview(id);
+    const bt = b.parentElement.querySelector('[data-act="undo"]'); if (bt) bt.textContent = '↶ Hoàn tác nét (' + V.strokes.length + ')';
+  }
   else if (act === 'run') {
     if (!L) return;
     EX.t0[id] = EX.t; if (EX.paused) { EX.paused = false; syncPlayBtn(); }
@@ -1200,9 +1230,26 @@ function onVideoInput(el, final) {
   else if (el.type === 'color' || el.tagName === 'SELECT') { V[k] = el.value; if (k === 'color') V.key = 'color'; }
   else { const v = parseFloat(el.value); if (!Number.isFinite(v)) return; V[k] = v; }
   if (final && (k === 'key' || k === 'color')) { exRender(); return; }
-  if (k === 'tol' || k === 'soft') { const lb = el.previousElementSibling; if (lb && lb.tagName === 'LABEL') lb.textContent = (k === 'tol' ? 'Độ nhạy: ' : 'Độ mượt viền: ') + V[k]; }
+  if (k === 'tol' || k === 'soft' || k === 'bsize') { const lb = el.previousElementSibling; if (lb && lb.tagName === 'LABEL') lb.textContent = (k === 'tol' ? 'Độ nhạy: ' : k === 'soft' ? 'Độ mượt viền: ' : 'Cỡ cọ: ') + V[k] + (k === 'bsize' ? '%' : ''); }
+  if (k === 'bsize') return;
+  if (k === 'brush') { const cv = document.querySelector('[data-vprev="' + id + '"]'); if (cv) cv.style.cursor = V.brush ? 'cell' : 'crosshair'; return; }
   vidPreview(id);
 }
+let BR = null;   // nét cọ đang vẽ
+const brushPt = (cv, ev) => { const r = cv.getBoundingClientRect(); return [Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height))]; };
+$('exParts').addEventListener('pointerdown', ev => {
+  const cv = ev.target.closest && ev.target.closest('[data-vprev]'); if (!cv) return;
+  const id = cv.dataset.vprev, V = EX.vid[id]; if (!V || !V.brush || V.busy || !V.keyed) return;
+  ev.preventDefault(); try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* bỏ qua */ }
+  const st = {r: V.bsize / 200, pts: [brushPt(cv, ev)]}; V.strokes.push(st); BR = {id, cv, V, st}; redrawPreview(id);
+});
+$('exParts').addEventListener('pointermove', ev => { if (!BR) return; BR.st.pts.push(brushPt(BR.cv, ev)); redrawPreview(BR.id); });
+const brushEnd = () => {
+  if (!BR) return;
+  const bt = BR.cv.closest('.vp').querySelector('[data-act="undo"]'); if (bt) bt.textContent = '↶ Hoàn tác nét (' + BR.V.strokes.length + ')';
+  BR = null;
+};
+$('exParts').addEventListener('pointerup', brushEnd); $('exParts').addEventListener('pointercancel', brushEnd);
 $('exParts').addEventListener('input', ev => { const t = ev.target; if (t.dataset && t.dataset.k) onLayerInput(t); else if (t.dataset && t.dataset.v && t.type !== 'color' && t.tagName !== 'SELECT') onVideoInput(t, false); });
 $('exParts').addEventListener('change', async ev => {
   const t = ev.target, c = EX.cur; if (!c) return;
