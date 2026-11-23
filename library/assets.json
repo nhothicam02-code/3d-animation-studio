@@ -1,4 +1,17 @@
 {
   "version": 1,
-  "items": []
+  "items": [
+    {
+      "id": "vay1-mwtgrjedcro",
+      "name": "vay1",
+      "category": "skirt",
+      "kind": "model",
+      "ext": "glb",
+      "size": 33167184,
+      "path": "library/assets/skirt/vay1-mwtgrjedcro.glb",
+      "thumbPath": "library/thumbnails/assets/vay1-mwtgrjedcro.png",
+      "thumbnail": "./library/thumbnails/assets/vay1-mwtgrjedcro.png",
+      "createdAt": "2026-11-23T16:12:17.586Z"
+    }
+  ]
 }
