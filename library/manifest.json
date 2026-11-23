@@ -19,6 +19,10 @@
     "chibi2.glb": {
       "thumbnail": "./library/thumbnails/characters/chibi2.png",
       "updatedAt": "2026-11-23T13:41:58.463Z"
+    },
+    "g2.glb": {
+      "thumbnail": "./library/thumbnails/characters/g2.png",
+      "updatedAt": "2026-11-23T16:40:11.194Z"
     }
   },
   "animations": [
