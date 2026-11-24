@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {createScatter} from './scatter-kit.js';
+export {LAYER_KINDS, layerDefaults, layerFields, layerOf, groundInfo} from './scatter-kit.js';
 
 /* ============================================================
    Nền cảnh cho Studio — MỘT đường ống hình ảnh duy nhất.
@@ -42,10 +44,11 @@ const sh = (c, k) => { const o = new THREE.Color(c); o.multiplyScalar(k); return
 export const ENV_PRESETS = [
   ['sky', '☀️ Bầu trời'], ['night', '🌙 Đêm sao'], ['studio', '🎬 Studio'], ['house', '🏠 Trong nhà'],
   ['classroom', '🏫 Lớp học'], ['shade', '🌳 Bóng râm'], ['sun', '🔆 Nắng gắt'], ['desert', '🏜 Sa mạc'], ['jungle', '🌴 Rừng rậm'], ['cloudsea', '☁️ Trên mây'], ['underwater', '🌊 Dưới nước'],
-  ['meadow', '🌿 Đồng cỏ'], ['trail', '🥾 Đường mòn'], ['plains', '🌾 Đồng bằng'], ['street', '🛣 Đường phố']
+  ['meadow', '🌿 Đồng cỏ'], ['trail', '🥾 Đường mòn'], ['plains', '🌾 Đồng bằng'], ['street', '🛣 Đường phố'],
+  ['arctic', '❄️ Bắc cực'], ['arcticnight', '🌌 Bắc cực đêm (cực quang)'], ['cobble', '🪨 Đường đá cuội'], ['gravel', '⚪ Đường sỏi']
 ];
 const BASE = {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sc: '#fff4e0', light: 1, hk: 1, lk: 1, hc: '#ffffff', hg: '#666070', lc: '#ffffff', speed: 1,
-  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, rc: '#bff5ff', canopy: 0, dunes: 0, sea: 0, rot: 0, exp: 1, ibl: false, room: '', gnd: 0, gc2: '#c9a86a', hills: 0, bld: 0, gdens: 1, gsize: 1, fdens: .035, pw: 1.15, pcurve: 1, gfar: 90, gh: 1.3, bdens: 22};
+  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, rc: '#bff5ff', canopy: 0, dunes: 0, sea: 0, rot: 0, exp: 1, ibl: false, room: '', gnd: 0, gc2: '#c9a86a', hills: 0, bld: 0, gdens: 1, gsize: 1, fdens: .035, pw: 1.15, pcurve: 1, gfar: 90, gh: 1.3, bdens: 22, wdist: 24, water: 1, bergs: 0, aurora: 0, anchor: false};
 const PRE = {
   sky: {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sun: .7, clouds: .5, lc: '#fff4e0', lk: 1.05, hc: '#bcd8ff', hg: '#6a6a58'},
   night: {c1: '#04081c', c2: '#1b2a52', c3: '#0a0f1e', sc: '#dfe8ff', sun: .8, az: 200, el: 30, stars: .9, clouds: .2, lc: '#8fa8ff', lk: .45, hc: '#4660a8', hg: '#101830', hk: .6},
@@ -62,6 +65,10 @@ const PRE = {
   trail: {c1: '#3a86d8', c2: '#d6ebff', c3: '#4f9438', gc2: '#b89868', gnd: 2, hills: .7, sun: .7, el: 32, clouds: .4, lc: '#fff2d6', lk: 1.15, hc: '#c4e0ff', hg: '#4a6a32'},
   plains: {c1: '#2f7fe0', c2: '#e4efff', c3: '#8aa84a', gc2: '#d6c060', gnd: 3, hills: .15, sun: .8, el: 40, clouds: .6, lc: '#fff4dc', lk: 1.3, hc: '#d2e6ff', hg: '#8a9a50'},
   street: {c1: '#4a8ad8', c2: '#cfe0f0', c3: '#8a8e96', gc2: '#3a3d44', gnd: 4, bld: 1, pw: 3.25, sun: .6, el: 35, clouds: .3, lc: '#fff6e6', lk: 1.1, hc: '#d0e0f4', hg: '#6a6e76'},
+  arctic: {c1: '#5b8cc4', c2: '#dcebf7', c3: '#eef4fa', sc: '#fff1de', sun: .55, az: 140, el: 9, clouds: .35, gnd: 5, gc2: '#0f5a7d', gfar: 150, gh: 1.5, gdens: 1, gsize: 1, wdist: 26, water: 1, bergs: .75, anchor: true, hills: 0, lc: '#fff0dc', lk: 1.05, hc: '#cfe3f7', hg: '#a9bfd6', hk: 1.05},
+  arcticnight: {c1: '#02050f', c2: '#0b2240', c3: '#6a82a0', sc: '#dfe8ff', sun: .5, az: 200, el: 24, stars: .9, aurora: 1, clouds: .1, gnd: 5, gc2: '#04182a', gfar: 150, gh: 1.5, wdist: 26, water: 1, bergs: .6, anchor: true, lc: '#9fb8ff', lk: .55, hc: '#4a64a8', hg: '#2a3a58', hk: .75},
+  cobble: {c1: '#3a86d8', c2: '#d6ebff', c3: '#5a8a3a', sc: '#fff4dc', gc2: '#8e8982', gnd: 6, pw: 2.2, pcurve: .6, hills: .6, sun: .7, el: 32, clouds: .4, gh: 1.4, gfar: 110, anchor: true, lc: '#fff2d6', lk: 1.15, hc: '#c4e0ff', hg: '#4a6a32'},
+  gravel: {c1: '#3a86d8', c2: '#d6ebff', c3: '#6f7a4a', sc: '#fff4dc', gc2: '#b9ad99', gnd: 7, pw: 2.4, pcurve: .9, hills: .6, sun: .75, el: 36, clouds: .35, gh: 1.4, gfar: 110, anchor: true, lc: '#fff2d6', lk: 1.2, hc: '#c4e0ff', hg: '#5a6a3a'},
   pano: {}
 };
 /** "Thêm hiệu ứng đi kèm": mỗi địa điểm gợi ý vài khối hiệu ứng — thêm vào timeline để sửa / xoá tuỳ ý (không còn ẩn trong thanh trượt của nền). */
@@ -80,6 +87,10 @@ export const ENV_BUNDLES = {
   trail: [{fx: 'leaves'}, {fx: 'dust', color: '#e8d9a8'}],
   plains: [{fx: 'wind'}, {fx: 'glow', intensity: .15}],
   street: [{fx: 'dust'}, {fx: 'glow', intensity: .12}],
+  arctic: [{fx: 'snow', intensity: .5}, {fx: 'fog', color: '#dcebf7', density: .07}, {fx: 'glow', intensity: .2}],
+  arcticnight: [{fx: 'snow', intensity: .35}, {fx: 'fog', color: '#0b2240', density: .06}, {fx: 'glow', intensity: .3}],
+  cobble: [{fx: 'dust', color: '#e8d9a8'}, {fx: 'leaves'}],
+  gravel: [{fx: 'dust', color: '#e8d9a8'}, {fx: 'wind'}],
   underwater: [{fx: 'fog', color: '#1b8aa6', density: .5}, {fx: 'distort', kind: 'wave', intensity: .35}, {fx: 'glow', intensity: .25}]
 };
 export const envBundle = k => ENV_BUNDLES[k] || [];
@@ -93,7 +104,7 @@ export function envFields(P, kind) {
   const f = P.room ? [['c1', 'Màu trần', 'c'], ['c2', 'Màu tường', 'c'], ['c3', 'Màu sàn', 'c']] : [['c1', 'Màu đỉnh trời', 'c'], ['c2', 'Màu chân trời', 'c'], ['c3', 'Màu mặt đất', 'c']];
   f.push(['light', 'Cường độ ánh sáng', 'r', 0, 3, .01]);
   if (!P.room && P.gnd) {
-    f.push(['gc2', P.gnd === 1 ? 'Màu hoa' : P.gnd === 4 ? 'Màu mặt đường' : P.gnd === 2 ? 'Màu đường mòn' : 'Màu ruộng', 'c'],
+    f.push(['gc2', ({1: 'Màu hoa', 2: 'Màu đường mòn', 4: 'Màu mặt đường', 5: 'Màu nước biển', 6: 'Màu đá cuội', 7: 'Màu sỏi'})[P.gnd] || 'Màu ruộng', 'c'],
       ['gh', 'Độ cao mắt nhìn (m) — thấp: mặt đất kéo dài, cao: nhìn từ trên xuống', 'r', .3, 6, .05],
       ['gfar', 'Tầm nhìn xa (m) — mặt đất hòa vào chân trời', 'r', 15, 400, 1],
       ['gdens', 'Mật độ chi tiết mặt đất (cỏ, đá, hạt)', 'r', .2, 3, .01],
@@ -102,9 +113,12 @@ export function envFields(P, kind) {
     if (P.gnd === 1) f.push(['fdens', 'Mật độ hoa', 'r', 0, .3, .002]);
     if (P.gnd === 2) f.push(['pw', 'Độ rộng đường mòn (m)', 'r', .3, 4, .05], ['pcurve', 'Độ uốn đường mòn', 'r', 0, 3, .05]);
     if (P.gnd === 4) f.push(['pw', 'Độ rộng lòng đường (m)', 'r', 1, 8, .05], ['bld', 'Chiều cao dãy nhà', 'r', 0, 2, .01], ['bdens', 'Mật độ nhà (số toà quanh tầm nhìn)', 'r', 6, 60, 1]);
+    if (P.gnd === 5) f.push(['water', 'Lượng nước biển (0 = toàn tuyết)', 'r', 0, 1, .01], ['wdist', 'Biển bắt đầu cách (m)', 'r', 4, 120, .5], ['bergs', 'Núi băng xa ở chân trời', 'r', 0, 1, .01]);
+    if (P.gnd === 6 || P.gnd === 7) f.push(['pw', 'Độ rộng con đường (m)', 'r', .5, 12, .05], ['pcurve', 'Độ uốn con đường', 'r', 0, 3, .05]);
+    f.push(['anchor', 'Mặt đất bám theo thế giới 3D (khớp cỏ / hoa / đá rải & nhân vật; khi bật, bỏ qua “độ cao mắt nhìn”)', 'b']);
   }
   if (!P.room) f.push(['sun', 'Mặt trời / trăng (độ sáng)', 'r', 0, 2, .01], ['az', 'Hướng mặt trời (độ)', 'r', 0, 360, 1], ['el', 'Độ cao mặt trời (độ)', 'r', -10, 89, 1], ['sl', 'Ánh sáng lên nhân vật theo hướng mặt trời', 'b'],
-    ['clouds', 'Mây', 'r', 0, 1, .01], ['stars', 'Sao', 'r', 0, 1, .01], ['rays', 'Tia sáng (dưới nước, xuyên lá)', 'r', 0, 1, .01], ['rc', 'Màu tia sáng', 'c'], ['canopy', 'Tán lá che nắng', 'r', 0, 1, .01],
+    ['clouds', 'Mây', 'r', 0, 1, .01], ['stars', 'Sao', 'r', 0, 1, .01], ['aurora', 'Cực quang', 'r', 0, 1, .01], ['rays', 'Tia sáng (dưới nước, xuyên lá)', 'r', 0, 1, .01], ['rc', 'Màu tia sáng', 'c'], ['canopy', 'Tán lá che nắng', 'r', 0, 1, .01],
     ['dunes', 'Đụn cát ở chân trời', 'r', 0, 1, .01], ['sea', 'Biển mây bên dưới', 'r', 0, 1, .01],
     ['speed', 'Tốc độ chuyển động (mây, tia sáng)', 'r', 0, 4, .05]);
   return f;
@@ -112,7 +126,7 @@ export function envFields(P, kind) {
 
 /* ---------------- Bầu trời bằng shader (có sương phủ về phía chân trời) ---------------- */
 const DOME_FS = `precision highp float; varying vec3 vD;
-uniform vec3 uTop,uHor,uBot,uSunC,uSunD,uFogC,uRayC; uniform float uT,uSun,uStars,uClouds,uRays,uCanopy,uFogK,uDunes,uSea,uGnd,uHills,uBld,uGDens,uGSize,uFDens,uPW,uPCurve,uGFar,uGH,uBDens; uniform vec3 uGc2;
+uniform vec3 uTop,uHor,uBot,uSunC,uSunD,uFogC,uRayC; uniform float uT,uSun,uStars,uClouds,uRays,uCanopy,uFogK,uDunes,uSea,uGnd,uHills,uBld,uGDens,uGSize,uFDens,uPW,uPCurve,uGFar,uGH,uBDens; uniform vec3 uGc2; uniform float uWDist,uWater,uBergs,uAurora; uniform vec2 uCam;
 float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x),mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x),f.y);}
 float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*n2(p);p=p*2.03+vec2(7.1,3.3);a*=.5;}return s;}
@@ -134,6 +148,16 @@ void main(){
     col=mix(col,mix(uBot,uHor,.6)*(.95+.1*sd),smoothstep(.003,-.003,h-r0));
     col=mix(col,mix(uBot,uHor,.3)*(.9+.15*sd),smoothstep(.003,-.003,h-r1));
   }
+  if(uBergs>0.){                       // núi băng / tảng băng xa ngoài biển (hai lớp)
+    float az=atan(d.z,d.x);
+    float c0=floor(az*5.),u0=fract(az*5.),c1=floor(az*9.+2.),u1=fract(az*9.+2.);
+    float r0=uBergs*step(.35,h21(vec2(c0,3.)))*(.014+.055*h21(vec2(c0,8.)))*smoothstep(0.,.3,1.-abs(u0*2.-1.))*(.72+.28*fbm(vec2(az*30.,c0)));
+    float r1=uBergs*step(.4,h21(vec2(c1,13.)))*(.008+.03*h21(vec2(c1,18.)))*smoothstep(0.,.3,1.-abs(u1*2.-1.))*(.72+.28*fbm(vec2(az*44.,c1)));
+    vec3 bf=mix(mix(vec3(.5,.72,.9),vec3(.95,.98,1.),smoothstep(0.,max(r0,.001),h)),uHor,.32)*(.9+.15*sd);
+    vec3 bn=mix(mix(vec3(.45,.68,.88),vec3(.97,.99,1.),smoothstep(0.,max(r1,.001),h)),uHor,.12)*(.92+.15*sd);
+    col=mix(col,bf,smoothstep(.002,-.002,h-r0)*step(.001,r0)*step(-.02,h));
+    col=mix(col,bn,smoothstep(.002,-.002,h-r1)*step(.001,r1)*step(-.02,h));
+  }
   if(uBld>0.){                         // dãy nhà dọc phố
     float az=atan(d.z,d.x); float cols=uBDens; float ci=floor(az*cols);
     float bh=uBld*(.03+.16*h21(vec2(ci,4.))); float fdist=h21(vec2(ci,9.))*.3;
@@ -146,7 +170,7 @@ void main(){
     }
   }
   if(uGnd>0.&&h<-.002){                // mặt đất theo phối cảnh (camera cao ~1.3 m)
-    float k=uGH/max(-h,.004); vec2 p=d.xz*k; vec2 q=p/uGSize; vec3 g=uBot;
+    float k=uGH/max(-h,.004); vec2 p=d.xz*k+uCam; vec2 q=p/uGSize; vec3 g=uBot;
     float nz=fbm(q*.9);
     if(uGnd<2.5){                      // đồng cỏ / đường mòn
       g=mix(uBot*.72,uBot*1.28,nz)*(.92+.16*fbm(q*5.*uGDens)); g*=1.-.12*step(.62,h21(floor(q*7.*uGDens)))*smoothstep(60.,6.,k);
@@ -164,7 +188,7 @@ void main(){
       g=mix(uBot,uGc2,step(.45,v)*.8)*(.78+.4*v)*(.9+.2*nz);
       vec2 fr=abs(fract(q*.07+vec2(3.,7.))-.5); g=mix(g,uBot*.55,smoothstep(.47,.5,max(fr.x,fr.y))*.6);
       g*=.95+.1*fbm(q*6.*uGDens);
-    } else {                           // đường phố
+    } else if(uGnd<4.5){               // đường phố
       float ax=abs(p.x); g=uBot*(.9+.15*fbm(p*3.));
       float road=smoothstep(uPW,uPW-.1,ax);
       vec3 asp=uGc2*(.85+.3*fbm(q*8.*uGDens));
@@ -175,6 +199,57 @@ void main(){
       float side=smoothstep(uPW,uPW+.15,ax)*smoothstep(uPW+2.35,uPW+2.2,ax);   // vỉa hè
       vec2 tl=abs(fract(vec2(p.x*.9,p.y*.9))-.5); g=mix(g,g*.82,side*smoothstep(.46,.5,max(tl.x,tl.y)));
       g=mix(g,vec3(.62,.62,.6),smoothstep(uPW+.05,uPW-.05,ax)*step(uPW-.05,ax)*.6);
+    } else if(uGnd<5.5){               // Bắc cực: tuyết + biển + mảng băng trôi
+      vec3 sn=uBot*(.92+.14*nz);
+      float rg=fbm(vec2(q.x*.5+q.y*.07,q.y*2.6)); sn*=.93+.12*rg;                            // gợn tuyết do gió thổi
+      sn=mix(sn,sn*vec3(.80,.9,1.06),smoothstep(.6,.25,fbm(q*.35+4.)));                       // bóng xanh lạnh
+      vec2 sq=floor(q*(26.*uGDens)); float sp=step(.988,h21(sq))*(.5+.5*sin(uT*3.+h21(sq)*40.));
+      sn+=vec3(.9,.95,1.)*sp*smoothstep(22.,4.,k);                                           // lấp lánh tinh thể băng
+      float shore=-uWDist+3.*sin(p.x*.15)+1.5*sin(p.x*.41+2.);
+      float wm=smoothstep(shore+.35,shore-.9,p.y)*uWater;
+      vec3 wc=uGc2*(.8+.4*fbm(q*.25+vec2(uT*.02,0.)));
+      vec2 fq=p*.11/max(uGSize,.2); vec2 fi=floor(fq),ff=fract(fq); float fl=0.,fe=0.;        // mảng băng trôi (ô Voronoi thô)
+      for(int j=-1;j<=1;j++)for(int i2=-1;i2<=1;i2++){
+        vec2 gg=vec2(float(i2),float(j)); vec2 o=vec2(h21(fi+gg),h21(fi+gg+5.7)); float on=step(.45,h21(fi+gg+2.2));
+        vec2 r=gg+.2+.6*o-ff; float rad=.14+.26*h21(fi+gg+9.1); float dd=length(r*vec2(1.,1.25))/rad;
+        fl=max(fl,on*smoothstep(1.,.82,dd)); fe=max(fe,on*smoothstep(.82,.55,dd));
+      }
+      wc=mix(wc,mix(vec3(.62,.8,.92),vec3(.96,.99,1.),fe),fl*.95);
+      wc+=vec3(1.,.95,.85)*pow(sd,6.)*smoothstep(0.,.5,fbm(q*2.+uT*.1))*(1.-fl)*.6;          // ánh mặt trời trên sóng
+      g=mix(sn,wc,wm);
+      g=mix(g,vec3(.93,.97,1.),smoothstep(.9,.1,abs(p.y-shore))*.45*uWater);                 // bọt băng ven bờ
+    } else if(uGnd<6.5){               // đường đá cuội (lát so le, đá tròn cạnh, mạch sẫm)
+      float cxp=(sin(p.y*.11)*2.2+sin(p.y*.04+1.)*3.)*uPCurve, dx=abs(p.x-cxp), w=uPW*(1.+.2*sin(p.y*.3));
+      vec3 sur=uBot*(.75+.5*nz)*(.92+.16*fbm(q*5.*uGDens));
+      float pm=smoothstep(w+.15,w-.1,dx+(nz-.5)*.25);
+      vec2 cq=vec2(p.x-cxp,p.y)/(.34*uGSize); float row=floor(cq.y); vec2 cc=vec2(cq.x+.5*mod(row,2.),cq.y); vec2 id=floor(cc),f=fract(cc)-.5;
+      float r1=h21(id),r2=h21(id+7.3),r3=h21(id+2.9);
+      vec2 hs=vec2(.40+.07*r1,.38+.08*r2); vec2 e=abs(f+(vec2(r1,r2)-.5)*.08)-hs+.13;
+      float sdf=length(max(e,0.))+min(max(e.x,e.y),0.)-.13;
+      float inside=smoothstep(.025,-.03,sdf), dome=smoothstep(-.02,-.2,sdf);
+      vec3 sc=uGc2*(.7+.6*r1); sc=mix(sc,sc*vec3(1.12,.96,.82),r3*.7); sc*=.8+.3*dome+.12*(fbm(cc*6.)-.5);
+      vec3 st=mix(uGc2*vec3(.24,.26,.22),sc,inside);
+      st=mix(uGc2*.62,st,smoothstep(60.,9.,k));                                              // xa thì hòa về màu trung bình (chống nhiễu)
+      g=mix(sur,st,pm);
+      g=mix(g,sur*.55,smoothstep(w+.55,w+.2,dx)*smoothstep(w-.05,w+.2,dx)*.45);             // viền đất ẩm
+    } else {                           // đường sỏi (hai lớp hạt sỏi, vệt bánh xe, sỏi văng ven đường)
+      float cxp=(sin(p.y*.11)*2.2+sin(p.y*.04+1.)*3.)*uPCurve, dx=abs(p.x-cxp), w=uPW*(1.+.2*sin(p.y*.3));
+      vec3 sur=uBot*(.75+.5*nz)*(.92+.16*fbm(q*5.*uGDens));
+      float pm=smoothstep(w+.4,w-.25,dx+(nz-.5)*.7), lod=smoothstep(55.,8.,k);
+      vec3 base=uGc2, gv=base*(.62+.3*fbm(p*2.));
+      for(int li=0;li<2;li++){
+        float fl2=float(li); vec2 s2=p*(li==0?5.:11.)*uGDens/uGSize; vec2 id=floor(s2),f=fract(s2);
+        for(int j=-1;j<=1;j++)for(int i2=-1;i2<=1;i2++){
+          vec2 g2=vec2(float(i2),float(j)); vec2 o=vec2(h21(id+g2+fl2*13.),h21(id+g2+3.1+fl2*13.)); vec2 r=g2+o-f;
+          float rad=.3+.2*h21(id+g2+9.+fl2*13.), dd=length(r)/rad;
+          if(dd<1.){ float sh=1.-dd*dd; vec3 pc=base*(.45+1.*h21(id+g2+5.)); pc=mix(pc,pc*vec3(1.1,.95,.8),h21(id+g2+1.2)); pc*=.65+.55*sh+.15*(r.x-r.y); gv=mix(gv,pc,smoothstep(1.,.88,dd)); }
+        }
+      }
+      gv=mix(base*.7,gv,lod*.85+.15);
+      gv*=1.-.12*smoothstep(.2,0.,abs(dx-w*.42));                                            // hai vệt bánh xe
+      g=mix(sur,gv,pm);
+      float sc2=step(.93,h21(floor(q*9.*uGDens)))*smoothstep(w+1.2,w+.2,dx)*(1.-pm)*lod;    // sỏi văng ra ven đường
+      g=mix(g,base*(.7+.4*h21(floor(q*9.))),sc2*.8);
     }
     g*=.9+.2*sd;
     col=mix(col,mix(g,uHor,smoothstep(10.,uGFar,k)),smoothstep(-.0005,-.006,h));
@@ -185,6 +260,16 @@ void main(){
     vec3 cc=mix(uBot*.9,mix(vec3(1.),uHor,.25)*(.88+.3*pow(sd,2.)),cm);
     cc=mix(uHor,cc,smoothstep(0.,.1,hh));
     col=mix(col,cc,smoothstep(.03,-.03,h)*uSea);
+  }
+  if(uAurora>0.&&h>.03){               // cực quang: ba tấm rèm sáng uốn lượn
+    float az=atan(d.z,d.x); vec3 au=vec3(0.);
+    for(int i=0;i<3;i++){ float fi=float(i);
+      float y0=.2+.13*fi+.05*sin(az*(2.+fi)+uT*.12*(1.+fi*.4))+.03*sin(az*7.+uT*.2+fi*3.);
+      float v=smoothstep(y0-.015,y0,h)*exp(-(h-y0)*9.);
+      float rv=.5+.5*sin(az*(24.+8.*fi)+uT*.5+fbm(vec2(az*3.+fi,uT*.05))*6.);
+      au+=mix(vec3(.15,1.,.55),vec3(.6,.3,1.),clamp((h-y0)*5.,0.,1.))*v*rv*(.62-.14*fi);
+    }
+    col+=au*uAurora*smoothstep(.03,.15,h);
   }
   if(uStars>0.&&h>-.05){
     vec3 p=d*95.,ip=floor(p),f=fract(p)-.5; float r=h21(ip.xy+ip.z*13.7);
@@ -353,6 +438,7 @@ export function createEnvEngine(scene, camera, renderer) {
 
   /* --- bầu trời môi trường --- */
   const U = {uTop: {value: C('#2f7fe0')}, uHor: {value: C('#cfe6ff')}, uBot: {value: C('#7d8f6a')}, uSunC: {value: C('#fff4e0')}, uSunD: {value: new THREE.Vector3(0, 1, 0)}, uT: {value: 0}, uSun: {value: 0}, uStars: {value: 0}, uClouds: {value: 0}, uRays: {value: 0}, uCanopy: {value: 0}, uRayC: {value: C('#bff5ff')}, uDunes: {value: 0}, uSea: {value: 0}, uGnd: {value: 0}, uHills: {value: 0}, uBld: {value: 0}, uGDens: {value: 1}, uGSize: {value: 1}, uFDens: {value: .035}, uPW: {value: 1.15}, uPCurve: {value: 1}, uGFar: {value: 90}, uGH: {value: 1.3}, uBDens: {value: 22}, uGc2: {value: C('#c9a86a')}, uFogC: {value: new THREE.Color(1, 1, 1)}, uFogK: {value: 0}};
+  Object.assign(U, {uWDist: {value: 24}, uWater: {value: 1}, uBergs: {value: 0}, uAurora: {value: 0}, uCam: {value: new THREE.Vector2()}});
   const dome = new THREE.Mesh(new THREE.SphereGeometry(100, 48, 24), new THREE.ShaderMaterial({uniforms: U, vertexShader: 'varying vec3 vD; void main(){ vD=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }', fragmentShader: DOME_FS, side: THREE.BackSide, depthTest: false, depthWrite: false, fog: false}));
   dome.renderOrder = -1001; dome.frustumCulled = false; dome.visible = false; dome.name = 'env_dome';
 
@@ -367,6 +453,7 @@ export function createEnvEngine(scene, camera, renderer) {
   const flatM = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({uniforms: FU, vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }', fragmentShader: FLAT_FS, depthTest: false, depthWrite: false, fog: false}));
   flatM.renderOrder = -1001; flatM.frustumCulled = false; flatM.visible = true; flatM.name = 'env_flat';
   scene.add(dome, panoM, flatM);
+  const scat = createScatter(scene);
 
   /* --- hậu kỳ --- */
   const PU = {tMap: {value: null}, uT: {value: 0}, uAmp: {value: 0}, uType: {value: 0}, uGlow: {value: 0}, uAsp: {value: 1}, uRes: {value: new THREE.Vector2(1, 1)}};
@@ -374,7 +461,7 @@ export function createEnvEngine(scene, camera, renderer) {
   const postScene = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), pq = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat); pq.frustumCulled = false; postScene.add(pq);
   let rt = null; const v2 = new THREE.Vector2();
 
-  const S = {post: false, vid: null, vidT: -1}, L = {h: null, d: null}, cache = new Map(), ibl = {url: '', rt: null, pm: null};
+  const S = {post: false, vid: null, vidT: -1, anchor: false, gh: 1.3}, L = {h: null, d: null}, cache = new Map(), ibl = {url: '', rt: null, pm: null};
   let room = null, roomKey = '', last = null, dirty = false, vtex = {el: null, tex: null};
 
   const load = url => {
@@ -421,6 +508,7 @@ export function createEnvEngine(scene, camera, renderer) {
         const el = P.el * DEG, az = P.az * DEG; U.uSunD.value.set(Math.cos(el) * Math.cos(az), Math.sin(el), -Math.cos(el) * Math.sin(az));
         U.uSun.value = P.sun; U.uStars.value = P.stars; U.uClouds.value = P.clouds; U.uRays.value = P.rays; U.uCanopy.value = P.canopy; U.uRayC.value.set(P.rc); U.uDunes.value = P.dunes; U.uSea.value = P.sea; U.uGnd.value = P.gnd; U.uHills.value = P.hills; U.uBld.value = P.bld; U.uGc2.value.set(P.gc2);
         U.uGDens.value = P.gdens; U.uGSize.value = P.gsize; U.uFDens.value = P.fdens; U.uPW.value = P.pw; U.uPCurve.value = P.pcurve; U.uGFar.value = P.gfar; U.uGH.value = P.gh; U.uBDens.value = P.bdens;
+        U.uWDist.value = P.wdist; U.uWater.value = P.water; U.uBergs.value = P.bergs; U.uAurora.value = P.aurora; S.anchor = !!(P.anchor && P.gnd); S.gh = P.gh;
         U.uFogK.value = K; U.uFogC.value.copy(fogC);
       }
 
@@ -466,11 +554,17 @@ export function createEnvEngine(scene, camera, renderer) {
           if (P.sl && !P.room) L.d.position.copy(U.uSunD.value).multiplyScalar(10); else L.d.position.copy(L.dp);
         } else restoreLights();
       }
+      /* lớp rải (cỏ, hoa, bụi, đá, băng trôi, mô hình thư viện…) */
+      scat.update(isEnv && !P.room ? P.layers : [], P, t, {visible: isEnv && !P.room, actors: ctx.actors, wind: ctx.wind, getModel: ctx.getModel, refresh: () => { dirty = true; }});
     },
+    /** Chờ các mô hình thư viện của lớp rải tải xong (xuất video). */
+    settle: () => scat.settle(),
+    layerStats: () => scat.stats(),
     /** Thay cho renderer.render: nền → cảnh → hậu kỳ → lớp phủ màn hình (fxEngine.overlay). */
     render(r, sc, cam, fxe) {
       if (dirty && last) { dirty = false; api.update(...last); }
       dome.position.copy(cam.position); panoM.position.copy(cam.position);
+      if (S.anchor) { U.uGH.value = Math.max(.12, cam.position.y); U.uCam.value.set(cam.position.x, cam.position.z); } else { U.uGH.value = S.gh; U.uCam.value.set(0, 0); }
       r.getDrawingBufferSize(v2); FU.uAsp.value = v2.x / Math.max(1, v2.y);
       if (S.vid && vtex.el && vtex.el.currentTime !== S.vidT) { S.vidT = vtex.el.currentTime; S.vid.needsUpdate = true; }
       if (!S.post) r.render(sc, cam);
@@ -483,7 +577,7 @@ export function createEnvEngine(scene, camera, renderer) {
       if (fxe && fxe.overlay) fxe.overlay(r);
     },
     dispose() {
-      if (room) disposeGroup(room);
+      scat.dispose(); if (room) disposeGroup(room);
       for (const m of [dome, panoM, flatM]) { m.geometry.dispose(); m.material.dispose(); m.removeFromParent(); }
       if (rt) rt.dispose(); if (vtex.tex) vtex.tex.dispose(); if (ibl.rt) ibl.rt.dispose();
       for (const o of cache.values()) if (o.tex) o.tex.dispose();
