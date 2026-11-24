@@ -3,7 +3,7 @@
   "id": "mina-mwu7iczd",
   "name": "mina",
   "base": "g1test.character.json",
-  "updatedAt": "2026-11-24T04:40:44.090Z",
+  "updatedAt": "2026-11-24T04:40:55.619Z",
   "items": [
     {
       "id": "g0z8t236",
@@ -53,7 +53,51 @@
       ]
     }
   ],
-  "expressions": [],
+  "expressions": [
+    {
+      "id": "vui-mwu7fjgb",
+      "name": "nhắm mắt",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "blink_down_left": {
+          "keys": [
+            {
+              "t": 1,
+              "v": 0
+            },
+            {
+              "t": 1.72,
+              "v": 0.77
+            },
+            {
+              "t": 2.75,
+              "v": 0
+            }
+          ]
+        },
+        "blink_down_right": {
+          "keys": [
+            {
+              "t": 1,
+              "v": 0
+            },
+            {
+              "t": 1.72,
+              "v": 0.88
+            },
+            {
+              "t": 2.75,
+              "v": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
   "face": {
     "y": 0.45,
     "z": 0.5,
