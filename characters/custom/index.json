@@ -1,1 +1,15 @@
-{"version":1,"characters":[]}
+{
+  "version": 1,
+  "characters": [
+    {
+      "id": "mina-mwu7iczd",
+      "name": "mina",
+      "base": "g1test.character.json",
+      "items": 1,
+      "expressions": 0,
+      "dataPath": "characters/custom/mina-mwu7iczd.json",
+      "thumbnail": "./characters/custom/thumbs/mina-mwu7iczd.png",
+      "updatedAt": "2026-11-24T04:40:44.090Z"
+    }
+  ]
+}
