@@ -46,3 +46,18 @@ Trang Custom → chọn một món → tick "🧵 Vật lý vải (áp dụng c�
 - Gọi trong code: `K.stepPhysics(dt)` mỗi khung hình sau khi cập nhật animation (custom.html, studio.html đã gọi).
 
 File thay đổi: js/cloth-physics.js (MỚI), js/character-kit.js, custom.html, studio.html.
+
+## Vật lý tóc và đuôi
+Dùng chung ô "🧵 Vật lý vải / tóc / đuôi" ở trang Custom. Bộ thuộc danh mục **Tóc** hoặc **Đuôi** tự dùng kiểu **Chuỗi**; muốn dùng cho dải / dây / khăn dài ở danh mục khác thì chọn "Kiểu mô phỏng → Chuỗi". Thông số lưu theo bộ (`phys` trong json nhân vật, thêm `mode`, `sway`, `flip`), studio.html tự chạy, kể cả lúc xuất video.
+- Đồ CỨNG (tóc đuôi ngựa, tóc dài, đuôi mèo / cáo / quỷ, hoặc file nhập không skin): tìm trục dài của mesh, đặt chuỗi 10 hạt dọc trục đó. Đầu gần xương gắn hơn là GỐC (ghim cứng), ngọn mềm dần; mỗi đỉnh được xoay + dời theo hạt gần nó trong vertex shader nên mesh nặng vẫn mượt. Độ dài chuỗi không giãn.
+- Va chạm với đầu, cổ, thân, tay, hông và chân (tóc không xuyên vai / lưng, đuôi không xuyên đùi).
+- **Vẫy / bay nhẹ tự nhiên**: lực ngang theo sin (đuôi ~1,3 Hz, tóc ~0,7 Hz) để đuôi vẫy, tóc đung đưa kể cả khi nhân vật đứng yên. Mặc định 0%.
+- **Đảo đầu gốc**: đồ nhập từ file có thể bị ghim nhầm đầu (tóc buộc vào ngọn thay vì chân tóc) → bấm để đổi.
+- Mảnh quá tròn / ngắn (mũ tóc ôm đầu, đuôi thỏ pompom) tự đứng yên, giao diện có ghi chú.
+- Đồ SKIN có xương riêng (xương tóc, xương đuôi): spring-bone như cũ nhưng ngọn mềm hơn gốc, có va chạm đầu / thân / tay và vẫy tự nhiên. Đồ skin không có xương riêng chưa mô phỏng được: thêm chuỗi xương tóc / đuôi trong Blender rồi xuất lại.
+- Mặc định cho tóc / đuôi: Độ cứng 30%, Cản gió 6%, Biên độ 50 cm (kiểu Lưới vải giữ mặc định cũ). Đổi kiểu mô phỏng thì thông số về mặc định của kiểu mới.
+- Bóng đổ và chọn bằng chuột vẫn theo dáng gốc; pháp tuyến chưa uốn theo nên khi vẫy mạnh ánh sáng hơi phẳng.
+- Kéo thanh thời gian / đổi cảnh nhảy xa → tóc và đuôi tự đặt lại. Gọi trong code vẫn là `K.stepPhysics(dt)` mỗi khung hình.
+- Kiểm thử lõi mô phỏng (không cần trình duyệt): `node tests/strand-core.test.mjs`.
+
+File thay đổi: js/strand-core.js (MỚI), js/cloth-physics.js, js/character-kit.js, custom.html, tests/strand-core.test.mjs (MỚI). studio.html không cần sửa.
