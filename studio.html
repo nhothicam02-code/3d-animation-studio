@@ -53,6 +53,7 @@ import * as M from './js/model-loader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {clone as skClone} from 'three/addons/utils/SkeletonUtils.js';
 import * as K from './js/character-kit.js';
+import * as FR from './js/face-runtime.js';
 const $=id=>document.getElementById(id),KEY='3dis.projects',LW=130,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').toLowerCase().replace(/^.*:/,'').replace(/^mixamorig/,'').replace(/[^a-z0-9]/g,'');
 const groups={hips:['pelvis','hip'],spine:['spine0','spine01'],spine1:['spine02','chest'],spine2:['spine03','upperchest'],neck:['neck1'],headTop:['headtopend'],lSho:['leftshoulder','leftclavicle','lshoulder','lclavicle'],rSho:['rightshoulder','rightclavicle','rshoulder','rclavicle'],lArm:['leftarm','leftupperarm','lupperarm','larm'],rArm:['rightarm','rightupperarm','rupperarm','rarm'],lFore:['leftforearm','leftlowerarm','lforearm','llowerarm'],rFore:['rightforearm','rightlowerarm','rforearm','rlowerarm'],lHand:['lefthand','lhand'],rHand:['righthand','rhand'],lUp:['leftupleg','leftthigh','leftupperleg','lthigh','lupleg','lupperleg'],rUp:['rightupleg','rightthigh','rightupperleg','rthigh','rupleg','rupperleg'],lLeg:['leftleg','leftlowerleg','leftcalf','leftshin','lcalf','lshin','llowerleg'],rLeg:['rightleg','rightlowerleg','rightcalf','rightshin','rcalf','rshin','rlowerleg'],lFoot:['leftfoot','lfoot'],rFoot:['rightfoot','rfoot']};
@@ -185,17 +186,18 @@ async function dressCustom(o,ch,mats,my){
   const rt=K.mountPiece(g,p,rig);
   if(!rt){warn.push((g.name||'đồ')+' › '+(p.label||p.part)+': không gắn được vào xương');continue}
   rt.content.traverse(n=>{if(n.isMesh&&n.material)mats.push(...[].concat(n.material))})}   // để chỉnh độ mờ cả đồ
+ try{const fx=FR.createFaceRuntime({model:o,wrap,rig,doc});if(fx){res.fx=fx;res.exs=fx.list}}catch(e){warn.push('Biểu cảm Custom: '+e.message)}
  return res}
 async function addRt(ch,my){const o=skClone(await getF(ch.file));if(my!==tok)return;const mats=[];o.traverse(n=>{if(n.material){n.material=Array.isArray(n.material)?n.material.map(m=>m.clone()):n.material.clone();mats.push(...[].concat(n.material))}});
- let w=null,ver='';
- if(ch.custom){try{const d=await dressCustom(o,ch,mats,my);w=d.wrap;ver=d.ver;if(d.warn.length)say('⚠ '+ch.name+': '+d.warn.join(' · '))}catch(e){say('Lỗi nhân vật Custom “'+ch.name+'”: '+e.message+' — đang dùng nhân vật gốc.')}}
+ let w=null,ver='',fx=null,exs=null;
+ if(ch.custom){try{const d=await dressCustom(o,ch,mats,my);w=d.wrap;ver=d.ver;fx=d.fx||null;exs=d.exs||null;if(d.warn.length)say('⚠ '+ch.name+': '+d.warn.join(' · '))}catch(e){say('Lỗi nhân vật Custom “'+ch.name+'”: '+e.message+' — đang dùng nhân vật gốc.')}}
  if(my!==tok)return;
  const g=new THREE.Group();let fit;
  if(w){g.add(w);fit=1.7/1.8}
  else{const bx=new THREE.Box3().setFromObject(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());o.position.set(-c.x,-bx.min.y,-c.z);g.add(o);fit=1.7/Math.max(sz.y,.001)}
- tscene.add(g);R[ch.id]={g,o,w,ver,mats,fit,mx:new THREE.AnimationMixer(o),cur:'~',clips:{}};place(ch);faceInit(R[ch.id])}
-async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;say(s.chars.length||s.props.length?'Đang tải cảnh…':'Thêm nhân vật ở tab “Nhân vật”, mô hình ở tab “Bối cảnh”.');
- await Promise.all([...s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')})),...s.props.map(pr=>addProp(pr,my).catch(e=>{err=1;say('Lỗi mô hình “'+pr.name+'”: '+e.message)}))]);if(my!==tok)return;busy=false;if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&(s.chars.length||s.props.length))say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
+ tscene.add(g);R[ch.id]={g,o,w,ver,mats,fit,fx,exs,mx:new THREE.AnimationMixer(o),cur:'~',clips:{}};place(ch);faceInit(R[ch.id])}
+async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){if(R[k].fx)R[k].fx.dispose();tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;say(s.chars.length||s.props.length?'Đang tải cảnh…':'Thêm nhân vật ở tab “Nhân vật”, mô hình ở tab “Bối cảnh”.');
+ await Promise.all([...s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')})),...s.props.map(pr=>addProp(pr,my).catch(e=>{err=1;say('Lỗi mô hình “'+pr.name+'”: '+e.message)}))]);if(my!==tok)return;busy=false;for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx)rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&(s.chars.length||s.props.length))say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
 async function getClip(r,id){if(id in r.clips)return r.clips[id];const e=manifest.animations.find(x=>x.id===id);r.clips[id]=null;if(!e)return null;try{const d=jc[id]||(jc[id]=await(await fetch('./'+e.dataPath)).json()),s0=r.g.scale.clone(),q0=r.g.quaternion.clone(),w0=r.w&&{p:r.w.position.clone(),q:r.w.quaternion.clone(),s:r.w.scale.clone()};r.g.scale.setScalar(1);r.g.quaternion.identity();if(r.w){r.w.position.set(0,0,0);r.w.quaternion.identity();r.w.scale.setScalar(1)}r.g.updateMatrixWorld(true);let m;try{m=mapClip(THREE.AnimationClip.parse(d.clip),r.o)}finally{r.g.scale.copy(s0);r.g.quaternion.copy(q0);if(w0){r.w.position.copy(w0.p);r.w.quaternion.copy(w0.q);r.w.scale.copy(w0.s)}r.g.updateMatrixWorld(true)}r.clips[id]=m.clip.tracks.length?m.clip:null}catch{}return r.clips[id]}
 async function apply(){if(!P)return;const s=sc(),tt=Math.floor(t*P.fmt.fps+1e-6)/P.fmt.fps;kfApply(s,tt);lightsSync(s);
  for(const ch of s.chars){const r=R[ch.id];if(!r)continue;const top=ch.clips.filter(c=>c.clip&&c.start<=tt+1e-6).sort((a,b)=>b.start-a.start)[0],key=top?top.id+top.clip:'';
@@ -286,7 +288,8 @@ function remove(){const l=loc();if(!l)return;l.list.splice(l.list.indexOf(l.it),
 
 /* ---------- Timeline (track không giới hạn) ---------- */
 const cname=id=>(manifest.animations.find(x=>x.id===id)||{name:'(chưa chọn)'}).name,onc=id=>sel&&sel.id===id?' on':'';
-function blk(it,isClip){const ty=isClip?'clip':it.type,l=isClip?cname(it.clip):it.type==='bg'?it.color:it.type==='face'?(EXL[it.expr]||'Biểu cảm'):it.text||it.name||(it.url||'').split('/').pop()||ty;return '<div class="blk k-'+ty+onc(it.id)+'" data-id="'+it.id+'" style="left:'+it.start*pps+'px;width:'+Math.max(it.dur*pps,14)+'px">'+ICON[ty]+' '+esc(l)+'<i class="rs"></i></div>'}
+function cxName(it){const r=R[it.ch],e=r&&r.exs&&r.exs.find(x=>'c:'+x.id===it.expr);return e?'✦ '+(e.name||e.id):''}
+function blk(it,isClip){const ty=isClip?'clip':it.type,l=isClip?cname(it.clip):it.type==='bg'?it.color:it.type==='face'?(EXL[it.expr]||cxName(it)||'Biểu cảm'):it.text||it.name||(it.url||'').split('/').pop()||ty;return '<div class="blk k-'+ty+onc(it.id)+'" data-id="'+it.id+'" style="left:'+it.start*pps+'px;width:'+Math.max(it.dur*pps,14)+'px">'+ICON[ty]+' '+esc(l)+'<i class="rs"></i></div>'}
 function renderTL(){if(!P)return;if(TLV==='kf')return renderKF();const s=sc(),W=Math.max(s.duration,1)*pps,st=pps>=100?.5:pps>=40?1:5,ln=(a,x)=>'<div class="lane" data-seek '+a+' style="width:'+W+'px">'+x+'</div>';let tk='';for(let i=0;i<=s.duration;i+=st)tk+='<span style="left:'+i*pps+'px">'+fmt(i)+'</span>';
  let h='<div class="tlc" style="width:'+(W+LW+40)+'px"><div class="row rul"><div class="lab"></div>'+ln('',tk)+'</div>';
  h+=s.chars.map(ch=>'<div class="row"><div class="lab'+onc(ch.id)+'" data-char="'+ch.id+'"><span>🧍 '+esc(ch.name)+'</span></div>'+ln('',ch.clips.map(c=>blk(c,1)).join(''))+'</div>').join('');
@@ -487,7 +490,7 @@ function field(k,l,ty,v){const a='data-k="'+k+'" ',g=x=>'<label>'+l+'</label>'+x
  if(ty==='chsel')return g('<select '+a+'><option value="">— không —</option>'+sc().chars.map(c=>'<option value="'+c.id+'"'+(c.id===v?' selected':'')+'>'+esc(c.name||c.file||'Nhân vật')+'</option>').join('')+'</select>');
  if(ty==='ltype')return g('<select '+a+'>'+LTY.map(([k,n])=>'<option value="'+k+'"'+(k===v?' selected':'')+'>'+n+'</option>').join('')+'</select>');
  if(ty==='rl'){const lt=(cur()||{}).lt,mx=lt==='point'||lt==='spot'?200:10;l+=' <b data-v="'+k+'" style="color:var(--text)">'+r2(+(v??1))+'</b>';return g('<input '+a+'type="range" min="0" max="'+mx+'" step="'+mx/200+'" value="'+esc(v)+'">')}
- if(ty==='expr')return g('<select '+a+'>'+EXS.map(([k,n])=>'<option value="'+k+'"'+(k===v?' selected':'')+'>'+n+'</option>').join('')+'</select>');
+ if(ty==='expr'){const it=cur(),rr=it&&R[it.ch],cx=(rr&&rr.exs)||[];return g('<select '+a+'>'+EXS.map(([k,n])=>'<option value="'+k+'"'+(k===v?' selected':'')+'>'+n+'</option>').join('')+(cx.length?'<optgroup label="Biểu cảm của nhân vật (Custom)">'+cx.map(e=>'<option value="c:'+esc(e.id)+'"'+('c:'+e.id===v?' selected':'')+'>'+esc(e.name||e.id)+'</option>').join('')+'</optgroup>':'')+'</select>')}
  if(ty==='lang')return g('<select '+a+'>'+LANGS.map(([c,n])=>'<option value="'+c+'"'+(c===langOf(cur())?' selected':'')+'>'+n+'</option>').join('')+'</select>');
  if(ty==='voice'){const it=cur(),L=langOf(it),cv=voiceOf(it);return g('<select '+a+'>'+VOICES.map(([gl,ls])=>[gl,ls.filter(([id])=>vlang(id)===L)]).filter(x=>x[1].length).map(([gl,ls])=>'<optgroup label="'+gl+'">'+ls.map(([id,nm])=>'<option value="'+id+'"'+(id===cv?' selected':'')+'>'+nm+'</option>').join('')+'</optgroup>').join('')+'</select>')}
  if(ty==='r'||ty==='r2')l+=' <b data-v="'+k+'" style="color:var(--text)">'+r2(+(v??1))+'</b>';return g('<input '+a+'type="'+({n:'number',c:'color',r:'range',r2:'range',t:'text'}[ty])+'"'+(ty==='n'?' step="any"':ty==='r'?' min="0" max="1" step="0.01"':ty==='r2'?' min="0.5" max="2" step="0.05"':'')+' value="'+esc(v)+'">')}
@@ -542,7 +545,7 @@ $('panel').oninput=e=>{const el=e.target,d=el.dataset,s=sc();
  if(d.lq){LS[d.lq].q=el.value;LS[d.lq].p=0;const p=el.selectionStart;renderPanel();const n=document.querySelector('[data-lq="'+d.lq+'"]');if(n){n.focus();n.setSelectionRange(p,p)}return}
  if(d.lcat){LS[d.lcat].c=el.value;LS[d.lcat].p=0;renderPanel();return}
  if(el.type==='number'&&el.value==='')return;const v=el.type==='checkbox'?el.checked:el.type==='number'||el.type==='range'?+el.value:el.value;
- if(d.k){const it=cur(),ty=stype();if(!it)return;if(['sx','sy','sz'].includes(d.k)&&it.lock&&it[d.k]>0&&v>0){const k=v/it[d.k];for(const a of['sx','sy','sz'])if(a!==d.k&&it[a]!==undefined)it[a]=Math.round(it[a]*k*1000)/1000}it[d.k]=v;if(d.k==='lt'){Object.assign(it,{distance:0,decay:2,angle:35,penumbra:.4},LDEF[v]);setTimeout(renderPanel,0)}if(d.k==='lang'){it.voice=DEFV[v]||DEFV.vi;setTimeout(renderPanel,0)}if(ty==='clip'&&d.k==='clip'){const a=manifest.animations.find(x=>x.id===v);if(a)it.dur=r2(a.duration);const l=loc();if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~'}if(ty==='char'||ty==='prop')place(it);
+ if(d.k){const it=cur(),ty=stype();if(!it)return;if(['sx','sy','sz'].includes(d.k)&&it.lock&&it[d.k]>0&&v>0){const k=v/it[d.k];for(const a of['sx','sy','sz'])if(a!==d.k&&it[a]!==undefined)it[a]=Math.round(it[a]*k*1000)/1000}it[d.k]=v;if(d.k==='lt'){Object.assign(it,{distance:0,decay:2,angle:35,penumbra:.4},LDEF[v]);setTimeout(renderPanel,0)}if(d.k==='lang'){it.voice=DEFV[v]||DEFV.vi;setTimeout(renderPanel,0)}if(d.k==='ch'&&it.type==='face'){const rr=R[v];if(FR.isCx(it.expr)&&!(rr&&rr.exs&&rr.exs.some(e=>e.id===FR.cxId(it.expr))))it.expr='happy';setTimeout(renderPanel,0)}if(ty==='clip'&&d.k==='clip'){const a=manifest.animations.find(x=>x.id===v);if(a)it.dur=r2(a.duration);const l=loc();if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~'}if(ty==='char'||ty==='prop')place(it);
   if((it.start||0)+(it.dur||0)>s.duration)s.duration=Math.ceil((it.start||0)+it.dur);if(['start','dur','text','name','color','clip','who','expr','ch'].includes(d.k))renderTL();if(ty==='char'&&d.k==='name')renderTL();if(KALL.includes(d.k))autoKey(it);renderOv();apply();touchSoon();sync()}
  if(d.sc){s[d.sc]=v;if(d.sc==='name')renderStrip();if(['duration','bg','bg2','bga','bgt','bgfit','bgz','bgx','bgy'].includes(d.sc)){renderTL();apply()}if(d.sc==='bgt')renderPanel();touchSoon()}
  if(d.pj){P[d.pj]=v;if(d.pj==='name')$('pn').textContent=v;touchSoon()}
@@ -618,6 +621,7 @@ async function exportVideo(fmt,onP){
  EXP=true;pause();busy=true;renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();
  try{await Promise.all(FONTS.map(x=>document.fonts.load('40px "'+x+'"').catch(()=>{})));let n=0;
   for(let k=0;k<P.scenes.length;k++){si=k;await loadScene();busy=true;const s=P.scenes[k];
+   for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx){onP(0,'Tải ảnh biểu cảm…');await rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}}
    for(let j=0;j<nF[k];j++){if(XC)throw Error('Đã huỷ xuất.');if(ERR)throw ERR;
     t=j/fps;await apply();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;renderer.render(tscene,camera);await compose(c,s,t,W,H);
     while(ve.encodeQueueSize>6)await new Promise(r=>setTimeout(r,4));
@@ -649,17 +653,20 @@ function drawFace(c,F){const g=c.getContext('2d'),eo=Math.max(0,Math.min(1.3,F.e
   const by=y-42-F.brow*14,dn=Math.max(0,-F.brow);g.strokeStyle='#2a1a14';g.lineWidth=9;g.beginPath();g.moveTo(128+sx*22,by+dn*18);g.lineTo(128+sx*80,by-dn*4);g.stroke()}
  const s=F.smile,o=Math.max(0,F.open),w=62,y0=190-s*12;g.lineWidth=8;g.strokeStyle='#5a1c1c';g.beginPath();g.moveTo(128-w,y0);
  if(o>.06){g.quadraticCurveTo(128,190+s*36-o*4,128+w,y0);g.quadraticCurveTo(128,190+o*70+Math.max(0,s)*14,128-w,y0);g.fillStyle='#7a2a2a';g.fill()}else g.quadraticCurveTo(128,190+s*36,128+w,y0);g.stroke()}
-function faceApply(s,tt){const all=s.tracks.flatMap(tr=>tr.items),fs=all.filter(x=>x.type==='face'),sp=all.filter(x=>x.type==='tts'&&x.ch&&x.lip!==false);
- for(const ch of s.chars){const r=R[ch.id];if(!r||!(r.hd||(r.mm&&r.mm.length)))continue;const mine=fs.filter(x=>x.ch===ch.id),spk=sp.filter(x=>x.ch===ch.id);if(!mine.length&&!spk.length&&!r.fa)continue;
+function faceApply(s,tt){const all=s.tracks.flatMap(tr=>tr.items),fall=all.filter(x=>x.type==='face'),fs=fall.filter(x=>!FR.isCx(x.expr)),fc=fall.filter(x=>FR.isCx(x.expr)),sp=all.filter(x=>x.type==='tts'&&x.ch&&x.lip!==false);
+ for(const ch of s.chars){const r=R[ch.id];let hasC=false;
+  if(r&&r.fx){const cx=fc.find(x=>x.ch===ch.id&&tt>=x.start&&tt<x.start+x.dur&&r.fx.has(FR.cxId(x.expr)));
+   if(cx){const k=tt-cx.start,rp=Math.min(.2,cx.dur/3),w=Math.max(0,Math.min(1,k/rp,(cx.dur-k)/rp));hasC=true;r.fx.apply(r.fx.get(FR.cxId(cx.expr)),k,Math.min(1,w*(+cx.amt||1)))}else r.fx.apply(null)}
+  if(!r||!(r.hd||(r.mm&&r.mm.length)))continue;const mine=fs.filter(x=>x.ch===ch.id),spk=sp.filter(x=>x.ch===ch.id);if(!mine.length&&!spk.length&&!r.fa)continue;
   const F={smile:0,open:0,brow:0,eye:1,hp:0,hy:0,hr:0};
   for(const x of mine){if(tt<x.start||tt>=x.start+x.dur)continue;const k=tt-x.start,rp=Math.min(.2,x.dur/3),w=(+x.amt||1)*Math.max(0,Math.min(1,k/rp,(x.dur-k)/rp)),p=(PRE[x.expr]||PRE.neutral)(k);for(const key in F)F[key]+=(p[key]||0)*w}
   for(const x of spk){if(tt<x.start||tt>=x.start+x.dur)continue;const u=srcOf(x);if(u)F.open+=Math.min(1,envAt(u,(tt-x.start)*eff(x))*1.5)*.9}
   const any=mine.length||spk.length;if(any){const ph=tt%3.7;if(ph<.14)F.eye*=1-Math.sin(Math.PI*ph/.14)}r.fa=!!any;
   if(r.hd){r.g.updateMatrixWorld(true);if(!r.act)r.hd.quaternion.copy(r.hq0);
    if(F.hp||F.hy||F.hr){const Q=new THREE.Quaternion().setFromEuler(new THREE.Euler(F.hp,F.hy,F.hr,'YXZ')),P=r.g.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(r.hd.parent.getWorldQuaternion(new THREE.Quaternion()));r.hd.quaternion.premultiply(P.clone().invert().multiply(Q).multiply(P))}}
-  if(r.mm.length){const mv=(ns,v)=>{for(const m of r.mm)for(const n of ns){const i=m.morphTargetDictionary[n];if(i!==undefined)m.morphTargetInfluences[i]=Math.max(0,Math.min(1,v))}};
+  if(r.mm.length&&!hasC){const mv=(ns,v)=>{for(const m of r.mm)for(const n of ns){const i=m.morphTargetDictionary[n];if(i!==undefined)m.morphTargetInfluences[i]=Math.max(0,Math.min(1,v))}};
    mv(['mouthSmileLeft','mouthSmileRight','Happy','happy'],F.smile);mv(['mouthFrownLeft','mouthFrownRight','Sad','sad'],-F.smile);mv(['jawOpen','aa','mouthOpen','A'],F.open);mv(['browInnerUp','browOuterUpLeft','browOuterUpRight','Surprised'],F.brow);mv(['browDownLeft','browDownRight','Angry'],-F.brow);mv(['eyeBlinkLeft','eyeBlinkRight','Blink','blink'],1-F.eye);mv(['eyeWideLeft','eyeWideRight'],F.eye-1)}
-  const oi=mine.find(x=>x.ov!==false)||(spk.length?{}:null);
+  const oi=hasC?null:(mine.find(x=>x.ov!==false)||(spk.length?{}:null));
   if(r.hd&&oi&&!r.mm.length){if(!r.fo){const cv=document.createElement('canvas');cv.width=cv.height=256;r.fc=cv;const tx=new THREE.CanvasTexture(cv);tx.colorSpace=THREE.SRGBColorSpace;r.fo=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:tx,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));r.fo.renderOrder=20;r.g.add(r.fo)}
    const sg=[F.smile,F.open,F.brow,F.eye].map(v=>Math.round(v*30)).join();if(r.fs!==sg){r.fs=sg;drawFace(r.fc,F);r.fo.material.map.needsUpdate=true}
    r.hd.updateWorldMatrix(true,false);const d=relQ(r).multiply(r.qrel0.clone().invert()),hh=r.hh;

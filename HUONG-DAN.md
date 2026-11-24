@@ -70,3 +70,24 @@ Danh mục mới **Bao tay trái** (`gloveL`) và **Bao tay phải** (`gloveR`) 
 - Mỗi danh mục là một bộ riêng: đeo bao tay trái kiểu A, bao tay phải kiểu B được.
 
 File thay đổi: js/character-kit.js, custom.html.
+
+## Biểu cảm nhân vật Custom dùng được trong Studio (và khi xuất video)
+Biểu cảm làm ở trang Custom (texture ảnh PNG, texture nhiều lớp v2, keyshape / morph target) được lưu trong `characters/custom/<id>.json`
+ở trường `expressions`, cùng vị trí mặt trên đầu ở trường `face` ({y, z, s}). Studio đọc đúng hai trường này.
+
+### Cách dùng
+1. Trang **Custom**: chọn nhân vật, làm biểu cảm, bấm **Lưu biểu cảm** rồi **Lưu nhân vật** (bắt buộc lưu lại, nhân vật lưu từ bản cũ chưa có trường `expressions`).
+2. Trang **Studio**: thêm nhân vật Custom vào cảnh. Ở tab **Thuộc tính** thêm item **Biểu cảm**, chọn **Nhân vật**.
+3. Ô **Biểu cảm** sẽ có thêm nhóm **“Biểu cảm của nhân vật (Custom)”**. Chọn biểu cảm, kéo độ dài item trên timeline.
+   Khối trên timeline hiện tên biểu cảm kèm dấu ✦.
+4. **Cường độ** (`amt`) và hai đầu item (khoảng 0,2 giây) điều khiển vào / ra mượt: texture mờ dần, keyshape nhân theo cường độ.
+5. Xuất video: Studio tự tải trước toàn bộ ảnh của biểu cảm trong từng cảnh, nên không bị thiếu khung hình.
+
+### Ghi chú kỹ thuật
+- Module mới `js/face-runtime.js` (dùng lại `face-kit.js`): `createFaceRuntime({model, wrap, rig, doc})` trả về bộ chạy, `apply(biểuCảm, t, độĐậm)` mỗi khung hình.
+- Giá trị `expr` của item biểu cảm là `c:<id biểu cảm>` với biểu cảm Custom, và tên mẫu cũ (`happy`, `sad`, …) với biểu cảm dựng sẵn. Dự án cũ vẫn chạy bình thường.
+- Khi một biểu cảm Custom đang chạy trên nhân vật: bỏ mặt vẽ đơn giản của Studio và bỏ nhép miệng bằng morph của chính nhân vật đó, tránh hai hệ thống ghi đè nhau. Gật / lắc / nghiêng đầu vẫn dùng như cũ.
+- Biểu cảm chỉ lưu tên bộ ảnh (`set`, không có danh sách `frames`) cần đọc được thư mục `faces/` (API git-tree hoặc `faces/manifest.json`).
+- Nhép miệng theo giọng đọc (TTS) vẫn dùng hệ cũ của Studio, chưa tự chọn bộ miệng của biểu cảm Custom.
+
+File thay đổi: js/face-runtime.js (MỚI), studio.html.
