@@ -457,8 +457,46 @@ function mountSkinned(group, piece, rig, content, extra) {
   (rig.model || (rig.bones[0] && rig.bones[0].parent) || new THREE.Group()).add(holder);
   content.traverse(o => { if (o.isMesh) { o.userData.pieceUid = piece.uid; o.frustumCulled = false; } });
   piece._rt = {holder, center, offset, content, mats: [], tint, group, skinned: true, extra: extra || []};
+  // Trước đây đồ skin không chỉnh được nên piece.scale lưu autoScale (0.01 với file tính bằng cm). Với đồ skin, scale là hệ số so với bản gốc: 1 = nguyên bản.
+  const as = (piece._obj && piece._obj.userData && piece._obj.userData.autoScale) || 1;
+  if (as !== 1 && Math.abs(piece.scale - as) < 1e-9) piece.scale = 1;
   applyPiece(group, piece);
   return piece._rt;
+}
+const _skE = new THREE.Euler(), _skQ = new THREE.Quaternion(), _skP = new THREE.Vector3(), _skS = new THREE.Vector3(), _skA = new THREE.Matrix4(), _skB = new THREE.Matrix4();
+/** Các SkinnedMesh của đồ skin, bindMatrix gốc của từng mesh và tâm (pivot) hộp bao ở pose gốc. Tính một lần. */
+function skinParts(rt) {
+  if (rt.skinList) return rt.skinList;
+  const list = [], box = new THREE.Box3();
+  rt.content.traverse(o => {
+    if (!o.isSkinnedMesh) return;
+    const d = o.userData._skin, base = d ? d.bind.clone() : o.bindMatrix.clone();
+    const g = o.geometry;
+    if (g) { if (!g.boundingBox) g.computeBoundingBox(); if (g.boundingBox && !g.boundingBox.isEmpty()) box.union(g.boundingBox.clone().applyMatrix4(base)); }
+    list.push({mesh: o, base});
+  });
+  rt.skinList = list;
+  rt.pivot = box.isEmpty() ? new THREE.Vector3() : box.getCenter(new THREE.Vector3());
+  return list;
+}
+/**
+ * Dời/xoay/co giãn đồ skin: biến đổi đỉnh ở pose gốc TRƯỚC khi skin (bindMatrix' = T · bindMatrix) nên đồ vẫn chạy theo xương.
+ * T = tịnh tiến(pivot + pos) · xoay · co giãn · tịnh tiến(−pivot): xoay/co giãn quanh tâm của đồ, pos tính theo trục thế giới ở pose gốc (như đồ gắn cứng).
+ */
+function applySkinOffset(rt, piece) {
+  const list = skinParts(rt), pos = piece.pos || [0, 0, 0], rot = piece.rot || [0, 0, 0];
+  const k = Number.isFinite(piece.scale) && piece.scale > 0 ? piece.scale : 1;
+  const none = !pos[0] && !pos[1] && !pos[2] && !rot[0] && !rot[1] && !rot[2] && Math.abs(k - 1) < 1e-9;
+  if (!none) {
+    _skQ.setFromEuler(_skE.set(rot[0] * D2R, rot[1] * D2R, rot[2] * D2R));
+    _skP.set(pos[0], pos[1], pos[2]).add(rt.pivot);
+    _skA.compose(_skP, _skQ, _skS.setScalar(k));
+    _skA.multiply(_skB.makeTranslation(-rt.pivot.x, -rt.pivot.y, -rt.pivot.z));
+  }
+  for (const {mesh, base} of list) {
+    if (mesh.bindMode !== 'attached') continue;   // chế độ detached dùng nghịch đảo bindMatrix nên không áp được kiểu này
+    if (none) mesh.bindMatrix.copy(base); else mesh.bindMatrix.multiplyMatrices(_skA, base);
+  }
 }
 const PAIR_ANCHOR_MAX = 0.5;   // mét: nửa tách ra cách xương xa hơn mức này thì coi như file không cùng hệ trục với nhân vật
 /** Nửa trái/phải của piece.split, tính một lần cho mỗi _obj (nhớ trong piece._half). null nếu file không còn tách được. */
@@ -543,7 +581,8 @@ export function unmountPiece(piece) {
 export function applyPiece(group, piece) {
   const rt = piece._rt;
   if (!rt) return;
-  if (!rt.skinned) {   // đồ skin bám theo xương nên không dời/xoay/co giãn tay được
+  if (rt.skinned) applySkinOffset(rt, piece);   // đồ skin: chỉnh trên pose gốc trước khi skin
+  else {
     rt.offset.position.set(...piece.pos);
     rt.offset.rotation.set(piece.rot[0] * D2R, piece.rot[1] * D2R, piece.rot[2] * D2R);
     rt.offset.scale.setScalar(piece.scale);
