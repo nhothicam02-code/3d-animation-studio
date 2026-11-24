@@ -61,6 +61,19 @@ export function framesOf(partId, L, lib = LIB) {
   const part = V2_PARTS.find(p => p.id === partId), sets = (lib && part && lib[part.folder]) || {};
   return (L && sets[L.set]) || [];
 }
+/* ---------------- Nhép miệng theo mức mở ----------------
+   Bộ miệng nhép = thư mục faces/mouth/<tên>/ có các ảnh xếp từ KHÉP → MỞ TO theo số thứ tự (01 khép, 02 hé, 03 mở vừa, 04 mở to…).
+   Số khung bất kỳ (≥2) đều được; mức mở 0..1 được chia đều cho các khung (dưới LIP_CLOSED coi là khép). */
+export const LIP_SET = 'nhep';
+const LIP_CLOSED = 0.1;
+export function lipFrame(n, open) {
+  if (n <= 1) return 0;
+  const o = Math.max(0, Math.min(1, +open || 0));
+  return o < LIP_CLOSED ? 0 : Math.min(n - 1, 1 + Math.floor((o - LIP_CLOSED) / ((1 - LIP_CLOSED) / (n - 1))));
+}
+/** Tên keyshape “mở miệng” thường gặp (ARKit / VRM / Blender tự đặt) — dùng khi biểu cảm là keyshape. */
+export const LIP_MORPHS = ['jawOpen', 'mouthOpen', 'MouthOpen', 'viseme_aa', 'aa', 'A', 'Fcl_MTH_A', 'mouth_open'];
+
 /** Chỉ số khung hình tại thời điểm t (giây kể từ lúc biểu cảm bắt đầu). */
 export function frameIdx(L, n, t) {
   if (n <= 1) return 0;
@@ -98,14 +111,19 @@ function mountPlanes(head, wrap, fit) {
   });
   const o = {
     setFit(f) { anchor.position.set(0, (+f.y || 0) * H, (+f.z || 0) * H); anchor.scale.setScalar(Math.max(0.01, (+f.s || 0.9) * H)); },
-    update(e, t, alpha) {
+    update(e, t, alpha, lip) {
       const layers = e && e.v === 2 ? e.layers : null;
       group.visible = !!layers;
       if (!layers) return;
       V2_PARTS.forEach((p, i) => {
-        const m = meshes[i], L = layers[p.id], fr = L && L.show !== false ? framesOf(p.id, L) : [];
+        const m = meshes[i], L = layers[p.id];
+        let fr = L && L.show !== false ? framesOf(p.id, L) : [], k = fr.length ? frameIdx(L, fr.length, t) : 0;
+        if (lip && p.id === 'mouth' && fr.length) {      // đang nói: chọn khung theo mức mở của tiếng
+          if (fr.length < 2) fr = (LIB && LIB.mouth && LIB.mouth[lip.set || LIP_SET]) || fr;   // miệng 1 khung → dùng bộ nhép mặc định
+          k = lipFrame(fr.length, lip.open);
+        }
         if (!fr.length) { m.visible = false; return; }
-        const te = texOf(fr[frameIdx(L, fr.length, t)]);
+        const te = texOf(fr[k]);
         if (!te.tex) { if (te.failed) m.visible = false; return; }   // ảnh chưa tải xong: giữ khung cũ
         if (m.material.map !== te.tex) { m.material.map = te.tex; m.material.needsUpdate = true; }
         const sc = L.scale || 1, P = L.pos || {x: 0, y: 0, z: 0}, R = L.rot || {x: 0, y: 0, z: 0};
@@ -151,16 +169,22 @@ export function createFaceRuntime({model, wrap, rig, doc}) {
     has: id => byId.has(id),
     get: id => byId.get(id) || null,
     setFit(f) { Object.assign(fit, f); if (planes) planes.setFit(fit); if (overlay) overlay.setFit(fit); },
-    /** e = biểu cảm (hoặc null để tắt) · t = giây kể từ lúc biểu cảm bắt đầu · alpha 0..1 (vào/ra mượt, độ đậm). */
-    apply(e, t = 0, alpha = 1) {
+    /** e = biểu cảm (hoặc null để tắt) · t = giây kể từ lúc biểu cảm bắt đầu · alpha 0..1 (vào/ra mượt, độ đậm)
+     *  lip = null | {open: 0..1, set?: tên bộ miệng nhép} — mức mở miệng khi nhân vật đang nói. */
+    apply(e, t = 0, alpha = 1, lip = null) {
+      if (lip && !LIB) faceLib();      // cần danh sách bộ ảnh để tìm bộ nhép
       const v2 = isV2(e), ks = isKs(e), a = Math.max(0, Math.min(1, alpha));
-      if (planes) planes.update(v2 ? e : null, t, a);
+      if (planes) planes.update(v2 ? e : null, t, a, lip);
       if (overlay) {
         overlay.update(e && !v2 ? e : null, LIB || F.emptyLib(), t);
         if (e && !v2) overlay.mesh.material.opacity = a;
       }
       if (SH) {
-        if (ks) { const vals = F.shapeValues(e, t); for (const k in vals) vals[k] *= a; SH.apply(vals); }
+        if (ks) {
+          const vals = F.shapeValues(e, t); for (const k in vals) vals[k] *= a;
+          if (lip) { const mn = LIP_MORPHS.find(n => SH.has(n)); if (mn) vals[mn] = Math.max(vals[mn] || 0, Math.min(1, lip.open) * a); }
+          SH.apply(vals);
+        }
         else SH.release();
       }
     },
