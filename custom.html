@@ -84,6 +84,7 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
 <aside class="left">
  <h2>Nhân vật</h2>
  <div class="field"><label>Nhân vật gốc (thư mục characters/)</label><select id="baseSel"></select></div>
+ <details class="field" id="partsBox" style="display:none"><summary style="cursor:pointer;color:var(--muted,#9aa0b4)">Phần cơ thể · ẩn phần bị áo/quần che <span id="partsCount"></span></summary><div id="partsList" style="display:grid;gap:4px;margin-top:8px;max-height:200px;overflow:auto"></div></details>
  <div class="field"><label>Nhân vật đã lưu</label><div class="row"><select id="savedSel"><option value="">— chưa chọn —</option></select><button id="loadSaved">Tải</button><button id="delSaved" class="danger" title="Gỡ khỏi danh sách (file vẫn giữ trên GitHub)">✕</button></div></div>
  <div class="field"><label>Tên nhân vật</label><input id="charName" placeholder="Ví dụ: Mina - đồ mùa đông" maxlength="60"></div>
  <div class="row"><button class="primary" id="saveBtn" style="flex:1">☁ Lưu &amp; đồng bộ GitHub</button></div>
@@ -191,7 +192,7 @@ const tag = (msg, bad) => { const t = $('stageTag'); t.textContent = msg; t.styl
 const D2R = Math.PI / 180;
 const DEFAULT_BONE = K.DEFAULT_BONE; // đồng bộ với danh mục ở Kho tài nguyên
 
-const S = {base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false, lib: [], libQ: '', libPage: 0, expr: [], fit: {...F.FACE_FIT}, face: null};
+const S = {hiddenMeshes: new Set(), base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false, lib: [], libQ: '', libPage: 0, expr: [], fit: {...F.FACE_FIT}, face: null};
 const SH = F.createShapeDriver();   // điều khiển keyshape (morph target) của model
 let renderer, scene, camera, controls, spinG, selBox, loadSeq = 0;
 const clock = new THREE.Clock();
@@ -248,7 +249,16 @@ $('spin').oninput = e => { $('auto').checked = false; S.spin = parseFloat(e.targ
 $('spinNum').oninput = e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) { $('auto').checked = false; S.spin = ((v % 360) + 360) % 360; $('spin').value = S.spin; } };
 $('camReset').onclick = resetCamera;
 $('showBody').onchange = () => setBodyVisible($('showBody').checked);
-function setBodyVisible(v) { if (S.model) S.model.traverse(o => { if (o.isSkinnedMesh || (o.isMesh && !o.userData.pieceUid && !isItemMesh(o))) o.visible = v; }); }
+function isBodyMesh(o) { return (o.isSkinnedMesh && !isItemMesh(o)) || (o.isMesh && !o.userData.pieceUid && !isItemMesh(o)); }
+function setBodyVisible(v) { if (S.model) S.model.traverse(o => { if (isBodyMesh(o)) o.visible = v && !S.hiddenMeshes.has(o.name); }); }
+/** Danh sách mesh của nhân vật gốc (đầu, thân, tay, chân…) để ẩn phần bị đồ che → áo/quần ôm sát không bị xuyên. */
+function renderParts() {
+  const names = []; if (S.model) S.model.traverse(o => { if ((o.isSkinnedMesh || o.isMesh) && isBodyMesh(o) && o.name && !names.includes(o.name) && (o.isSkinnedMesh || o.userData.packPart)) names.push(o.name); });
+  $('partsBox').style.display = names.length > 1 ? '' : 'none';
+  $('partsCount').textContent = '· ' + names.length;
+  $('partsList').innerHTML = names.map(n => '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-part="' + esc(n) + '"' + (S.hiddenMeshes.has(n) ? '' : ' checked') + '> ' + esc(n) + '</label>').join('');
+}
+$('partsList').onchange = e => { const c = e.target.closest('[data-part]'); if (!c) return; if (c.checked) S.hiddenMeshes.delete(c.dataset.part); else S.hiddenMeshes.add(c.dataset.part); setBodyVisible($('showBody').checked); dirty(); };
 function isItemMesh(o) { let n = o; while (n) { if (n.name && n.name.startsWith('holder_')) return true; n = n.parent; } return false; }
 const dirty = () => { S.dirty = true; };
 window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
@@ -283,7 +293,7 @@ async function loadBase(name) {
   S.face = F.mountFaceOverlay(rig, S.fit);
   TF = mountTexFace(rig); if (TF) TF.setFit(S.fit);
   onMorphs(SH.setModel(obj));
-  setBodyVisible($('showBody').checked);
+  renderParts(); setBodyVisible($('showBody').checked);
   tag(name + ' · ' + rig.bones.length + ' xương' + (rig.missing.length ? ' · thiếu: ' + rig.missing.map(k => K.BONE_LABELS[k]).join(', ') : ''));
   renderOutfit(); fillEditor(); updateSelBox();
 }
@@ -379,7 +389,7 @@ $('importFile').onchange = async e => {
     const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: S.slot, preset: 'import', name: f.name.replace(/\.[^.]+$/, ''), color: '#ffffff', color2: '#ffffff', visible: true, pieces: [p]};
     S.groups.push(g); K.mountPiece(g, p, S.rig);
     dirty(); select(g.id, p.uid);
-    say($('importStatus'), 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
+    say($('importStatus'), p._rt && p._rt.skinned ? 'Đã nhập ' + f.name + ' · đồ có skin: ôm theo xương và biến dạng cùng cơ thể (không cần chỉnh vị trí). Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
   } catch (err) { say($('importStatus'), 'Không nhập được: ' + err.message, 'bad'); }
   e.target.value = '';
 };
@@ -422,7 +432,7 @@ $('libGrid').onclick = async e => {
     p._obj = fit.obj; p._autoScale = fit.autoScale;
     const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: it.category, preset: 'import', name: it.name, color: '#ffffff', color2: '#ffffff', blend: 0, blendMode: 'mix', visible: true, pieces: [p]};
     S.groups.push(g); K.mountPiece(g, p, S.rig); dirty(); select(g.id, p.uid);
-    say($('importStatus'), 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.', 'good');
+    say($('importStatus'), p._rt && p._rt.skinned ? 'Đã thêm “' + it.name + '” · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.', 'good');
   } catch (err) { say($('importStatus'), 'Không thêm được: ' + err.message, 'bad'); }
 };
 const libItem = id => S.lib.find(x => x.id === id);
@@ -497,7 +507,7 @@ $('speed').onchange = () => { if (S.action) S.action.timeScale = parseFloat($('s
 const INDEX = 'characters/custom/index.json';
 function buildDoc() {
   const name = $('charName').value.trim();
-  return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups), expressions: JSON.parse(JSON.stringify(S.expr)), face: {...S.fit}};
+  return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups), expressions: JSON.parse(JSON.stringify(S.expr)), face: {...S.fit}, hiddenMeshes: [...S.hiddenMeshes]};
 }
 function thumbData() {
   const wasSel = selBox.visible; selBox.visible = false;
@@ -558,7 +568,7 @@ async function loadSaved(id) {
   if (!doc || !Array.isArray(doc.items)) throw Error('Không đọc được dữ liệu nhân vật.');
   // dọn đồ cũ
   S.groups.forEach(g => g.pieces.forEach(K.unmountPiece));
-  S.groups = doc.items; S.sel = null; S.charId = doc.id || id;
+  S.groups = doc.items; S.sel = null; S.charId = doc.id || id; S.hiddenMeshes = new Set(Array.isArray(doc.hiddenMeshes) ? doc.hiddenMeshes : []);
   S.expr = Array.isArray(doc.expressions) ? doc.expressions.map(upExpr) : []; S.fit = {...F.FACE_FIT, ...(doc.face || {})};
   EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
   for (const g of S.groups) for (const p of g.pieces) {
@@ -573,7 +583,7 @@ async function loadSaved(id) {
   }
   $('charName').value = doc.name || entry.name;
   if (doc.base !== S.base) await loadBase(doc.base);
-  else { for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, S.rig); renderOutfit(); fillEditor(); updateSelBox(); }
+  else { for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, S.rig); renderParts(); setBodyVisible($('showBody').checked); renderOutfit(); fillEditor(); updateSelBox(); }
   S.dirty = false;
   say($('saveStatus'), 'Đã tải “' + (doc.name || entry.name) + '”.', 'good');
 }
@@ -590,7 +600,7 @@ $('delSaved').onclick = async () => {
 };
 $('newBtn').onclick = () => {
   if (S.dirty && !confirm('Bỏ các thay đổi chưa lưu?')) return;
-  S.groups.forEach(g => g.pieces.forEach(K.unmountPiece)); S.groups = []; S.sel = null; S.charId = ''; S.dirty = false;
+  S.groups.forEach(g => g.pieces.forEach(K.unmountPiece)); S.groups = []; S.sel = null; S.charId = ''; S.dirty = false; S.hiddenMeshes = new Set(); renderParts(); setBodyVisible($('showBody').checked);
   S.expr = []; S.fit = {...F.FACE_FIT}; EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
   $('charName').value = ''; $('savedSel').value = ''; renderOutfit(); fillEditor(); updateSelBox(); say($('saveStatus'), 'Đã tạo mới.');
 };
@@ -1565,8 +1575,8 @@ async function init() {
   S.clips = (manifest && manifest.animations) || []; S.saved = (idx && idx.characters) || [];
   $('clipSel').innerHTML = '<option value="">— T-pose (đứng yên) —</option>' + S.clips.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + ' · ' + Number(c.duration || 0).toFixed(1) + 's</option>').join('');
   renderSaved();
-  $('baseSel').innerHTML = models.map(m => '<option value="' + esc(m) + '">' + esc(m) + '</option>').join('');
-  if (!models.length) { tag('Không tìm thấy model nhân vật (.fbx/.glb/.gltf/.vrm/.dae) trong thư mục characters/.', true); return; }
+  $('baseSel').innerHTML = models.map(m => '<option value="' + esc(m) + '">' + esc(M.isPackFile(m) ? M.stripExt(m) + ' · tách mesh' : m) + '</option>').join('');
+  if (!models.length) { tag('Không tìm thấy model nhân vật (.fbx/.glb/.gltf/.vrm/.dae hoặc .character.json) trong thư mục characters/.', true); return; }
   const wantChar = params.get('char'), wantModel = params.get('model');
   if (wantChar && S.saved.some(c => c.id === wantChar)) { $('savedSel').value = wantChar; await loadSaved(wantChar); return; }
   await loadBase(wantModel && models.includes(wantModel) ? wantModel : models[0]);

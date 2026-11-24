@@ -53,7 +53,8 @@ section{padding:22px;min-width:0}
  <div class="dh"><h2>＋ Thêm item vào thư viện</h2><button class="quiet" data-close="upModal">✕</button></div>
  <div class="row" style="margin-top:0"><div class="f"><label>Danh mục</label><select id="upCat"></select></div></div>
  <div class="row"><div class="f"><label>Chọn file (có thể chọn nhiều)</label><input type="file" id="upFile" multiple></div></div>
- <div class="row" id="nameRow"><div class="f"><label>Tên hiển thị (để trống = lấy theo tên file)</label><input id="upName" maxlength="80"></div></div>
+ <div class="row" id="nameRow"><div class="f"><label id="nameLbl">Tên hiển thị (để trống = lấy theo tên file)</label><input id="upName" maxlength="80"></div></div>
+ <div class="row hide" id="splitRow"><div class="f"><label style="display:flex;gap:8px;align-items:flex-start;text-transform:none;letter-spacing:0"><input type="checkbox" id="upSplit" checked style="width:auto;margin-top:3px"><span>Tách nhân vật theo từng mesh (khuyên dùng). Mỗi mesh thành 1 file nhỏ trong <b>characters/&lt;tên&gt;/</b>, xương lưu trong <b>&lt;tên&gt;.character.json</b>. Bỏ chọn = tải nguyên file như cũ.</span></label></div></div>
  <div class="status" id="upStatus">Thumbnail được tạo tự động từ file (ảnh, khung hình video, dạng sóng âm thanh, hình 3D). Item được lưu lên GitHub và đồng bộ sang trang Custom.</div>
  <div class="up" id="upList"></div>
  <div class="row" style="justify-content:flex-end"><button data-close="upModal">Đóng</button><button class="primary" id="upGo">☁ Tải lên &amp; đồng bộ GitHub</button></div>
@@ -65,6 +66,7 @@ import * as THREE from 'three';
 import * as M from './js/model-loader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import * as K from './js/character-kit.js';
+import * as P from './js/character-pack.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -274,8 +276,13 @@ function fillUpCat() {
   $('upCat').innerHTML = '<optgroup label="Nhân vật gốc (lưu vào thư mục characters/)">' + opt(CHAR_CAT) + '</optgroup><optgroup label="Nền &amp; âm thanh">' + MEDIA.map(opt).join('') + '</optgroup><optgroup label="Bối cảnh 3D (mô hình ' + M.listText(M.ITEM_EXTS, ' ') + ')">' + ENV.map(opt).join('') + '</optgroup><optgroup label="Trang phục &amp; phụ kiện (mô hình ' + M.listText(M.ITEM_EXTS, ' ') + ')">' + WEAR.map(opt).join('') + '</optgroup>';
 }
 const isCharCat = () => catOf($('upCat').value).kind === 'character';
-const syncNameRow = () => $('nameRow').classList.toggle('hide', isCharCat() || $('upFile').files.length > 1);   // nhân vật: tên = tên file
-const upHint = () => isCharCat() ? 'Nhân vật: chọn file ' + M.listText(M.CHAR_EXTS, ' ') + ' — sẽ được lưu vào thư mục characters/ trên GitHub và hiện ở “Nhân vật gốc” bên trang Custom.' : 'Chọn danh mục và file rồi bấm tải lên.';
+const syncNameRow = () => {
+  const n = $('upFile').files.length, ch = isCharCat();
+  $('nameRow').classList.toggle('hide', n > 1);   // nhiều file → tên lấy theo từng file
+  $('nameLbl').textContent = ch ? 'Tên nhân vật (để trống = lấy theo tên file gốc)' : 'Tên hiển thị (để trống = lấy theo tên file)';
+  $('splitRow').classList.toggle('hide', !ch);
+};
+const upHint = () => isCharCat() ? 'Nhân vật: chọn file ' + M.listText(M.CHAR_EXTS, ' ') + ' — sẽ được tách theo từng mesh vào characters/<tên>/ (xương lưu trong json) và hiện ở “Nhân vật gốc” bên trang Custom.' : 'Chọn danh mục và file rồi bấm tải lên.';
 $('upCat').onchange = () => { $('upFile').accept = catOf($('upCat').value).accept; $('upFile').value = ''; syncNameRow(); if (K.auth().token) say($('upStatus'), upHint()); };
 $('upFile').onchange = syncNameRow;
 $('addBtn').onclick = () => {
@@ -283,11 +290,14 @@ $('addBtn').onclick = () => {
   syncNameRow(); say($('upStatus'), K.auth().token ? upHint() : 'Chưa có GitHub token — nhập ở Thư viện → ⚙ Cài đặt (index.html) trước khi tải lên.', K.auth().token ? '' : 'bad');
   $('upModal').classList.add('open');
 };
-/** Nhân vật gốc: đưa file model (fbx/glb/gltf/vrm/dae) vào characters/ (+ thumbnail), danh sách tự nhận qua K.listModels(). */
-async function addCharacter(f, st) {
-  const fname = f.name.replace(/[\\/:*?"<>|#%]+/g, '_').replace(/\s+/g, '_'), base = fname.replace(/\.[^.]+$/, '');
+/** Nhân vật gốc: tách theo mesh (mặc định) hoặc đưa nguyên file model vào characters/ (+ thumbnail). */
+const PART_MAX = 45 * 1048576;   // GitHub Contents API từ chối file quá lớn → mỗi mesh phải nhỏ hơn mức này
+async function addCharacter(f, st, customName) {
+  const ext = M.extOf(f.name), want = ($('upSplit').checked);
+  const fname0 = f.name.replace(/[\\/:*?"<>|#%]+/g, '_').replace(/\s+/g, '_'), base0 = fname0.replace(/\.[^.]+$/, '');
+  if (want) return addCharacterPack(f, st, customName || base0, ext);
+  const fname = fname0, base = base0;
   if (S.chars.some(x => x.ref && x.ref.type === 'base' && x.ref.file.toLowerCase() === fname.toLowerCase())) throw Error('đã có “' + fname + '” trong characters/ — hãy đổi tên file');
-  const ext = M.extOf(fname);
   if (ext === 'gltf') await M.parseModel(ext, await f.arrayBuffer());   // .gltf phải đọc được khi đứng một mình, nếu không sẽ báo lỗi trước khi tải lên
   st('Đang tạo thumbnail…');
   const th = await makeThumb(CHAR_CAT, f), path = 'characters/' + fname, tp = 'library/thumbnails/characters/' + K.slug(base) + (th.data.startsWith('data:image/jpeg') ? '.jpg' : '.png');
@@ -301,6 +311,34 @@ async function addCharacter(f, st) {
   S.newChars.push({id, name: base, category: CHAR_CAT.id, kind: 'character', ext, size: f.size, thumbPath: tp, createdAt, ref: {type: 'base', file: fname}});
   S.fresh.set(id, {thumb: th.data});
   st('✓ Đã vào ' + path);
+}
+/** Tách model thành gói: characters/<tên>.character.json + characters/<tên>/<mesh>.glb */
+async function addCharacterPack(f, st, rawName, ext) {
+  const nm = P.packSlug(rawName), manifestName = nm + '.character.json', mpath = 'characters/' + manifestName;
+  if (S.chars.some(x => x.ref && x.ref.type === 'base' && x.ref.file.toLowerCase() === manifestName.toLowerCase())) throw Error('đã có nhân vật “' + nm + '” — hãy đặt tên khác');
+  st('Đang đọc model…');
+  const obj = await M.parseModel(ext, await f.arrayBuffer());
+  st('Đang tạo thumbnail…');
+  const th = await makeThumb(CHAR_CAT, f), tp = 'library/thumbnails/characters/' + K.slug(nm) + (th.data.startsWith('data:image/jpeg') ? '.jpg' : '.png');
+  const pack = await P.splitCharacter(obj, {name: nm, source: f.name, onProgress: st});
+  const big = pack.manifest.meshes.find(m => m.size > PART_MAX);
+  if (big) throw Error('mesh “' + big.name + '” nặng ' + fmtSize(big.size) + ' (> ' + fmtSize(PART_MAX) + ') — hãy giảm texture/polygon của mesh này rồi tải lại');
+  let n = 0;
+  for (const file of pack.files) {
+    st('Đang tải ' + (++n) + '/' + pack.files.length + ': ' + file.path.split('/').pop());
+    await K.ghPutBytes('characters/' + file.path, file.bytes, 'Add character part ' + file.path);
+  }
+  st('Đang lưu xương & danh sách mesh…');
+  await K.ghPutText(mpath, JSON.stringify(pack.manifest, null, 1), 'Add character ' + manifestName);
+  st('Đang lưu thumbnail…');
+  await K.ghPutDataUrl(tp, th.data, 'Add character thumbnail ' + manifestName);
+  const createdAt = new Date().toISOString(), id = 'char:' + manifestName, total = pack.manifest.meshes.reduce((a, m) => a + m.size, 0);
+  S.pendingChars.push({file: manifestName, tp, createdAt});
+  S.newChars = S.newChars.filter(x => x.id !== id);
+  S.newChars.push({id, name: nm, category: CHAR_CAT.id, kind: 'character', ext: 'pack', size: total, thumbPath: tp, createdAt, ref: {type: 'base', file: manifestName, meshes: pack.manifest.meshes.length}});
+  S.fresh.set(id, {thumb: th.data});
+  obj.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  st('✓ Đã tách ' + pack.manifest.meshes.length + ' mesh, ' + pack.manifest.bones.length + ' xương → characters/' + pack.folder + '/');
 }
 async function flushCharManifest() {
   if (!S.pendingChars.length) return;
@@ -330,8 +368,8 @@ $('upGo').onclick = async () => {
       const ext = (f.name.split('.').pop() || '').toLowerCase();
       if (c.kind === 'model' && !M.ITEM_EXTS.includes(ext)) throw Error('chỉ nhận ' + M.listText(M.ITEM_EXTS, ' '));
       if (c.kind === 'character' && !M.CHAR_EXTS.includes(ext)) throw Error('nhân vật chỉ nhận ' + M.listText(M.CHAR_EXTS, ' '));
+      if (c.kind === 'character') { if (f.size > 400 * 1048576 || (!$('upSplit').checked && f.size > MAX_BYTES)) throw Error('file quá lớn (' + fmtSize(f.size) + (!$('upSplit').checked ? ' — hãy bật “Tách theo từng mesh”' : '') + ')'); await addCharacter(f, st, files.length === 1 ? $('upName').value.trim() : ''); ok++; continue; }
       if (f.size > MAX_BYTES) throw Error('file quá lớn (> 90 MB)');
-      if (c.kind === 'character') { await addCharacter(f, st); ok++; continue; }
       st('Đang tạo thumbnail…');
       const th = await makeThumb(c, f);
       const base = f.name.replace(/\.[^.]+$/, ''), name = (files.length === 1 && $('upName').value.trim()) || base.replace(/[_-]+/g, ' ').trim() || 'Item';
@@ -367,7 +405,7 @@ async function loadChars() {
   try {
     const [m, ci, models] = await Promise.all([K.readJSON('library/manifest.json', {characters: {}}), K.readJSON('characters/custom/index.json', {characters: []}), K.listModels().catch(() => [])]);
     const mc = (m && m.characters) || {}, names = models.length ? models : Object.keys(mc), out = [];
-    for (const n of names) { const e = mc[n] || {}; out.push({id: 'char:' + n, name: M.stripExt(n), category: CHAR_CAT.id, kind: 'character', ext: M.extOf(n) || 'fbx', size: 0, thumbPath: String(e.thumbnail || '').replace(/^\.\//, ''), createdAt: e.updatedAt || '', ref: {type: 'base', file: n}}); }
+    for (const n of names) { const e = mc[n] || {}; out.push({id: 'char:' + n, name: M.stripExt(n), category: CHAR_CAT.id, kind: 'character', ext: M.isPackFile(n) ? 'pack' : (M.extOf(n) || 'fbx'), size: 0, thumbPath: String(e.thumbnail || '').replace(/^\.\//, ''), createdAt: e.updatedAt || '', ref: {type: 'base', file: n}}); }
     for (const c of (ci && ci.characters) || []) out.push({id: 'char:custom:' + c.id, name: c.name, category: CHAR_CAT.id, kind: 'character', ext: 'custom', size: 0, thumbPath: String(c.thumbnail || '').replace(/^\.\//, ''), createdAt: c.updatedAt || '', ref: {type: 'custom', id: c.id, base: c.base, items: c.items || 0}});
     for (const x of S.newChars) if (!out.some(o => o.id === x.id)) out.unshift(x);
     S.chars = out; render();

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {PACK_RE, loadPackFromBuffer} from './character-pack.js';
 
 /* ============================================================
    Nạp model 3D dùng chung cho mọi trang.
@@ -11,11 +12,12 @@ export const ITEM_EXTS = ['glb', 'gltf', 'fbx', 'obj', 'dae', 'stl', 'ply', 'vrm
 export const CLIP_EXTS = ['fbx', 'glb', 'gltf', 'dae'];
 
 export const extOf = n => { const m = /\.([a-z0-9]+)$/i.exec(String(n || '')); return m ? m[1].toLowerCase() : ''; };
-export const stripExt = n => String(n || '').replace(/\.[a-z0-9]+$/i, '');
+export const stripExt = n => String(n || '').replace(PACK_RE, '').replace(/\.[a-z0-9]+$/i, '');
 export const extRegex = list => new RegExp('\\.(' + list.join('|') + ')$', 'i');
 export const acceptOf = list => list.map(e => '.' + e).join(',');
 export const listText = (list, sep = ', ') => list.map(e => '.' + e).join(sep);
-export const isCharFile = n => CHAR_EXTS.includes(extOf(n));
+export const isPackFile = n => PACK_RE.test(String(n || ''));   // <Tên>.character.json = nhân vật đã tách mesh
+export const isCharFile = n => CHAR_EXTS.includes(extOf(n)) || isPackFile(n);
 export const isItemFile = n => ITEM_EXTS.includes(extOf(n));
 export const isClipFile = n => CLIP_EXTS.includes(extOf(n));
 export const badgeOf = n => (extOf(n) || 'model').toUpperCase();
@@ -52,6 +54,7 @@ export async function parseModel(ext, buf, base = '') {
       o.animations = g.animations || [];
       return o;
     }
+    case 'json': return loadPackFromBuffer(buf, base);   // gói nhân vật: json xương + các mesh .glb
     case 'fbx': { const F = await LOADERS.fbx(); return new F().parse(buf, base); }
     case 'obj': { const O = await LOADERS.obj(); return new O().parse(dec(buf)); }
     case 'dae': {

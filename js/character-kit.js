@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {norm} from './retarget.js';
 import {CHAR_EXTS, extRegex} from './model-loader.js';
+import {PACK_RE, bindSkinnedItem} from './character-pack.js';
 export {CHAR_EXTS, CHAR_EXTS as CHARACTER_EXTS, extOf, stripExt, loadModelUrl, parseModel, acceptOf, listText} from './model-loader.js';
 export const CHAR_RE = extRegex(CHAR_EXTS);
 
@@ -72,7 +73,7 @@ export async function listModels() {
   try {
     const {token} = auth();
     const r = await fetch('https://api.github.com/repos/' + repo + '/contents/characters?ref=main', token ? {headers: {Authorization: 'Bearer ' + token}} : undefined);
-    if (r.ok) return (await r.json()).filter(x => x.type === 'file' && CHAR_RE.test(x.name)).map(x => x.name);
+    if (r.ok) return (await r.json()).filter(x => x.type === 'file' && (CHAR_RE.test(x.name) || PACK_RE.test(x.name))).map(x => x.name);
   } catch (e) { /* dùng manifest */ }
   const m = await readJSON('library/manifest.json', {characters: {}});
   return Object.keys(m.characters || {});
@@ -163,7 +164,7 @@ export function buildRig(model) {
     rest.set(b, {pos, holder: m.clone().invert().multiply(new THREE.Matrix4().makeTranslation(pos.x, pos.y, pos.z))});
   }
   const rig = {
-    bones, byKey, byName, rest,
+    model, bones, byKey, byName, rest,
     lsign: 1,
     bone(spec) { return spec && spec.startsWith('n:') ? byName.get(spec.slice(2)) : byKey[spec]; },
     /** Vị trí rest (không gian thế giới) của một key/xương; có giá trị dự phòng cho đỉnh đầu & mũi chân. */
@@ -438,12 +439,34 @@ export function buildPieceContent(group, piece, rig) {
  * Gắn mảnh vào xương. Cây node:
  * xương → holder (căn theo trục thế giới ở rest pose) → centerNode (vị trí mặc định) → offsetNode (pos/rot/scale của người dùng) → nội dung
  */
+/** Gắn đồ đã bind skin: không gắn vào xương nào, mesh tự chạy theo xương nhân vật. */
+function mountSkinned(group, piece, rig, content, extra) {
+  const tint = [];
+  content.traverse(o => {
+    if (!o.isMesh || !o.material) return;
+    const a = Array.isArray(o.material) ? o.material : [o.material];
+    const nm = a.map(m => { if (!m.color || m._tintClone) return m; const c = m.clone(); c._base = m.color.clone(); c._tintClone = true; return c; });
+    o.material = Array.isArray(o.material) ? nm : nm[0];
+    nm.forEach(m => { if (m._tintClone) tint.push(m); });
+  });
+  const holder = new THREE.Group(); holder.name = 'holder_' + piece.uid;
+  const center = new THREE.Group(), offset = new THREE.Group();
+  holder.add(center); center.add(offset); offset.add(content);
+  (rig.model || (rig.bones[0] && rig.bones[0].parent) || new THREE.Group()).add(holder);
+  content.traverse(o => { if (o.isMesh) { o.userData.pieceUid = piece.uid; o.frustumCulled = false; } });
+  piece._rt = {holder, center, offset, content, mats: [], tint, group, skinned: true, extra: extra || []};
+  applyPiece(group, piece);
+  return piece._rt;
+}
 export function mountPiece(group, piece, rig, parent) {
   unmountPiece(piece);
   let built, bone = rig.bone(piece.bone);
   if (piece.file) {
     if (!piece._obj) return null;
     const obj = piece._obj;
+    // Đồ có skin trùng tên xương với nhân vật (áo, quần, váy…) → bind vào xương nhân vật, biến dạng theo cơ thể
+    const sk = bindSkinnedItem(obj, rig);
+    if (sk) return mountSkinned(group, piece, rig, sk.content, sk.extra);
     // nhân bản vật liệu để có thể pha màu (blend) mà không làm hỏng bản gốc
     const tint = [];
     obj.traverse(o => {
@@ -477,6 +500,7 @@ export function unmountPiece(piece) {
   const rt = piece._rt;
   if (!rt) return;
   rt.holder.removeFromParent();
+  if (rt.extra) rt.extra.forEach(b => b.removeFromParent());   // xương riêng của đồ skin đang gắn dưới xương nhân vật
   if (!piece.file) rt.content.traverse(o => { if (o.geometry) o.geometry.dispose(); });
   rt.mats.forEach(m => m.dispose());
   piece._rt = null;
@@ -484,9 +508,11 @@ export function unmountPiece(piece) {
 export function applyPiece(group, piece) {
   const rt = piece._rt;
   if (!rt) return;
-  rt.offset.position.set(...piece.pos);
-  rt.offset.rotation.set(piece.rot[0] * D2R, piece.rot[1] * D2R, piece.rot[2] * D2R);
-  rt.offset.scale.setScalar(piece.scale);
+  if (!rt.skinned) {   // đồ skin bám theo xương nên không dời/xoay/co giãn tay được
+    rt.offset.position.set(...piece.pos);
+    rt.offset.rotation.set(piece.rot[0] * D2R, piece.rot[1] * D2R, piece.rot[2] * D2R);
+    rt.offset.scale.setScalar(piece.scale);
+  }
   rt.holder.visible = group.visible !== false && piece.visible !== false;
   if (rt.mats.length) { rt.mats[0].color.set(group.color); rt.mats[1].color.set(group.color2 || group.color); }
   if (rt.tint && rt.tint.length) { // đồ nhập/thư viện: pha màu với màu gốc của mô hình
@@ -513,6 +539,7 @@ export function fitImported(obj) {
   const wrap = new THREE.Group();
   obj.position.sub(c);
   wrap.add(obj);
+  wrap.userData.fitInner = obj; wrap.userData.fitCenter = c.clone();   // để đồ skin trả lại vị trí gốc (xem bindSkinnedItem)
   return {obj: wrap, autoScale: m > 3 ? 0.01 : 1};
 }
 
