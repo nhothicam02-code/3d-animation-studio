@@ -88,16 +88,17 @@ const ENV = [
   {id: 'env-prop', label: 'Đồ vật khác', icon: '📦'}
 ].map(c => ({...c, kind: 'model', accept: M.acceptOf(M.ITEM_EXTS), env: true}));
 const CHAR_CAT = {id: 'character', label: 'Nhân vật (characters/)', icon: '🧍', kind: 'character', accept: M.acceptOf(M.CHAR_EXTS)};
-const CATS = [...MEDIA, ...ENV, ...WEAR], catOf = id => id === CHAR_CAT.id ? CHAR_CAT : CATS.find(c => c.id === id);
-const S = {items: [], chars: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: [], pendingChars: [], newChars: []};
-const allItems = () => S.items.concat(S.chars);
+const PROJ_CAT = {id: 'project', label: 'Dự án phim (projects/)', icon: '🎞️', kind: 'project'};
+const CATS = [...MEDIA, ...ENV, ...WEAR], catOf = id => id === CHAR_CAT.id ? CHAR_CAT : id === PROJ_CAT.id ? PROJ_CAT : CATS.find(c => c.id === id);
+const S = {items: [], chars: [], projs: [], cat: new URLSearchParams(location.search).get('cat') || '', q: '', sort: 'new', page: 1, fresh: new Map(), pending: [], pendingChars: [], newChars: []};
+const allItems = () => S.items.concat(S.chars, S.projs);
 if (S.cat && !catOf(S.cat)) S.cat = '';
 
 /* ---------------- Danh sách ---------------- */
 function renderCats() {
   const n = id => allItems().filter(x => x.category === id).length;
   const btn = (id, label, icon, count) => '<button class="cat' + (S.cat === id ? ' active' : '') + '" data-cat="' + id + '"><span>' + icon + ' ' + esc(label) + '</span><b>' + count + '</b></button>';
-  $('cats').innerHTML = btn('', 'Tất cả', '📚', allItems().length) + '<div class="cg">Nhân vật</div>' + btn(CHAR_CAT.id, CHAR_CAT.label + ' (gốc + Custom)', CHAR_CAT.icon, n(CHAR_CAT.id)) + '<div class="cg">Nền &amp; âm thanh</div>' + MEDIA.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
+  $('cats').innerHTML = btn('', 'Tất cả', '📚', allItems().length) + '<div class="cg">Nhân vật</div>' + btn(CHAR_CAT.id, CHAR_CAT.label + ' (gốc + Custom)', CHAR_CAT.icon, n(CHAR_CAT.id)) + '<div class="cg">Dự án</div>' + btn(PROJ_CAT.id, PROJ_CAT.label, PROJ_CAT.icon, n(PROJ_CAT.id)) + '<div class="cg">Nền &amp; âm thanh</div>' + MEDIA.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
     '<div class="cg">Bối cảnh 3D</div>' + ENV.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('') +
     '<div class="cg">Trang phục &amp; phụ kiện</div>' + WEAR.map(c => btn(c.id, c.label, c.icon, n(c.id))).join('');
 }
@@ -111,7 +112,7 @@ const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(
 function card(x) {
   const c = catOf(x.category) || {icon: '📦', label: x.category};
   return '<article class="card" data-id="' + esc(x.id) + '"><div class="thumb"><div class="ph">' + c.icon + '</div><img alt="" loading="lazy" data-th="' + esc(thumbPath(x)) + '" data-id="' + esc(x.id) + '"><span class="badge">' + esc(x.ext) + '</span></div>' +
-    '<div class="cb"><div class="ct" title="' + esc(x.name) + '">' + esc(x.name) + '</div><div class="meta">' + esc(c.label) + ' · ' + (x.kind === 'character' ? (x.ref.type === 'custom' ? 'Custom · ' + x.ref.items + ' món đồ' : 'Model gốc') : fmtSize(x.size || 0)) + (x.duration ? ' · ' + Number(x.duration).toFixed(1) + 's' : '') + '</div></div></article>';
+    '<div class="cb"><div class="ct" title="' + esc(x.name) + '">' + esc(x.name) + '</div><div class="meta">' + esc(c.label) + ' · ' + (x.kind === 'project' ? x.ref.scenes + ' cảnh' + (x.ref.legacy ? ' · thư mục cũ' : '') : x.kind === 'character' ? (x.ref.type === 'custom' ? 'Custom · ' + x.ref.items + ' món đồ' : 'Model gốc') : fmtSize(x.size || 0)) + (x.duration ? ' · ' + Number(x.duration).toFixed(1) + 's' : '') + '</div></div></article>';
 }
 function render() {
   renderCats();
@@ -124,6 +125,7 @@ function render() {
     '<div class="empty">' + (allItems().length ? 'Không có item nào khớp.' : 'Thư viện đang trống. Bấm “＋ Thêm item” để tải file đầu tiên.') + '</div>';
   for (const img of $('grid').querySelectorAll('img[data-th]')) {
     const fr = S.fresh.get(img.dataset.id);
+    if (!img.dataset.th && !fr) { img.remove(); continue; }
     if (fr) img.src = fr.thumb; else if (/^data:/.test(img.dataset.th)) img.src = img.dataset.th; else K.setSrc(img, img.dataset.th, () => img.remove());
   }
   const set = [...new Set([1, pages, S.page - 1, S.page, S.page + 1])].filter(p => p >= 1 && p <= pages).sort((x, y) => x - y);
@@ -175,15 +177,17 @@ async function mount3D(stage, it, my) {
 async function openDetail(id) {
   const it = allItems().find(x => x.id === id); if (!it) return;
   if (it.kind === 'character') return openCharDetail(it);
+  if (it.kind === 'project') return openProjDetail(it);
   const c = catOf(it.category) || {label: it.category, icon: '📦'}, fr = S.fresh.get(id), my = ++vtoken;
   if (viewer) { viewer.stop(); viewer = null; }
   $('dTitle').textContent = it.name;
   const media = {image: '<img id="dMedia" class="dmedia" alt="">', video: '<video id="dMedia" class="dmedia" controls playsinline loop></video>',
     audio: '<img id="dThumb" class="dmedia" style="max-height:200px" alt=""><audio id="dMedia" controls style="width:100%"></audio>', model: '<div class="stage3d" id="dStage"></div>'}[it.kind] || '';
   $('dBody').innerHTML = media + '<div class="meta">' + esc(c.icon + ' ' + c.label) + ' · ' + esc(it.ext.toUpperCase()) + ' · ' + fmtSize(it.size || 0) + (it.duration ? ' · ' + Number(it.duration).toFixed(1) + 's' : '') + ' · ' + new Date(it.createdAt || Date.now()).toLocaleDateString('vi-VN') + '</div><div class="meta">' + esc(it.path) + '</div>' +
-    '<div class="row"><a href="' + esc(K.repoRaw(it.path)) + '" target="_blank" rel="noopener"><button type="button">Mở file gốc ↗</button></a>' + (it.kind === 'model' && !c.env ? '<a href="./custom.html"><button type="button">✦ Dùng trong Custom</button></a>' : '') + '<button class="danger" id="dDel" style="margin-left:auto">Gỡ khỏi thư viện</button></div>';
+    '<div class="row"><a href="' + esc(K.repoRaw(it.path)) + '" target="_blank" rel="noopener"><button type="button">Mở file gốc ↗</button></a>' + (it.kind === 'model' && !c.env ? '<a href="./custom.html"><button type="button">✦ Dùng trong Custom</button></a>' : '') + '<button class="danger quiet" id="dDel" style="margin-left:auto" title="Chỉ ẩn khỏi danh sách, file trên GitHub vẫn còn">Gỡ khỏi thư viện</button><button class="danger" id="dPurge">🗑 Xóa vĩnh viễn</button></div><div class="status hide" id="dStatus"></div>';
   $('detail').classList.add('open');
   $('dDel').onclick = () => removeItem(id);
+  $('dPurge').onclick = () => purgeItem(id);
   const m = $('dMedia'); if (m) { if (fr) m.src = fr.blob; else K.setSrc(m, it.path, () => {}); }
   const t = $('dThumb'); if (t) { if (fr) t.src = fr.thumb; else K.setSrc(t, thumbPath(it), () => t.remove()); }
   if (it.kind === 'model') {
@@ -199,8 +203,9 @@ function openCharDetail(it) {
     '<div class="meta">🧍 Nhân vật · ' + (custom ? 'Custom · ' + r.items + ' món đồ (tóc, mũ, trang phục…)' : 'Model gốc') + (it.createdAt ? ' · ' + new Date(it.createdAt).toLocaleDateString('vi-VN') : '') + '</div>' +
     '<div class="meta">Nhân vật gốc: ' + esc(base) + '</div>' +
     '<div class="row"><a href="./custom.html?' + (custom ? 'char=' + q(r.id) : 'model=' + q(r.file)) + '"><button type="button" class="primary">✦ ' + (custom ? 'Mở để chỉnh trong Custom' : 'Custom nhân vật này') + '</button></a>' +
-    '<a href="./apply.html?model=' + q(base) + '"><button type="button">▶ Xem animation</button></a><a href="./studio.html"><button type="button">🎬 Dùng trong Studio</button></a></div>';
+    '<a href="./apply.html?model=' + q(base) + '"><button type="button">▶ Xem animation</button></a><a href="./studio.html"><button type="button">🎬 Dùng trong Studio</button></a><button class="danger" id="dPurge" style="margin-left:auto">🗑 Xóa vĩnh viễn</button></div><div class="status hide" id="dStatus"></div>';
   $('detail').classList.add('open');
+  $('dPurge').onclick = () => purgeChar(it);
   const t = $('dThumb'), tp = thumbPath(it);
   if (!tp) t.remove(); else if (/^data:/.test(tp)) t.src = tp; else K.setSrc(t, tp, () => t.remove());
 }
@@ -213,6 +218,98 @@ async function removeItem(id) {
     await K.ghPutText(INDEX, JSON.stringify({version: 1, items}, null, 2), 'Remove library item');
     S.items = items; closeDetail(); render();
   } catch (e) { alert('Không cập nhật được GitHub: ' + e.message); }
+}
+
+/* ---------------- Xóa vĩnh viễn trên GitHub ---------------- */
+/** Hỏi xác nhận → chạy task(st) → làm mới. Lỗi giữa chừng: bấm xóa lại để tiếp tục (file đã xóa được bỏ qua). */
+async function runDelete(confirmText, task) {
+  if (!K.auth().token) { alert('Cần GitHub token (trang Thư viện → ⚙ Cài đặt).'); return; }
+  if (!confirm(confirmText)) return;
+  const st = $('dStatus'), btns = [...$('dBody').querySelectorAll('button')];
+  btns.forEach(b => { b.disabled = true; }); st.classList.remove('hide');
+  try { await task(t => say(st, t)); closeDetail(); render(); }
+  catch (e) { say(st, 'Chưa xóa xong: ' + e.message + ' — bấm “Xóa vĩnh viễn” lần nữa để tiếp tục (phần đã xóa sẽ được bỏ qua).', 'bad'); btns.forEach(b => { b.disabled = false; }); }
+}
+const THIS_COMMIT = 'đều khôi phục được từ lịch sử commit trên GitHub';
+async function purgeItem(id) {
+  const it = S.items.find(x => x.id === id); if (!it) return;
+  await runDelete('Xóa VĨNH VIỄN “' + it.name + '” khỏi GitHub?\n\nFile gốc và thumbnail sẽ bị xóa khỏi repo (' + THIS_COMMIT + '). Dự án hoặc nhân vật Custom đang dùng file này sẽ không tải được nữa.', async st => {
+    const tp = thumbPath(it);
+    st('Đang xóa file…'); await K.ghDelete(it.path, 'Delete library item ' + it.name);
+    if (tp && !/^data:/.test(tp)) { st('Đang xóa thumbnail…'); await K.ghDelete(tp, 'Delete library thumbnail ' + it.name); }
+    st('Đang cập nhật danh mục…');
+    const latest = (await K.readJSON(INDEX, {version: 1, items: []})) || {}, items = (latest.items || []).filter(x => x.id !== id);
+    await K.ghPutText(INDEX, JSON.stringify({version: 1, items}, null, 2), 'Delete library item ' + it.name);
+    S.items = items; S.fresh.delete(id); S.pending = S.pending.filter(x => x.id !== id);
+  });
+}
+async function purgeChar(it) {
+  const r = it.ref, custom = r.type === 'custom';
+  const deps = custom ? [] : S.chars.filter(x => x.ref.type === 'custom' && x.ref.base === r.file).map(x => x.name);
+  const warn = deps.length ? '\n\n⚠ ' + deps.length + ' nhân vật Custom đang dùng nhân vật này làm gốc (' + deps.slice(0, 5).join(', ') + (deps.length > 5 ? '…' : '') + ') — chúng sẽ KHÔNG mở được nữa. Hãy xóa chúng trước nếu không cần.' : '';
+  await runDelete('Xóa VĨNH VIỄN nhân vật “' + it.name + '” khỏi GitHub?\n\n' + (custom ? 'Dữ liệu Custom, thumbnail và các file đồ đã tải riêng cho nhân vật này sẽ bị xóa (ảnh biểu cảm trong faces/ được giữ vì dùng chung).' : 'File model (hoặc thư mục các mesh), thumbnail và mục trong manifest sẽ bị xóa.') + ' Tất cả ' + THIS_COMMIT + '.' + warn, async st => {
+    const tp = thumbPath(it), prog = (i, n, p) => st('Đang xóa ' + i + '/' + n + ': ' + p.split('/').pop());
+    if (custom) {
+      const dataPath = 'characters/custom/' + r.id + '.json', doc = await K.readJSON(dataPath, null), files = [];
+      for (const g of (doc && doc.items) || []) for (const p of g.pieces || []) { const fp = p.file && p.file.path; if (fp && fp.startsWith('characters/items/' + r.id + '-')) files.push(fp); }
+      await K.ghDeleteMany(files, 'Delete custom item of ' + it.name, prog);
+      if (tp) await K.ghDelete(tp, 'Delete custom character thumbnail ' + it.name);
+      await K.ghDelete(dataPath, 'Delete custom character ' + it.name);
+      st('Đang cập nhật danh sách Custom…');
+      const idx = (await K.readJSON('characters/custom/index.json', {version: 1, characters: []})) || {version: 1, characters: []};
+      idx.characters = (idx.characters || []).filter(x => x.id !== r.id);
+      await K.ghPutText('characters/custom/index.json', JSON.stringify(idx, null, 2), 'Delete custom character ' + it.name);
+    } else {
+      const file = r.file, path = 'characters/' + file;
+      if (M.isPackFile(file)) {
+        const man = await K.readJSON(path, null);
+        if (man && man.folder) await K.ghDeleteTree('characters/' + man.folder, 'Delete character parts ' + it.name, prog);
+      }
+      if (tp) await K.ghDelete(tp, 'Delete character thumbnail ' + it.name);
+      st('Đang xóa ' + file + '…'); await K.ghDelete(path, 'Delete character ' + file);
+      st('Đang cập nhật manifest…');
+      const m = (await K.readJSON('library/manifest.json', {})) || {};
+      if (m.characters && m.characters[file]) { delete m.characters[file]; await K.ghPutText('library/manifest.json', JSON.stringify(m, null, 2), 'Delete character ' + file + ' from manifest'); }
+    }
+    S.newChars = S.newChars.filter(x => x.id !== it.id); S.pendingChars = S.pendingChars.filter(x => x.file !== r.file); S.fresh.delete(it.id);
+    S.chars = S.chars.filter(x => x.id !== it.id);
+  });
+}
+
+/* ---------------- Dự án phim (projects/) ---------------- */
+async function loadProjects() {
+  try {
+    const out = [];
+    for (const [dir, legacy] of [['projects', false], ['film-projects', true]]) {
+      const files = (await K.listDir(dir)).filter(x => x.type === 'file' && /\.json$/i.test(x.name));
+      const docs = await Promise.all(files.map(x => K.readJSON(x.path, null).catch(() => null)));
+      files.forEach((x, i) => {
+        const d = docs[i] || {}, id = d.id || x.name.replace(/\.json$/i, '');
+        out.push({id: 'proj:' + x.path, name: d.name || id, category: PROJ_CAT.id, kind: 'project', ext: 'json', size: x.size || 0, thumbPath: '', createdAt: d.updated ? new Date(d.updated).toISOString() : '', ref: {path: x.path, id, scenes: Array.isArray(d.scenes) ? d.scenes.length : 0, legacy}});
+      });
+    }
+    S.projs = out; render();
+  } catch (e) { console.warn('Không nạp được danh sách dự án:', e); }
+}
+function openProjDetail(it) {
+  vtoken++; if (viewer) { viewer.stop(); viewer = null; }
+  const r = it.ref;
+  $('dTitle').textContent = it.name;
+  $('dBody').innerHTML = '<div class="meta">🎞️ Dự án phim · ' + r.scenes + ' cảnh' + (it.createdAt ? ' · cập nhật ' + new Date(it.createdAt).toLocaleDateString('vi-VN') : '') + '</div><div class="meta">' + esc(r.path) + (r.legacy ? ' (thư mục cũ — Studio hiện dùng projects/)' : '') + '</div>' +
+    '<div class="row"><a href="./studio.html#p=' + encodeURIComponent(r.id) + '"><button type="button" class="primary">🎬 Mở trong Studio</button></a><a href="' + esc(K.repoRaw(r.path)) + '" target="_blank" rel="noopener"><button type="button">Mở file ↗</button></a><button class="danger" id="dPurge" style="margin-left:auto">🗑 Xóa vĩnh viễn</button></div><div class="status hide" id="dStatus"></div>';
+  $('detail').classList.add('open');
+  $('dPurge').onclick = () => purgeProject(it);
+}
+async function purgeProject(it) {
+  const r = it.ref;
+  await runDelete('Xóa VĨNH VIỄN dự án “' + it.name + '” khỏi GitHub?\n\nFile ' + r.path + ' sẽ bị xóa (' + THIS_COMMIT + '). Bản lưu trong trình duyệt này cũng bị xóa để Studio không tự đẩy lên lại. Ảnh, video, âm thanh trong kho thư viện KHÔNG bị ảnh hưởng.', async st => {
+    st('Đang xóa ' + r.path + '…'); await K.ghDelete(r.path, 'Delete project ' + it.name);
+    try {   // dọn bản cục bộ của Studio (cùng trình duyệt) để không bị đẩy lại lên GitHub
+      const a = JSON.parse(localStorage.getItem('3dis.projects') || '[]'); if (Array.isArray(a)) localStorage.setItem('3dis.projects', JSON.stringify(a.filter(p => p.id !== r.id)));
+      const sh = JSON.parse(localStorage.getItem('3dis.proj.sha') || '{}'); if (sh && sh[r.id]) { delete sh[r.id]; localStorage.setItem('3dis.proj.sha', JSON.stringify(sh)); }
+    } catch (e) { /* bỏ qua */ }
+    S.projs = S.projs.filter(x => x.id !== it.id);
+  });
 }
 
 /* ---------------- Tạo thumbnail tự động ---------------- */
@@ -420,5 +517,6 @@ async function loadChars() {
   try { const idx = await K.readJSON(INDEX, {version: 1, items: []}); S.items = Array.isArray(idx?.items) ? idx.items : []; } catch (e) { console.warn(e); }
   render();
   loadChars();
+  loadProjects();
 })();
 </script></body></html>
