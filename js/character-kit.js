@@ -3,6 +3,8 @@ import {norm} from './retarget.js';
 import {CHAR_EXTS, extRegex} from './model-loader.js';
 import {PACK_RE, bindSkinnedItem} from './character-pack.js';
 import {splitPair} from './pair-split.js';
+import {syncPhysics, disposePhysics} from './cloth-physics.js';
+export {stepPhysics, physInfo, resetPhysics, PHYS_DEFAULT} from './cloth-physics.js';
 export {splitPair};
 export {CHAR_EXTS, CHAR_EXTS as CHARACTER_EXTS, extOf, stripExt, loadModelUrl, parseModel, acceptOf, listText} from './model-loader.js';
 export const CHAR_RE = extRegex(CHAR_EXTS);
@@ -456,7 +458,7 @@ function mountSkinned(group, piece, rig, content, extra) {
   holder.add(center); center.add(offset); offset.add(content);
   (rig.model || (rig.bones[0] && rig.bones[0].parent) || new THREE.Group()).add(holder);
   content.traverse(o => { if (o.isMesh) { o.userData.pieceUid = piece.uid; o.frustumCulled = false; } });
-  piece._rt = {holder, center, offset, content, mats: [], tint, group, skinned: true, extra: extra || []};
+  piece._rt = {holder, center, offset, content, mats: [], tint, group, skinned: true, extra: extra || [], rig};
   // Trước đây đồ skin không chỉnh được nên piece.scale lưu autoScale (0.01 với file tính bằng cm). Với đồ skin, scale là hệ số so với bản gốc: 1 = nguyên bản.
   const as = (piece._obj && piece._obj.userData && piece._obj.userData.autoScale) || 1;
   if (as !== 1 && Math.abs(piece.scale - as) < 1e-9) piece.scale = 1;
@@ -565,13 +567,14 @@ export function mountPiece(group, piece, rig, parent) {
   holder.add(center); center.add(offset); offset.add(built.content);
   bone.add(holder);
   built.content.traverse(o => { if (o.isMesh) { o.userData.pieceUid = piece.uid; o.frustumCulled = false; } });
-  piece._rt = {holder, center, offset, content: built.content, mats: built.mats, tint: built.tint || [], group};
+  piece._rt = {holder, center, offset, content: built.content, mats: built.mats, tint: built.tint || [], group, rig};
   applyPiece(group, piece);
   return piece._rt;
 }
 export function unmountPiece(piece) {
   const rt = piece._rt;
   if (!rt) return;
+  disposePhysics(rt);   // trả vật liệu / xương về nguyên trạng
   rt.holder.removeFromParent();
   if (rt.extra) rt.extra.forEach(b => b.removeFromParent());   // xương riêng của đồ skin đang gắn dưới xương nhân vật
   if (!piece.file) rt.content.traverse(o => { if (o.geometry) o.geometry.dispose(); });
@@ -593,6 +596,7 @@ export function applyPiece(group, piece) {
     const t = new THREE.Color(group.color || '#ffffff'), b = Math.min(Math.max(group.blend || 0, 0), 1), mul = group.blendMode === 'multiply';
     for (const m of rt.tint) { m.color.copy(m._base); if (b > 0) m.color.lerp(mul ? m._base.clone().multiply(t) : t, b); }
   }
+  syncPhysics(group, piece);   // vật lý vải theo group.phys (bật/tắt/đổi thông số)
 }
 export function newPiece(part, label, bone) {
   return {uid: 'p' + Math.random().toString(36).slice(2, 9), part, label, bone, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, visible: true};
