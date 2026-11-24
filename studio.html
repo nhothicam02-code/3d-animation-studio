@@ -55,6 +55,7 @@ import {clone as skClone} from 'three/addons/utils/SkeletonUtils.js';
 import * as K from './js/character-kit.js';
 import * as FR from './js/face-runtime.js';
 import * as FX from './js/fx-kit.js';
+import * as ENVK from './js/env-kit.js';
 const $=id=>document.getElementById(id),KEY='3dis.projects',LW=130,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').toLowerCase().replace(/^.*:/,'').replace(/^mixamorig/,'').replace(/[^a-z0-9]/g,'');
 const groups={hips:['pelvis','hip'],spine:['spine0','spine01'],spine1:['spine02','chest'],spine2:['spine03','upperchest'],neck:['neck1'],headTop:['headtopend'],lSho:['leftshoulder','leftclavicle','lshoulder','lclavicle'],rSho:['rightshoulder','rightclavicle','rshoulder','rclavicle'],lArm:['leftarm','leftupperarm','lupperarm','larm'],rArm:['rightarm','rightupperarm','rupperarm','rarm'],lFore:['leftforearm','leftlowerarm','lforearm','llowerarm'],rFore:['rightforearm','rightlowerarm','rforearm','rlowerarm'],lHand:['lefthand','lhand'],rHand:['righthand','rhand'],lUp:['leftupleg','leftthigh','leftupperleg','lthigh','lupleg','lupperleg'],rUp:['rightupleg','rightthigh','rightupperleg','rthigh','rupleg','rupperleg'],lLeg:['leftleg','leftlowerleg','leftcalf','leftshin','lcalf','lshin','llowerleg'],rLeg:['rightleg','rightlowerleg','rightcalf','rightshin','rcalf','rshin','rlowerleg'],lFoot:['leftfoot','lfoot'],rFoot:['rightfoot','rfoot']};
@@ -162,8 +163,8 @@ function route(){const m=location.hash.match(/#p=(\w+)/),p=m&&projects.find(x=>x
 addEventListener('hashchange',route);$('back').onclick=e=>{e.preventDefault();location.hash=''};
 
 /* ---------- Khung + 3D ---------- */
-let renderer,tscene,camera,controls,GRID,SG,FXE,FXI=[],FXT=0;const R={},AU={},OV={},clock=new THREE.Clock(),fbx={},jc={};let tok=0;
-function initThree(){if(renderer)return;renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('vp').appendChild(renderer.domElement);tscene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,16/9,.01,500);const hl=new THREE.HemisphereLight(0xffffff,0x666070,2),l=new THREE.DirectionalLight(0xffffff,2.2);l.position.set(3,6,5);BL.push(hl,l);tscene.add(hl,l);SG=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:.45}));SG.rotation.x=-Math.PI/2;SG.position.y=.002;SG.receiveShadow=true;SG.visible=false;tscene.add(SG);tscene.add(GRID=new THREE.GridHelper(20,20,0x444a60,0x2a2e3e));controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;FXE=FX.createFxEngine(tscene,camera);buildGiz();new ResizeObserver(layout).observe($('stage'));tick()}
+let renderer,tscene,camera,controls,GRID,SG,FXE,ENVE,EXPV=null,FXI=[],FXT=0;const R={},AU={},OV={},clock=new THREE.Clock(),fbx={},jc={};let tok=0;
+function initThree(){if(renderer)return;renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('vp').appendChild(renderer.domElement);tscene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,16/9,.01,500);const hl=new THREE.HemisphereLight(0xffffff,0x666070,2),l=new THREE.DirectionalLight(0xffffff,2.2);l.position.set(3,6,5);BL.push(hl,l);tscene.add(hl,l);SG=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:.45}));SG.rotation.x=-Math.PI/2;SG.position.y=.002;SG.receiveShadow=true;SG.visible=false;tscene.add(SG);tscene.add(GRID=new THREE.GridHelper(20,20,0x444a60,0x2a2e3e));controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;FXE=FX.createFxEngine(tscene,camera);ENVE=ENVK.createEnvEngine(tscene,camera,renderer);ENVE.setLights(hl,l);buildGiz();new ResizeObserver(layout).observe($('stage'));tick()}
 function layout(){if(!P||!renderer||EXP)return;const st=$('stage'),W=st.clientWidth-28,H=st.clientHeight-28,f=P.fmt,ar=f.w/f.h;if(W<60||H<60)return;let w=W,h=w/ar;if(h>H){h=H;w=h*ar}const fr=$('frame');fr.style.width=w+'px';fr.style.height=h+'px';fr.style.setProperty('--k',h/f.h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);camera.aspect=ar;camera.updateProjectionMatrix();$('flab').textContent=f.w+'×'+f.h+' · '+f.aspect+' · '+f.fps+'fps'}
 function autoCam(){const s=sc(),xs=s.chars.map(c=>c.x),a=Math.min(...xs,0),b=Math.max(...xs,0),cx=(a+b)/2,th=Math.tan(camera.fov*Math.PI/360),d=Math.max(1/th,((b-a)/2+.9)/(th*camera.aspect))*1.2;camera.position.set(cx,1.3,d);controls.target.set(cx,.9,0);controls.update()}
 const getF=f=>fbx[f]||(fbx[f]=M.loadModelUrl('./characters/'+encodeURIComponent(f),f).catch(()=>M.loadModelUrl('./'+encodeURIComponent(f),f)));
@@ -259,7 +260,7 @@ function seek(v){t=Math.min(Math.max(0,v),sc().duration);for(const k in AU)AU[k]
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.06);
  if(P&&playing&&!busy){t+=dt;const s=sc();if(t>=s.duration){t=s.duration;if(allMode&&si<P.scenes.length-1){nextScene();return}pause()}apply();renderOv();syncTp();audioSync()}
  K.stepPhysics(P&&playing&&!busy&&!EXP?dt:0);
- if(EXP)return;controls.update();const co=fxCamOn();updCbox();updGiz();renderer.render(tscene,camera);fxCamOff(co)}
+ if(EXP)return;controls.update();const co=fxCamOn();updCbox();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
 $('bPlay').onclick=()=>play(false);$('bAll').onclick=()=>{if(si){si=0;renderAll();loadScene().then(()=>play(true))}else play(true)};$('bPause').onclick=pause;
 
 /* ---------- Chọn / kéo / xoay trong khung ---------- */
@@ -326,32 +327,61 @@ function addItem(type,o={},tid){const s=sc(),it={id:uid(),type,start:snap(o.star
 DEFS.fx=()=>({dur:3});
 const fxItems=s=>s.tracks.flatMap(tr=>tr.items).filter(x=>x.type==='fx'&&FX.FX[x.fx]),rtOf=id=>R[id]||(FXE&&FXE.rt.get(id))||null;
 function fxStep(s,tt){if(!FXE||!P)return;s=s||sc();if(!s)return;const items=fxItems(s);FXE.sync(items);const f=P.fmt.fps,q=tt??Math.floor(t*f+1e-6)/f,ft=EXP||!playing?q:t;
- FXE.update(items,ft,{view:{w:renderer.domElement.width,h:renderer.domElement.height},exporting:EXP});FXI=items;FXT=ft}
+ FXE.update(items,ft,{view:{w:renderer.domElement.width,h:renderer.domElement.height},exporting:EXP});FXI=items;FXT=ft;envBgStep(s,ft)}
 const fxCamOn=()=>!!(FXE&&FXI.length&&FXE.camBegin(FXI,FXT,controls.target)),fxCamOff=o=>{if(o)FXE.camEnd()};
-function addFx(id){const s=sc(),d=FX.FX[id];if(!d)return;const st=snap(t);addItem('fx',{...FX.fxDefaults(id),start:st,dur:FX.defaultDur(id,s.duration,st)});apply()}
+function addFx(id,over,st0){const s=sc(),d=FX.FX[id];if(!d)return;const st=snap(st0??t);addItem('fx',{...FX.fxDefaults(id),...over,start:st,dur:FX.defaultDur(id,s.duration,st)});apply()}
 function fxPanel(s){const its=fxItems(s);
- let h='<div class="hint">Bấm một hiệu ứng để thêm vào timeline tại đường đỏ. Hiệu ứng <b>không gian</b> (mưa, tuyết, lửa, nổ…) có khung vùng + gizmo trong khung hình (kéo, xoay, đổi cỡ; 🔒 để khóa); hiệu ứng <b>camera</b> tác động lên góc quay; hiệu ứng <b>màn hình</b> phủ lên toàn khung. Chỉnh cường độ, tốc độ, màu, vị trí / xoay / scale X Y Z ở tab “Thuộc tính”. Mọi hiệu ứng tính theo thời gian nên tua và xuất video cho kết quả giống hệt.</div>';
- for(const[g,gn]of FX.FX_GROUPS)h+='<label>'+gn+'</label><div class="grid">'+FX.FX_IDS.filter(id=>FX.FX[id].g===g).map(id=>'<button class="cd" data-fxadd="'+id+'" title="'+esc(FX.FX[id].note||FX.FX[id].name)+'"><div class="ic">'+FX.FX[id].ic+'</div><b>'+esc(FX.FX[id].name)+'</b></button>').join('')+'</div>';
+ let h='<div class="hint">Bấm một hiệu ứng để thêm vào timeline tại đường đỏ. Hiệu ứng <b>không gian</b> (mưa, tuyết, lửa, nổ…) có khung vùng + gizmo trong khung hình (kéo, xoay, đổi cỡ; 🔒 để khóa); hiệu ứng <b>camera</b> tác động lên góc quay; hiệu ứng <b>màn hình</b> phủ lên toàn khung. Nhóm <b>Không khí &amp; ánh sáng</b> (sương mù, mờ ảo, biến dạng…) dùng được với mọi loại nền. Chỉnh cường độ, tốc độ, màu, vị trí / xoay / scale X Y Z ở tab “Thuộc tính”. Mọi hiệu ứng tính theo thời gian nên tua và xuất video cho kết quả giống hệt.</div>';
+ for(const[g,gn]of FX.FX_GROUPS)h+='<label>'+gn+'</label><div class="grid">'+FX.FX_IDS.filter(id=>FX.FX[id].g===g&&!FX.FX[id].hidden).map(id=>'<button class="cd" data-fxadd="'+id+'" title="'+esc(FX.FX[id].note||FX.FX[id].name)+'"><div class="ic">'+FX.FX[id].ic+'</div><b>'+esc(FX.FX[id].name)+'</b></button>').join('')+'</div>';
  h+='<label>Hiệu ứng trong cảnh ('+its.length+')</label>'+(its.map(it=>'<div style="display:flex;gap:6px;margin:3px 0"><button data-fxsel="'+it.id+'" style="flex:1;text-align:left;'+(sel&&sel.id===it.id?'outline:1px solid var(--accent);':'')+'">'+esc(it.name||FX.FX[it.fx].name)+(it.on===false?' (tắt)':'')+'</button>'+(FX.hasGizmo(it.fx)?'<button data-fxlock="'+it.id+'" title="Khóa / mở khóa kéo thả">'+(it.fixed?'🔒':'🔓')+'</button>':'')+'<button class="del" data-fxdel="'+it.id+'" title="Xóa hiệu ứng">✕</button></div>').join('')||'<div class="hint">Chưa có hiệu ứng nào trong cảnh.</div>');
  return h}
+$('panel').addEventListener('click',e=>{const el=e.target.closest('[data-envp],[data-envbundle]');if(!el||!P)return;const s=sc();
+ if(el.dataset.envp){s.env={preset:el.dataset.envp};touch();renderPanel();apply();return}
+ const pk=ENVK.envParams(s).preset,its=fxItems(s);let n=0;
+ for(const o of ENVK.envBundle(pk)){if(its.some(x=>x.fx===o.fx&&x.bundle===pk))continue;const{fx,...over}=o;addFx(fx,{...over,bundle:pk},0);n++}
+ tab='fx';renderTabs();renderAll();say(n?'Đã thêm '+n+' hiệu ứng vào timeline — chỉnh ở tab Hiệu ứng / Thuộc tính.':'Các hiệu ứng đi kèm đã có trong cảnh.');setTimeout(()=>say(''),2800)});
 $('panel').addEventListener('click',e=>{const el=e.target.closest('[data-fxadd],[data-fxsel],[data-fxdel],[data-fxlock]');if(!el||!P)return;const d=el.dataset;
  if(d.fxadd)addFx(d.fxadd);else if(d.fxsel)setSel(d.fxsel,'props');else if(d.fxlock){const it=fxItems(sc()).find(x=>x.id===d.fxlock);if(it){it.fixed=!it.fixed;touch();renderPanel()}}else if(d.fxdel){sel={id:d.fxdel};remove()}});
 const addMediaItem=(r,o={},tid)=>r&&addItem(r.type,{media:r.id,name:r.name,dur:r2(r.dur||5),...o},tid);
 
 /* ---------- Nền cảnh: màu / gradient / ảnh / video ---------- */
+/* ---------- Nền trong WebGL: dữ liệu đưa cho env-kit.js ---------- */
+const bgTrackAt=(s,tt)=>{let b=null;for(const tr of s.tracks)for(const x of tr.items)if(x.type==='bg'&&tt>=x.start&&tt<x.start+x.dur)b=x;return b},
+ mediaOk=(id,ty)=>{const m=id&&media.find(x=>x.id===id);return m&&m.type===ty?murl[id]||'':''},
+ envUrl=s=>s.bgt==='pano'||s.bgt==='img'?mediaOk(s.bgm,'img'):'',
+ bgVidUrl=(s,tt)=>!bgTrackAt(s,tt)&&s.bgt==='vid'?mediaOk(s.bgm,'vid'):'';
+function flatBg(s,tt,b){const k=s.bgt==='grad'||s.bgt==='img'||s.bgt==='vid'?s.bgt:'color',o={type:b?'color':k,c1:b?b.color:s.bg,c2:s.bg2||'#000000',ang:s.bga??135,fit:s.bgfit||'cover',z:s.bgz??100,x:s.bgx??0,y:s.bgy??0,url:'',el:null,force:!!b};
+ if(!b&&k==='img'){o.url=mediaOk(s.bgm,'img');if(!o.url)o.type='color'}
+ if(!b&&k==='vid'){if(EXP)o.el=EXPV;else{const v=document.querySelector('#bgl video');if(v&&bgVidUrl(s,tt))o.el=v}}
+ return o}
+function envBgStep(s,ft){if(!ENVE||!s)return;const b=bgTrackAt(s,ft),w=renderer.domElement.width,h=renderer.domElement.height;
+ ENVE.update(s,ft,{url:s.bgt==='pano'?mediaOk(s.bgm,'img'):'',custom:!!(s.lights&&s.lights.length),aspect:w/Math.max(1,h),bg:flatBg(s,ft,b),post:FXE.post})}
+function envField(f,P){const[k,l,ty,a,b,c]=f,v=P[k],at='data-env="'+k+'" ';
+ if(ty==='r'){const n=+v;return '<label>'+l+'</label><div class="r"><input '+at+'type="range" min="'+a+'" max="'+b+'" step="'+c+'" value="'+n+'" style="flex:1"><input '+at+'type="number" step="any" value="'+r2(n)+'" style="width:72px;flex:none"></div>'}
+ if(ty==='c')return '<label>'+l+'</label><input '+at+'type="color" value="'+esc(v)+'">';
+ if(ty==='b')return '<label><input '+at+'type="checkbox"'+(v?' checked':'')+'> '+l+'</label>';
+ return ''}
+function envBgUI(s){const P=ENVK.envParams(s),cur=P.preset,bn=ENVK.envBundle(cur);
+ let h='<label>Địa điểm</label><div class="grid">'+ENVK.ENV_PRESETS.map(([k,n])=>'<button class="cd" data-envp="'+k+'"'+(k===cur?' style="border-color:var(--ac);background:#2a2740"':'')+'><b>'+n+'</b></button>').join('')+'</div>';
+ h+=ENVK.envFields(P,'env').map(f=>envField(f,P)).join('');
+ if(bn.length)h+='<button data-envbundle="1" style="width:100%;margin-top:10px">✨ Thêm hiệu ứng đi kèm: '+esc(bn.map(x=>FX.FX[x.fx].name).join(', '))+'</button>';
+ return h+'<div class="hint">Nền chỉ là <b>địa điểm</b>. Sương mù, mờ ảo, biến dạng không khí, mây, bụi… nằm ở tab ✨ Hiệu ứng và dùng được với <b>mọi loại nền</b> (kể cả ảnh, video, ảnh 360°). Nút trên thêm sẵn vài hiệu ứng hợp với địa điểm vào timeline để bạn sửa / xoá.</div>'}
+
 function bgFit(el,s){const f=s.bgfit||'cover';if(el.tagName==='VIDEO')el.style.objectFit=f;else el.style.backgroundSize=f==='fill'?'100% 100%':f;el.style.transform='translate('+(s.bgx||0)+'%,'+(s.bgy||0)+'%) scale('+((s.bgz??100)/100)+')'}
 function bgApply(){const s=sc();if(!s)return;let b=null;for(const tr of s.tracks)for(const x of tr.items)if(x.type==='bg'&&t>=x.start&&t<x.start+x.dur)b=x;
  const L=$('bgl'),ty=b?'color':s.bgt||'color',u=s.bgm&&murl[s.bgm],css=b?b.color:ty==='grad'?'linear-gradient('+(s.bga??135)+'deg,'+s.bg+','+(s.bg2||'#000')+')':s.bg;
- if(L._c!==css){L._c=css;L.style.background=css}
- let im=L.querySelector('.bgi');if(!b&&ty==='img'&&u){if(!im){im=document.createElement('div');im.className='bgi';L.appendChild(im)}if(im.dataset.u!==u){im.dataset.u=u;im.style.backgroundImage='url("'+u+'")'}bgFit(im,s)}else if(im)im.remove();
+ L.style.visibility='hidden';   /* nền phẳng giờ vẽ trong WebGL; lớp HTML này chỉ giữ <video> nguồn */
+ {const im=L.querySelector('.bgi');if(im)im.remove()}
  let v=L.querySelector('video');
- if(ty==='vid'&&u){if(!v){v=document.createElement('video');v.muted=true;v.playsInline=true;L.appendChild(v)}if(v.dataset.u!==u){v.dataset.u=u;v.src=u}bgFit(v,s);const d=v.duration||0,want=d?t%d:t;
+ if(ty==='vid'&&u){if(!v){v=document.createElement('video');v.muted=true;v.playsInline=true;v.crossOrigin='anonymous';v.addEventListener('loadeddata',()=>ENVE&&ENVE.refresh());v.addEventListener('seeked',()=>ENVE&&ENVE.refresh());L.appendChild(v)}if(v.dataset.u!==u){v.dataset.u=u;v.src=u}bgFit(v,s);const d=v.duration||0,want=d?t%d:t;
   if(playing){if(v.paused)v.play().catch(()=>{});if(d&&Math.abs(v.currentTime-want)>.4)v.currentTime=want}else{if(!v.paused)v.pause();if(Math.abs(v.currentTime-want)>.05)try{v.currentTime=want}catch{}}}else if(v)v.remove()}
-const BGT=[['color','Màu đơn'],['grad','Gradient'],['img','Ảnh'],['vid','Video']],GP=['#171923,#4a2f8f','#ff7e5f,#feb47b','#00c6ff,#0072ff','#11998e,#38ef7d','#434343,#000000','#ee0979,#ff6a00'];
-function bgUI(s){const ty=s.bgt||'color';let h='<label>Nền cảnh</label><select data-sc="bgt">'+BGT.map(x=>'<option value="'+x[0]+'"'+(x[0]===ty?' selected':'')+'>'+x[1]+'</option>').join('')+'</select>';
+const BGT=[['color','Màu đơn'],['grad','Gradient'],['img','Ảnh'],['vid','Video'],['env','🌍 Môi trường 3D'],['pano','🌐 Ảnh 360°']],GP=['#171923,#4a2f8f','#ff7e5f,#feb47b','#00c6ff,#0072ff','#11998e,#38ef7d','#434343,#000000','#ee0979,#ff6a00'];
+function bgUI(s){const ty=s.bgt||'color',bgOpt=x=>'<option value="'+x[0]+'"'+(x[0]===ty?' selected':'')+'>'+x[1]+'</option>';let h='<label>Nền cảnh</label><select data-sc="bgt"><optgroup label="Phẳng (2D)">'+BGT.slice(0,4).map(bgOpt).join('')+'</optgroup><optgroup label="3D (camera nhìn quanh được)">'+BGT.slice(4).map(bgOpt).join('')+'</optgroup></select>';
  if(ty==='color')h+='<label>Màu</label><input type="color" data-sc="bg" value="'+s.bg+'">';
  if(ty==='grad')h+='<div class="r"><div><label>Màu 1</label><input type="color" data-sc="bg" value="'+s.bg+'"></div><div><label>Màu 2</label><input type="color" data-sc="bg2" value="'+(s.bg2||'#000000')+'"></div><div><label>Góc (độ)</label><input type="number" step="any" data-sc="bga" value="'+(s.bga??135)+'"></div></div><div class="grid">'+GP.map(g=>{const[a,b]=g.split(',');return '<button class="cd" data-gp="'+g+'" style="height:30px;background:linear-gradient(135deg,'+a+','+b+')"></button>'}).join('')+'</div>';
- if(ty==='img'||ty==='vid'){const l=media.filter(m=>m.type===ty&&!m.lib);h+='<input type="file" id="fbg" accept="'+(ty==='img'?'image/*':'video/*')+'" hidden><button id="bgimp" class="pri" style="width:100%;margin-top:8px">+ Nhập '+(ty==='img'?'ảnh':'video')+' từ máy…</button><div class="grid">'+l.map(m=>'<div class="cd" data-bgm="'+m.id+'"'+(m.id===s.bgm?' style="border-color:var(--ac);background:#2a2740"':'')+'>'+(ty==='img'?'<img alt="" src="'+murl[m.id]+'">':'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>')+'<b>'+esc(m.name)+'</b></div>').join('')+'</div>'+(l.length?'':'<div class="hint">Chưa có file nào, hãy nhập file ở trên.</div>')+'<label>Thư viện GitHub</label>'+libHtml('bg',[ty],s.bgm)+'<label>Cách vừa khung</label><select data-sc="bgfit">'+[['cover','Phủ kín (cắt phần thừa)'],['contain','Vừa khung (giữ nguyên tỉ lệ)'],['fill','Kéo giãn đầy khung']].map(x=>'<option value="'+x[0]+'"'+(x[0]===(s.bgfit||'cover')?' selected':'')+'>'+x[1]+'</option>').join('')+'</select><div class="r"><div><label>Thu phóng (%)</label><input type="number" step="any" min="10" max="500" data-sc="bgz" value="'+(s.bgz??100)+'"></div><div><label>Lệch X (%)</label><input type="number" step="any" data-sc="bgx" value="'+(s.bgx||0)+'"></div><div><label>Lệch Y (%)</label><input type="number" step="any" data-sc="bgy" value="'+(s.bgy||0)+'"></div></div><div class="r"><button data-bgreset="1">Đặt lại kích thước nền</button></div>'}
+ if(ty==='img'||ty==='vid'||ty==='pano'){const mt=ty==='pano'?'img':ty,l=media.filter(m=>m.type===mt&&!m.lib);h+='<input type="file" id="fbg" accept="'+(mt==='img'?'image/*':'video/*')+'" hidden><button id="bgimp" class="pri" style="width:100%;margin-top:8px">+ Nhập '+(ty==='pano'?'ảnh 360°':mt==='img'?'ảnh':'video')+' từ máy…</button><div class="grid">'+l.map(m=>'<div class="cd" data-bgm="'+m.id+'"'+(m.id===s.bgm?' style="border-color:var(--ac);background:#2a2740"':'')+'>'+(mt==='img'?'<img alt="" src="'+murl[m.id]+'">':'<video src="'+murl[m.id]+'#t=0.5" preload="metadata" muted></video>')+'<b>'+esc(m.name)+'</b></div>').join('')+'</div>'+(l.length?'':'<div class="hint">Chưa có file nào, hãy nhập file ở trên.</div>')+'<label>Thư viện GitHub</label>'+libHtml('bg',[mt],s.bgm)+'<label>Cách vừa khung</label><select data-sc="bgfit">'+[['cover','Phủ kín (cắt phần thừa)'],['contain','Vừa khung (giữ nguyên tỉ lệ)'],['fill','Kéo giãn đầy khung']].map(x=>'<option value="'+x[0]+'"'+(x[0]===(s.bgfit||'cover')?' selected':'')+'>'+x[1]+'</option>').join('')+'</select><div class="r"><div><label>Thu phóng (%)</label><input type="number" step="any" min="10" max="500" data-sc="bgz" value="'+(s.bgz??100)+'"></div><div><label>Lệch X (%)</label><input type="number" step="any" data-sc="bgx" value="'+(s.bgx||0)+'"></div><div><label>Lệch Y (%)</label><input type="number" step="any" data-sc="bgy" value="'+(s.bgy||0)+'"></div></div><div class="r"><button data-bgreset="1">Đặt lại kích thước nền</button></div>'}
+ if(ty==='pano'){const k=h.indexOf('<label>Cách vừa khung</label>');if(k>=0)h=h.slice(0,k);const P=ENVK.envParams(s);h+='<div class="hint">Chọn ảnh toàn cảnh <b>equirectangular (tỉ lệ 2:1)</b>. Dùng Lia / Orbit ở tab ✨ Hiệu ứng để nhìn quanh trong ảnh.</div>'+ENVK.envFields(P,'pano').map(f=>envField(f,P)).join('')}
+ if(ty==='env')h+=envBgUI(s);
  return h}
 
 
@@ -553,16 +583,17 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
   if(m==='down'&&si<P.scenes.length-1){[P.scenes[si+1],P.scenes[si]]=[P.scenes[si],P.scenes[si+1]];si++}
   touch();sel=null;renderAll();loadScene()}
  if(el.id==='exp')dl(P.name+'.film.json',P);
- if(el.id==='snap'){const o=renderer.domElement;renderer.setPixelRatio(1);renderer.setSize(P.fmt.w,P.fmt.h,false);gzG.visible=false;FXE.hideHelpers();{const co=fxCamOn();renderer.render(tscene,camera);fxCamOff(co)}o.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=P.name+'.png';a.click()});layout();fxStep()}};
+ if(el.id==='snap'){const o=renderer.domElement;renderer.setPixelRatio(1);renderer.setSize(P.fmt.w,P.fmt.h,false);gzG.visible=false;FXE.hideHelpers();{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}o.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=P.name+'.png';a.click()});layout();fxStep()}};
 /* chỉnh thông số realtime */
 $('panel').oninput=e=>{const el=e.target,d=el.dataset,s=sc();
  if(el.id==='fi'){importFiles([...el.files]);el.value='';return}
  if(el.id==='fm'){importModels([...el.files]);el.value='';return}
- if(el.id==='fbg'){importFiles([...el.files]).then(r=>{const m=r.find(x=>x.type===s.bgt);if(m){s.bgm=m.id;touch();renderPanel();apply()}});el.value='';return}
+ if(el.id==='fbg'){importFiles([...el.files]).then(r=>{const m=r.find(x=>x.type===(s.bgt==='pano'?'img':s.bgt));if(m){s.bgm=m.id;touch();renderPanel();apply()}});el.value='';return}
  if(el.id==='cq'){cq=el.value;const p=el.selectionStart;renderPanel();const n=$('cq');n.focus();n.setSelectionRange(p,p);return}
  if(d.lq){LS[d.lq].q=el.value;LS[d.lq].p=0;const p=el.selectionStart;renderPanel();const n=document.querySelector('[data-lq="'+d.lq+'"]');if(n){n.focus();n.setSelectionRange(p,p)}return}
  if(d.lcat){LS[d.lcat].c=el.value;LS[d.lcat].p=0;renderPanel();return}
  if(el.type==='number'&&el.value==='')return;const v=el.type==='checkbox'?el.checked:el.type==='number'||el.type==='range'?+el.value:el.value;
+ if(d.env){const e=s.env||(s.env={preset:'sky'});e[d.env]=v;document.querySelectorAll('#panel [data-env="'+d.env+'"]').forEach(i=>{if(i!==el&&i.type!=='checkbox')i.value=i.type==='number'?r2(v):v});apply();touchSoon();return}
  if(d.k){const it=cur(),ty=stype();if(!it)return;if(['sx','sy','sz'].includes(d.k)&&it.lock&&it[d.k]>0&&v>0){const k=v/it[d.k];for(const a of['sx','sy','sz'])if(a!==d.k&&it[a]!==undefined)it[a]=Math.round(it[a]*k*1000)/1000}it[d.k]=v;if(d.k==='lt'){Object.assign(it,{distance:0,decay:2,angle:35,penumbra:.4},LDEF[v]);setTimeout(renderPanel,0)}if(d.k==='lang'){it.voice=DEFV[v]||DEFV.vi;setTimeout(renderPanel,0)}if(d.k==='ch'&&it.type==='face'){const rr=R[v];if(FR.isCx(it.expr)&&!(rr&&rr.exs&&rr.exs.some(e=>e.id===FR.cxId(it.expr))))it.expr='happy';setTimeout(renderPanel,0)}if(ty==='clip'&&d.k==='clip'){const a=manifest.animations.find(x=>x.id===v);if(a)it.dur=r2(a.duration);const l=loc();if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~'}if(ty==='char'||ty==='prop')place(it);
   if((it.start||0)+(it.dur||0)>s.duration)s.duration=Math.ceil((it.start||0)+it.dur);if(['start','dur','text','name','color','clip','who','expr','ch'].includes(d.k))renderTL();if(ty==='char'&&d.k==='name')renderTL();if(KALL.includes(d.k))autoKey(it);renderOv();apply();touchSoon();sync()}
  if(d.sc){s[d.sc]=v;if(d.sc==='name')renderStrip();if(['duration','bg','bg2','bga','bgt','bgfit','bgz','bgx','bgy'].includes(d.sc)){renderTL();apply()}if(d.sc==='bgt')renderPanel();touchSoon()}
@@ -597,16 +628,11 @@ $('fVoice').onchange=async e=>{const it=cur(),r=(await importFiles([...e.target.
 /* ---------- Xuất video: dựng offline từng khung (không phụ thuộc tốc độ máy → không lag/khựng/rớt frame) ---------- */
 let EXP=false,XC=false;const IMGC={},VPL={},DEC={},MP4U='https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.mjs',WEBMU='https://cdn.jsdelivr.net/npm/webm-muxer@5.0.3/build/webm-muxer.mjs';
 const loadImg=u=>IMGC[u]||(IMGC[u]=new Promise(r=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u}));
-async function vFrame(u,tm){let v=VPL[u];if(!v){v=VPL[u]=document.createElement('video');v.muted=true;v.preload='auto';v.crossOrigin='anonymous';v.src=u;await new Promise(r=>{v.onloadeddata=v.onerror=r})}
- const d=v.duration>0?v.duration:1e9,w=Math.min(Math.max(0,tm),d-.001);if(Math.abs(v.currentTime-w)>.001)await new Promise(r=>{v.onseeked=r;v.currentTime=w;setTimeout(r,1500)});return v}
+async function vFrame(u,tm,lp){let v=VPL[u];if(!v){v=VPL[u]=document.createElement('video');v.muted=true;v.preload='auto';v.crossOrigin='anonymous';v.src=u;await new Promise(r=>{v.onloadeddata=v.onerror=r})}
+ const d=v.duration>0?v.duration:1e9,w=lp&&v.duration>0?tm%d:Math.min(Math.max(0,tm),d-.001);if(Math.abs(v.currentTime-w)>.001)await new Promise(r=>{v.onseeked=r;v.currentTime=w;setTimeout(r,1500)});return v}
 const fitDraw=(c,im,iw,ih,W,H,z,ox,oy,mode)=>{const k=(mode==='contain'?Math.min:Math.max)(W/iw,H/ih)*(z/100);c.drawImage(im,W/2-iw*k/2+ox*W/100,H/2-ih*k/2+oy*H/100,iw*k,ih*k)};
 async function compose(c,s,tt,W,H){
- let b=null;for(const tr of s.tracks)for(const x of tr.items)if(x.type==='bg'&&tt>=x.start&&tt<x.start+x.dur)b=x;
- const ty=b?'color':s.bgt||'color';
- if(ty==='grad'){const a=(s.bga??135)*Math.PI/180,dx=Math.sin(a),dy=-Math.cos(a),h=(Math.abs(W*dx)+Math.abs(H*dy))/2,g=c.createLinearGradient(W/2-dx*h,H/2-dy*h,W/2+dx*h,H/2+dy*h);g.addColorStop(0,s.bg);g.addColorStop(1,s.bg2||'#000');c.fillStyle=g}else c.fillStyle=b?b.color:s.bg;
- c.fillRect(0,0,W,H);
- const u=!b&&s.bgm&&murl[s.bgm];
- if(u&&ty!=='color'&&ty!=='grad'){const m=media.find(x=>x.id===s.bgm),im=m&&m.type==='vid'?await vFrame(u,tt):await loadImg(u),iw=im&&(im.videoWidth||im.naturalWidth),ih=im&&(im.videoHeight||im.naturalHeight);if(iw)fitDraw(c,im,iw,ih,W,H,s.bgz??100,s.bgx??0,s.bgy??0,s.bgfit)}
+ /* Nền (màu / gradient / ảnh / video / môi trường / 360°) đã được vẽ trong WebGL — chỉ ghép canvas 3D rồi tới lớp 2D. */
  c.drawImage(renderer.domElement,0,0,W,H);
  const its=s.tracks.flatMap(tr=>tr.items).filter(x=>V2.includes(x.type)&&tt>=x.start&&tt<x.start+x.dur).sort((a,b)=>(a.zi||0)-(b.zi||0));
  for(const it of its){c.save();c.globalAlpha=it.opacity??1;c.translate(it.x/100*W,it.y/100*H);c.rotate((it.rot||0)*Math.PI/180);c.scale(it.sx??1,it.sy??1);
@@ -638,15 +664,15 @@ async function exportVideo(fmt,onP){
  onP(0,'Phân tích khẩu hình…');for(const sc of P.scenes)for(const tr of sc.tracks)for(const it of tr.items)if(it.type==='tts'&&it.ch&&it.lip!==false){const u=srcOf(it);if(u)await envReady(u).catch(()=>{})}
  EXP=true;pause();busy=true;renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();
  try{await Promise.all(FONTS.map(x=>document.fonts.load('40px "'+x+'"').catch(()=>{})));let n=0;
-  for(let k=0;k<P.scenes.length;k++){si=k;await loadScene();busy=true;const s=P.scenes[k];
+  for(let k=0;k<P.scenes.length;k++){si=k;await loadScene();busy=true;const s=P.scenes[k];{const eu=envUrl(s);if(eu)await ENVE.preload(eu).catch(()=>{})}
    for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx){onP(0,'Tải ảnh biểu cảm…');await rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}}
    for(let j=0;j<nF[k];j++){if(XC)throw Error('Đã huỷ xuất.');if(ERR)throw ERR;
-    t=j/fps;await apply();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;{const co=fxCamOn();renderer.render(tscene,camera);fxCamOff(co)}await compose(c,s,t,W,H);
+    t=j/fps;{const vu=bgVidUrl(s,t);EXPV=vu?await vFrame(vu,t,true):null}await apply();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}await compose(c,s,t,W,H);
     while(ve.encodeQueueSize>6)await new Promise(r=>setTimeout(r,4));
     const vf=new VideoFrame(cv,{timestamp:Math.round(n*1e6/fps),duration:Math.round(1e6/fps)});ve.encode(vf,{keyFrame:n%(fps*2)===0});vf.close();n++;
     if(n%4===0){onP(n/total,'Khung '+n+' / '+total);await new Promise(r=>setTimeout(r))}}}
   await ve.flush();if(ERR)throw ERR;flushA(Infinity);mux.finalize();return new Blob([tg.buffer],{type:mp4?'video/mp4':'video/webm'})}
- finally{EXP=false;try{ve.close()}catch{}if(GRID)GRID.visible=true;for(const k in VPL){VPL[k].removeAttribute('src');delete VPL[k]}layout();si=orig.si;renderAll();await loadScene();seek(orig.t)}}
+ finally{EXP=false;EXPV=null;try{ve.close()}catch{}if(GRID)GRID.visible=true;for(const k in VPL){VPL[k].removeAttribute('src');delete VPL[k]}layout();si=orig.si;renderAll();await loadScene();seek(orig.t)}}
 let xRun=false;
 $('bExp').onclick=()=>{if(!P)return;pause();$('xs').textContent='';$('xp').value=0;$('dExp').showModal()};
 $('xX').onclick=()=>{if(xRun)XC=true;else $('dExp').close()};
