@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import {norm} from './retarget.js';
 import {CHAR_EXTS, extRegex} from './model-loader.js';
 import {PACK_RE, bindSkinnedItem} from './character-pack.js';
+import {splitPair} from './pair-split.js';
+export {splitPair};
 export {CHAR_EXTS, CHAR_EXTS as CHARACTER_EXTS, extOf, stripExt, loadModelUrl, parseModel, acceptOf, listText} from './model-loader.js';
 export const CHAR_RE = extRegex(CHAR_EXTS);
 
@@ -458,15 +460,46 @@ function mountSkinned(group, piece, rig, content, extra) {
   applyPiece(group, piece);
   return piece._rt;
 }
+const PAIR_ANCHOR_MAX = 0.5;   // mét: nửa tách ra cách xương xa hơn mức này thì coi như file không cùng hệ trục với nhân vật
+/** Nửa trái/phải của piece.split, tính một lần cho mỗi _obj (nhớ trong piece._half). null nếu file không còn tách được. */
+function halfOf(piece, rig) {
+  if (piece._halfSrc !== piece._obj) { const sp = splitPair(piece._obj, rig); piece._half = sp ? sp[piece.split] : null; piece._halfSrc = piece._obj; }
+  return piece._half;
+}
+/** Danh mục có đồ dạng cặp, kèm xương của chiếc trái / phải. */
+export const PAIR_SLOTS = {shoes: ['lFoot', 'rFoot'], socks: ['lFoot', 'rFoot']};
+/**
+ * Thử tách đồ cặp thành 2 piece (trái/phải) gắn vào hai xương bàn chân. `fit` = kết quả fitImported; `label` ví dụ 'Giày'.
+ * Trả về [pieceTrái, pieceMặt] (kèm .mode = 'gap'|'plane') hoặc null nếu không phải đồ cặp / nhân vật thiếu xương chân.
+ */
+export function pairPieces(slot, fit, rig, label, file) {
+  const bones = PAIR_SLOTS[slot];
+  if (!bones || !rig || !bones.every(b => rig.bone(b))) return null;
+  const sp = splitPair(fit.obj, rig);
+  if (!sp) return null;
+  const out = ['l', 'r'].map((s, i) => {
+    const p = {...newPiece('file', label + (s === 'l' ? ' trái' : ' phải'), bones[i]), file: {...file}, split: s, scale: fit.autoScale};
+    p._obj = fit.obj; p._autoScale = fit.autoScale; p._half = sp[s]; p._halfSrc = fit.obj;
+    return p;
+  });
+  out.mode = sp.mode;
+  return out;
+}
 export function mountPiece(group, piece, rig, parent) {
   unmountPiece(piece);
   let built, bone = rig.bone(piece.bone);
   if (piece.file) {
     if (!piece._obj) return null;
-    const obj = piece._obj;
-    // Đồ có skin trùng tên xương với nhân vật (áo, quần, váy…) → bind vào xương nhân vật, biến dạng theo cơ thể
-    const sk = bindSkinnedItem(obj, rig);
-    if (sk) return mountSkinned(group, piece, rig, sk.content, sk.extra);
+    let obj = piece._obj, anchor = null;
+    // Đồ cặp (giày, tất…) đã được tách trái/phải: mỗi piece chỉ dựng nửa của mình. Tính lại khi nạp từ file đã lưu (cùng thuật toán → cùng kết quả).
+    const half = piece.split ? halfOf(piece, rig) : null;
+    if (piece.split && !half) return null;   // file không còn tách được: bỏ qua thay vì gắn cả đôi vào một chân
+    if (half) { obj = half.obj; anchor = half.anchor; }
+    else {
+      // Đồ có skin trùng tên xương với nhân vật (áo, quần, váy…) → bind vào xương nhân vật, biến dạng theo cơ thể
+      const sk = bindSkinnedItem(obj, rig);
+      if (sk) return mountSkinned(group, piece, rig, sk.content, sk.extra);
+    }
     // nhân bản vật liệu để có thể pha màu (blend) mà không làm hỏng bản gốc
     const tint = [];
     obj.traverse(o => {
@@ -477,6 +510,8 @@ export function mountPiece(group, piece, rig, parent) {
       nm.forEach(m => { if (m._tintClone) tint.push(m); });
     });
     built = {content: obj, worldCenter: bone ? rig.rest.get(bone).pos.clone() : new THREE.Vector3(), mats: [], tint};
+    // Nửa tách ra từ file xuất cùng hệ trục với nhân vật → giữ đúng chỗ gốc (gần xương); lệch xa thì căn tâm vào xương như đồ thường
+    if (anchor && bone && anchor.distanceTo(built.worldCenter) < PAIR_ANCHOR_MAX) built.worldCenter = anchor.clone();
   } else {
     built = buildPieceContent(group, piece, rig);
     if (!built) return null;
@@ -540,7 +575,9 @@ export function fitImported(obj) {
   obj.position.sub(c);
   wrap.add(obj);
   wrap.userData.fitInner = obj; wrap.userData.fitCenter = c.clone();   // để đồ skin trả lại vị trí gốc (xem bindSkinnedItem)
-  return {obj: wrap, autoScale: m > 3 ? 0.01 : 1};
+  const autoScale = m > 3 ? 0.01 : 1;
+  wrap.userData.autoScale = autoScale;   // để đồ cặp tách ra tính được vị trí gốc (mét)
+  return {obj: wrap, autoScale};
 }
 
 /** Xuất JSON lưu trữ (bỏ trường runtime bắt đầu bằng _). */
