@@ -2,14 +2,25 @@
  "id": "097lyv3r2",
  "name": "a",
  "created": 1795364455358,
- "updated": 1795366972080,
+ "updated": 1795495532113,
  "scenes": [
   {
    "id": "hobmvu3r2",
    "name": "Cảnh 1",
    "duration": 8,
    "bg": "#171923",
-   "cam": null,
+   "cam": {
+    "p": [
+     3.122838218833653,
+     -0.25939373121024356,
+     2.633642547455137
+    ],
+    "t": [
+     0.6,
+     0.9,
+     0
+    ]
+   },
    "chars": [
     {
      "id": "e029qo91g",
@@ -61,17 +72,182 @@
        }
       ]
      }
+    },
+    {
+     "id": "jg4c4l9ep",
+     "file": "g1test.character.json",
+     "name": "mina",
+     "custom": {
+      "id": "mina-mwu7iczd",
+      "dataPath": "characters/custom/mina-mwu7iczd.json",
+      "name": "mina"
+     },
+     "x": 1.2,
+     "z": 0,
+     "rot": 0,
+     "scale": 1,
+     "opacity": 1,
+     "y": 0,
+     "rx": 0,
+     "rz": 0,
+     "sx": 1,
+     "sy": 1,
+     "sz": 1,
+     "lock": true,
+     "fixed": true,
+     "clips": [
+      {
+       "id": "aobok8y7x",
+       "clip": "mua-dancing-mwrl03b9",
+       "start": 0,
+       "dur": 4.47,
+       "loop": true
+      }
+     ]
     }
    ],
-   "tracks": [],
-   "bgt": "color",
+   "tracks": [
+    {
+     "id": "z8e1ld6o6",
+     "items": [
+      {
+       "id": "owx7g16o6",
+       "type": "face",
+       "start": 0,
+       "ch": "jg4c4l9ep",
+       "expr": "happy",
+       "amt": 0.85,
+       "ov": true,
+       "ovy": 0.45,
+       "ovz": 0.5,
+       "ovs": 0.9,
+       "dur": 2
+      }
+     ]
+    },
+    {
+     "id": "matlsa2tz",
+     "items": [
+      {
+       "id": "d9ddzv2ty",
+       "type": "face",
+       "start": 0.4666666666666667,
+       "ch": "jg4c4l9ep",
+       "expr": "c:vui-mwu7fjgb",
+       "amt": 1,
+       "ov": true,
+       "ovy": 0.45,
+       "ovz": 0.5,
+       "ovs": 0.9,
+       "dur": 2
+      }
+     ]
+    }
+   ],
+   "bgt": "img",
    "bg2": "#5b3fa8",
    "bga": 135,
    "bgfit": "cover",
    "bgz": 100,
    "bgx": 0,
    "bgy": 0,
-   "props": []
+   "props": [],
+   "lights": [
+    {
+     "id": "81edveegr",
+     "name": "Đèn rọi 1",
+     "lt": "spot",
+     "on": true,
+     "color": "#ffffff",
+     "helper": true,
+     "shadow": false,
+     "x": -2.4,
+     "z": 2,
+     "rx": -60,
+     "rot": 0,
+     "rz": 0,
+     "distance": 0,
+     "decay": 2,
+     "intensity": 60,
+     "y": 4,
+     "angle": 35,
+     "penumbra": 0.4
+    },
+    {
+     "id": "w4hnhwg2f",
+     "name": "Điểm 1",
+     "lt": "point",
+     "on": true,
+     "color": "#ffffff",
+     "helper": true,
+     "shadow": false,
+     "x": -1.2,
+     "z": 2,
+     "rx": 0,
+     "rot": 0,
+     "rz": 0,
+     "distance": 0,
+     "decay": 2,
+     "intensity": 25,
+     "y": 3
+    },
+    {
+     "id": "gry5ogh82",
+     "name": "Bán cầu 1",
+     "lt": "hemi",
+     "on": true,
+     "color": "#ffffff",
+     "helper": true,
+     "shadow": false,
+     "x": 0,
+     "z": 2,
+     "rx": 0,
+     "rot": 0,
+     "rz": 0,
+     "distance": 0,
+     "decay": 2,
+     "intensity": 1.5,
+     "color2": "#666070",
+     "y": 3
+    },
+    {
+     "id": "8d58k1id9",
+     "name": "Môi trường 1",
+     "lt": "amb",
+     "on": true,
+     "color": "#ffffff",
+     "helper": true,
+     "shadow": false,
+     "x": 1.2,
+     "z": 2,
+     "rx": 0,
+     "rot": 0,
+     "rz": 0,
+     "distance": 0,
+     "decay": 2,
+     "intensity": 0.6,
+     "y": 3
+    },
+    {
+     "id": "2qnd3nj81",
+     "name": "Hướng 1",
+     "lt": "dir",
+     "on": true,
+     "color": "#ffffff",
+     "helper": true,
+     "shadow": false,
+     "x": 2.4,
+     "z": 2,
+     "rx": -50,
+     "rot": 20,
+     "rz": 0,
+     "distance": 0,
+     "decay": 2,
+     "intensity": 2.2,
+     "y": 6
+    }
+   ],
+   "bgm": "isjc9ejuc"
   }
  ],
  "fmt": {
