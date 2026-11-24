@@ -225,6 +225,7 @@ export function createShapeDriver() {
   const names = () => [...map.keys()].sort(natural);
   return {
     names,
+    has: n => map.has(n),
     setModel(root) {
       map = new Map(); driven = new Set();
       if (root) root.traverse(o => {
