@@ -338,7 +338,7 @@ function fillEditor() {
   $('editor').classList.toggle('off', !p);
   if (!p) { $('edLabel').value = ''; return; }
   $('edLabel').value = g.name + ' › ' + p.label;
-  $('edBone').value = p.bone;
+  $('edBone').value = p.bone; $('edBone').disabled = !!(p._rt && p._rt.skinned);   // đồ skin bám cả bộ xương, không gắn vào 1 xương
   ['px', 'py', 'pz'].forEach((id, i) => $(id).value = +p.pos[i].toFixed(4));
   ['rx', 'ry', 'rz'].forEach((id, i) => $(id).value = +p.rot[i].toFixed(3));
   $('sc').value = +p.scale.toFixed(4);
@@ -358,7 +358,7 @@ $('blendMode').onchange = e => { const {g} = curSel(); if (!g) return; g.blendMo
 $('vP').onchange = e => { const {g, p} = curSel(); if (!p) return; p.visible = e.target.checked; K.applyPiece(g, p); dirty(); };
 $('vG').onchange = e => { const {g} = curSel(); if (!g) return; g.visible = e.target.checked; g.pieces.forEach(p => K.applyPiece(g, p)); dirty(); renderOutfit(); };
 $('edBone').onchange = e => { const {g, p} = curSel(); if (!p) return; p.bone = e.target.value; K.mountPiece(g, p, S.rig); dirty(); renderOutfit(); updateSelBox(); };
-$('resetP').onclick = () => { const {g, p} = curSel(); if (!p) return; p.pos = [0, 0, 0]; p.rot = [0, 0, 0]; p.scale = p._autoScale || 1; K.applyPiece(g, p); dirty(); fillEditor(); };
+$('resetP').onclick = () => { const {g, p} = curSel(); if (!p) return; p.pos = [0, 0, 0]; p.rot = [0, 0, 0]; p.scale = (p._rt && p._rt.skinned) ? 1 : (p._autoScale || (p._obj && p._obj.userData && p._obj.userData.autoScale) || 1); K.applyPiece(g, p); dirty(); fillEditor(); updateSelBox(); };
 $('delP').onclick = () => { const {g, p} = curSel(); if (!p) return; K.unmountPiece(p); g.pieces = g.pieces.filter(x => x !== p); if (!g.pieces.length) deleteGroup(g.id); else { select(g.id); dirty(); } };
 $('delG').onclick = () => { const {g} = curSel(); if (g) deleteGroup(g.id); };
 
@@ -402,7 +402,7 @@ $('importFile').onchange = async e => {
     S.groups.push(g); pieces.forEach(q => K.mountPiece(g, q, S.rig));
     dirty(); select(g.id, p.uid);
     if (pair) say($('importStatus'), pairMsg('Đã nhập ' + f.name, pair), 'good');
-    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã nhập ' + f.name + ' · đồ có skin: ôm theo xương và biến dạng cùng cơ thể (không cần chỉnh vị trí). Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
+    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã nhập ' + f.name + ' · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Cần thì chỉnh vị trí / xoay / tỉ lệ (1 = nguyên bản) ở bảng bên phải. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
   } catch (err) { say($('importStatus'), 'Không nhập được: ' + err.message, 'bad'); }
   e.target.value = '';
 };
@@ -453,7 +453,7 @@ $('libGrid').onclick = async e => {
     const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: it.category, preset: 'import', name: it.name, color: '#ffffff', color2: '#ffffff', blend: 0, blendMode: 'mix', visible: true, pieces};
     S.groups.push(g); pieces.forEach(q => K.mountPiece(g, q, S.rig)); dirty(); select(g.id, p.uid);
     if (pair) say($('importStatus'), pairMsg('Đã thêm “' + it.name + '”', pair), 'good');
-    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã thêm “' + it.name + '” · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.', 'good');
+    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã thêm “' + it.name + '” · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Chỉnh vị trí / xoay / tỉ lệ (1 = nguyên bản) ở bảng bên phải. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.', 'good');
   } catch (err) { say($('importStatus'), 'Không thêm được: ' + err.message, 'bad'); }
 };
 const libItem = id => S.lib.find(x => x.id === id);

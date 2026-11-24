@@ -19,6 +19,11 @@ Các trang khác (studio, apply, motion-lab, index) tự thấy "<tên>.characte
 Xuất từ Blender CÙNG armature (tên xương giống nhân vật), cùng pose gốc (T/A-pose), scale 1, KHÔNG xoá xương,
 có skin weight. Upload vào danh mục Áo/Quần/Váy... Custom tự nhận khi >= 50% tên xương trùng.
 Xương riêng của đồ (vạt áo, dây...) mà nhân vật không có sẽ được giữ và gắn dưới xương cha tương ứng.
+Đồ skin chỉnh được Vị trí / Xoay / Tỉ lệ ở bảng bên phải như đồ thường: phép chỉnh áp lên dáng gốc TRƯỚC khi skin nên đồ vẫn biến dạng và chạy theo xương.
+- Xoay và tỉ lệ quanh tâm hộp bao của đồ; Vị trí tính theo trục thế giới ở pose gốc.
+- Tỉ lệ của đồ skin: 1 = nguyên bản (đồ lưu từ bản cũ tự quy về 1). Nút "Đặt lại" trả về nguyên bản.
+- Ô chọn xương bị khoá với đồ skin (đồ bám cả bộ xương).
+
 Đồ không có skin (mũ, tóc, kính, giày...) vẫn gắn cứng vào 1 xương như cũ.
 
 ## Giày / tất gắn cứng: tự tách trái – phải
