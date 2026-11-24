@@ -6,10 +6,10 @@
       "name": "mina",
       "base": "g1test.character.json",
       "items": 1,
-      "expressions": 0,
+      "expressions": 1,
       "dataPath": "characters/custom/mina-mwu7iczd.json",
       "thumbnail": "./characters/custom/thumbs/mina-mwu7iczd.png",
-      "updatedAt": "2026-11-24T04:40:44.090Z"
+      "updatedAt": "2026-11-24T04:40:55.619Z"
     }
   ]
 }
