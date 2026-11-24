@@ -76,7 +76,7 @@ return {clip:new THREE.AnimationClip(source.name,source.duration,tracks),mapped,
 const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3),fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'),r2=v=>Math.round(v*100)/100;
 const FONTS=['Be Vietnam Pro','Roboto','Montserrat','Playfair Display','Pacifico','Lobster','Dancing Script','Oswald','Arial','Georgia','Courier New','Impact'],V2=['txt','dlg','img','vid'],ICON={clip:'🎞',txt:'T',dlg:'💬',img:'🖼',vid:'🎬',aud:'🎵',tts:'🗣',bg:'■',face:'😀',fx:''};
 let projects=[];try{projects=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{}
-let P=null,si=0,sel=null,tab='src',pps=60,t=0,playing=false,allMode=false,busy=false,manifest={characters:{},animations:[]},cq='',media=[];const murl={},spoken={};let envLib=[],lmodels=[];
+let P=null,si=0,sel=null,tab='src',pps=60,t=0,playing=false,allMode=false,busy=false,manifest={characters:{},animations:[]},cq='',media=[];const murl={},spoken={};let envLib=[],lmodels=[],lysel=null;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(projects))}catch(e){say('Không lưu được: '+e.message)}},touch=()=>{P.updated=Date.now();persist();commit()};let tmr;const touchSoon=()=>{P.updated=Date.now();clearTimeout(tmr);tmr=setTimeout(()=>{persist();commit()},300)};
 const sc=()=>P.scenes[si],snap=v=>Math.max(0,Math.round(v*P.fmt.fps)/P.fmt.fps),say=m=>{$('say').textContent=m||'';$('say').hidden=!m},dl=(n,o)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));a.download=n;a.click()};
 const mkScene=n=>({id:uid(),name:'Cảnh '+n,duration:8,bg:'#171923',cam:null,chars:[],props:[],tracks:[]});
@@ -336,7 +336,7 @@ function fxPanel(s){const its=fxItems(s);
  h+='<label>Hiệu ứng trong cảnh ('+its.length+')</label>'+(its.map(it=>'<div style="display:flex;gap:6px;margin:3px 0"><button data-fxsel="'+it.id+'" style="flex:1;text-align:left;'+(sel&&sel.id===it.id?'outline:1px solid var(--accent);':'')+'">'+esc(it.name||FX.FX[it.fx].name)+(it.on===false?' (tắt)':'')+'</button>'+(FX.hasGizmo(it.fx)?'<button data-fxlock="'+it.id+'" title="Khóa / mở khóa kéo thả">'+(it.fixed?'🔒':'🔓')+'</button>':'')+'<button class="del" data-fxdel="'+it.id+'" title="Xóa hiệu ứng">✕</button></div>').join('')||'<div class="hint">Chưa có hiệu ứng nào trong cảnh.</div>');
  return h}
 $('panel').addEventListener('click',e=>{const el=e.target.closest('[data-envp],[data-envbundle]');if(!el||!P)return;const s=sc();
- if(el.dataset.envp){s.env={preset:el.dataset.envp};touch();renderPanel();apply();return}
+ if(el.dataset.envp){const old=(s.env&&s.env.layers)||[];s.env={preset:el.dataset.envp};if(old.length){s.env.layers=old;s.env.anchor=true}else{const pl=ENVK.presetLayers(el.dataset.envp);if(pl.length){s.env.layers=pl;s.env.anchor=true;lysel=null;say('Đã rải sẵn cảnh vật cho địa điểm này (cỏ, hoa, đá, lá, cánh hoa…) — sửa / xoá ở khung “Rải cây cối”.');setTimeout(()=>say(''),3200)}}touch();renderPanel();apply();return}
  const pk=ENVK.envParams(s).preset,its=fxItems(s);let n=0;
  for(const o of ENVK.envBundle(pk)){if(its.some(x=>x.fx===o.fx&&x.bundle===pk))continue;const{fx,...over}=o;addFx(fx,{...over,bundle:pk},0);n++}
  tab='fx';renderTabs();renderAll();say(n?'Đã thêm '+n+' hiệu ứng vào timeline — chỉnh ở tab Hiệu ứng / Thuộc tính.':'Các hiệu ứng đi kèm đã có trong cảnh.');setTimeout(()=>say(''),2800)});
@@ -355,17 +355,64 @@ function flatBg(s,tt,b){const k=s.bgt==='grad'||s.bgt==='img'||s.bgt==='vid'?s.b
  if(!b&&k==='vid'){if(EXP)o.el=EXPV;else{const v=document.querySelector('#bgl video');if(v&&bgVidUrl(s,tt))o.el=v}}
  return o}
 function envBgStep(s,ft){if(!ENVE||!s)return;const b=bgTrackAt(s,ft),w=renderer.domElement.width,h=renderer.domElement.height;
- ENVE.update(s,ft,{url:s.bgt==='pano'?mediaOk(s.bgm,'img'):'',custom:!!(s.lights&&s.lights.length),aspect:w/Math.max(1,h),bg:flatBg(s,ft,b),post:FXE.post})}
+ ENVE.update(s,ft,{url:s.bgt==='pano'?mediaOk(s.bgm,'img'):'',custom:!!(s.lights&&s.lights.length),aspect:w/Math.max(1,h),bg:flatBg(s,ft,b),post:FXE.post,actors:lyActors(s),wind:FX.windAt(fxItems(s),ft),getModel:lyModel})}
 function envField(f,P){const[k,l,ty,a,b,c]=f,v=P[k],at='data-env="'+k+'" ';
  if(ty==='r'){const n=+v;return '<label>'+l+'</label><div class="r"><input '+at+'type="range" min="'+a+'" max="'+b+'" step="'+c+'" value="'+n+'" style="flex:1"><input '+at+'type="number" step="any" value="'+r2(n)+'" style="width:72px;flex:none"></div>'}
  if(ty==='c')return '<label>'+l+'</label><input '+at+'type="color" value="'+esc(v)+'">';
  if(ty==='b')return '<label><input '+at+'type="checkbox"'+(v?' checked':'')+'> '+l+'</label>';
  return ''}
+/* ---------- Lớp rải: cỏ, hoa, bụi cây, đá, sỏi, tuyết, băng trôi, mô hình thư viện (xem js/scatter-kit.js) ---------- */
+const lyFind=(s,id)=>((s.env&&s.env.layers)||[]).find(x=>x.id===id),
+ lyActors=s=>s.chars.slice(0,8).map(c=>{const r=R[c.id],g=r&&r.g;return{x:g?g.position.x:(+c.x||0),z:g?g.position.z:(+c.z||0),r:.3*Math.max(+c.sx||1,+c.sz||1)}}),
+ lyModel=L=>getPropModel({src:L.src,ref:L.ref,path:L.path,ext:L.ext}),
+ lyBadge=z=>z.loading?'đang tải…':z.err?'⚠ '+z.err:z.n!=null?z.n.toLocaleString('vi')+' cá thể'+(z.capped?' (chạm trần 24.000)':''):'';
+function lyCounts(){if(!ENVE)return;const st=ENVE.layerStats();document.querySelectorAll('#panel [data-lyn]').forEach(x=>{x.textContent=lyBadge(st[x.dataset.lyn]||{})})}
+setInterval(lyCounts,900);
+function lyField(L,f){const[k,l,ty,a,b,c]=f;
+ if(k==='h')return '<div style="margin:14px 0 0;font-weight:700;color:var(--text)">'+l+'</div>';
+ const at='data-ly="'+k+'" data-lid="'+L.id+'" ',v=L[k];
+ if(ty==='r'){const n=+v;return '<label>'+l+'</label><div class="r"><input '+at+'type="range" min="'+a+'" max="'+b+'" step="'+c+'" value="'+n+'" style="flex:1"><input '+at+'type="number" step="any" value="'+r2(n)+'" style="width:72px;flex:none"></div>'}
+ if(ty==='c')return '<label>'+l+'</label><input '+at+'type="color" value="'+esc(v)+'">';
+ if(ty==='b')return '<label><input '+at+'type="checkbox"'+(v?' checked':'')+'> '+l+'</label>';
+ if(ty==='s')return '<label>'+l+'</label><select '+at+'>'+a.map(x=>'<option value="'+x[0]+'"'+(x[0]===v?' selected':'')+'>'+esc(x[1])+'</option>').join('')+'</select>';
+ return ''}
+function scatterUI(s){const P=ENVK.envParams(s);if(P.room)return '';
+ const ls=(s.env&&s.env.layers)||[],st=ENVE?ENVE.layerStats():{},gi=ENVK.groundInfo(0,0,P);
+ let h='<label style="margin-top:16px">🌱 Rải cây cối &amp; vật trang trí lên địa điểm</label><div class="grid">'+Object.entries(ENVK.LAYER_KINDS).filter(([k])=>k!=='lib').map(([k,K])=>'<button class="cd" data-lyadd="'+k+'"><div class="ic" style="aspect-ratio:auto;padding:6px 0">'+K.ic+'</div><b>'+esc(K.name)+'</b></button>').join('')+'</div>';
+ h+='<div class="hint">Muốn rải <b>mô hình trong kho thư viện</b> (cây, đá, nhà…): ở tab <b>Bối cảnh</b>, bấm nút 🌱 ở góc thẻ mô hình. Mỗi lớp rải hàng nghìn cá thể, chỉnh được màu, mật độ, vùng gần–xa, kích thước và vật lí.</div>';
+ if((s.bgt||'color')!=='env')h+='<div class="hint" style="color:var(--red)">Nền cảnh chưa phải “🌍 Môi trường 3D” nên lớp rải chưa hiện. <button data-lyenv="1" style="padding:3px 8px">Chuyển sang Môi trường 3D</button></div>';
+ h+='<label>Các lớp trong địa điểm ('+ls.length+')</label>'+(ls.map(L0=>{const L=ENVK.layerOf(L0),K=ENVK.LAYER_KINDS[L.kind]||{},z=st[L.id]||{};return '<div class="li'+(L.id===lysel?' on':'')+'" data-lysel="'+L.id+'"><span>'+(K.ic||'📦')+' '+esc(L.kind==='lib'?L.name:K.name)+' · <small data-lyn="'+L.id+'" style="color:var(--muted)">'+esc(lyBadge(z))+'</small></span><button data-lyon="'+L.id+'" title="Bật / tắt lớp">'+(L.on===false?'🚫':'👁')+'</button><button data-lydup="'+L.id+'" title="Nhân bản">⧉</button><button class="del" data-lydel="'+L.id+'" title="Xoá lớp">✕</button></div>'}).join('')||'<div class="hint">Chưa có lớp nào. Bấm một loại ở trên để rải.</div>');
+ const c0=ls.find(x=>x.id===lysel);
+ if(c0){const L=ENVK.layerOf(c0);h+='<div style="border:1px solid var(--line);border-radius:10px;padding:2px 10px 10px;margin-top:8px">';
+  if(L.kind==='lib'){const opt=(k,m)=>'<option value="'+k+':'+esc(m.id)+'"'+(L.src===k&&L.ref===m.id?' selected':'')+'>'+esc(M.stripExt(m.name))+'</option>';
+   h+='<label>Mô hình đang rải</label><select data-lymodel="'+L.id+'">'+envLib.map(m=>opt('lib',m)).join('')+lmodels.map(m=>opt('loc',m)).join('')+'</select>'}
+  h+=ENVK.layerFields(L).map(f=>lyField(L,f)).join('');
+  if(L.where==='path'&&!gi.hasPath)h+='<div class="hint" style="color:var(--red)">Địa điểm này không có lối đi — chọn Đường mòn / Đường phố / Đường đá cuội / Đường sỏi.</div>';
+  if(L.where==='water'&&!gi.hasWater)h+='<div class="hint" style="color:var(--red)">Địa điểm này chưa có mặt nước — chọn 🏞 Mặt hồ / 🛶 Dòng sông / 💦 Con suối / 🏖 Biển, hoặc ❄️ Bắc cực (để “Lượng nước biển” &gt; 0).</div>';
+  if(!P.gnd)h+='<div class="hint">Địa điểm này không có mặt đất 3D; hãy chọn Đồng cỏ, Đường mòn, Bắc cực, Đường đá cuội… để cây có nền.</div>';
+  else if(!P.anchor)h+='<div class="hint" style="color:var(--red)">Hãy bật “Mặt đất bám theo thế giới 3D” ở phần thông số địa điểm để cây dính đất đúng chỗ.</div>';
+  h+='<button data-lyreset="'+L.id+'" style="width:100%;margin-top:10px">Đặt lại thông số mặc định của lớp</button></div>'}
+ return h}
+function lyClick(el,s){const q=a=>el.closest('['+a+']');let b;
+ if(b=q('data-lyadd')){const k=b.dataset.lyadd;let L;
+  if(k.startsWith('lib:')||k.startsWith('loc:')){const kk=k.slice(0,3),id=k.slice(4),m=kk==='lib'?envLib.find(x=>x.id===id):lmodels.find(x=>x.id===id);if(!m)return true;
+   L={...ENVK.layerDefaults('lib'),name:M.stripExt(m.name),src:kk,ref:id,path:m.path||'',ext:m.ext,cat:m.cat||''};
+   const cat=L.cat;if(cat==='env-tree'){L.size=3;L.density=.8;L.far=22;L.where='off'}else if(cat==='env-rock'){L.size=.8;L.density=3;L.wind=0;L.push=0;L.where='any'}else if(cat==='env-cloud'){L.size=6;L.density=.05;L.near=10;L.far=60;L.wind=0;L.push=0}else if(cat==='env-mountain'){L.size=8;L.density=.04;L.near=25;L.far=90;L.wind=0;L.push=0}}
+  else L=ENVK.layerDefaults(k);
+  const e=s.env||(s.env={preset:'sky'});(e.layers||(e.layers=[])).push(L);if(e.anchor===undefined)e.anchor=true;lysel=L.id;touch();renderPanel();apply();
+  say((s.bgt||'color')==='env'?'Đã thêm lớp “'+L.name+'”.':'Đã thêm lớp “'+L.name+'” — cần nền cảnh là 🌍 Môi trường 3D để thấy.');setTimeout(()=>say(''),2800);return true}
+ if(b=q('data-lyenv')){s.bgt='env';touch();renderTL();renderPanel();apply();return true}
+ if(b=q('data-lyon')){const L=lyFind(s,b.dataset.lyon);if(L){L.on=L.on===false;touch();renderPanel();apply()}return true}
+ if(b=q('data-lydup')){const L=lyFind(s,b.dataset.lydup);if(L){const c=JSON.parse(JSON.stringify(L));c.id=ENVK.layerDefaults('grass').id;c.seed=(c.seed|0)+1;s.env.layers.push(c);lysel=c.id;touch();renderPanel();apply()}return true}
+ if(b=q('data-lydel')){const e=s.env;if(e&&e.layers){e.layers=e.layers.filter(x=>x.id!==b.dataset.lydel);if(lysel===b.dataset.lydel)lysel=null;touch();renderPanel();apply()}return true}
+ if(b=q('data-lyreset')){const L=lyFind(s,b.dataset.lyreset);if(L){const D=ENVK.layerDefaults(L.kind),keep={id:L.id,kind:L.kind,name:L.name,src:L.src,ref:L.ref,path:L.path,ext:L.ext,cat:L.cat};for(const k of Object.keys(L))delete L[k];Object.assign(L,D,keep);touch();renderPanel();apply()}return true}
+ if(b=q('data-lysel')){lysel=lysel===b.dataset.lysel?null:b.dataset.lysel;renderPanel();return true}
+ return false}
 function envBgUI(s){const P=ENVK.envParams(s),cur=P.preset,bn=ENVK.envBundle(cur);
  let h='<label>Địa điểm</label><div class="grid">'+ENVK.ENV_PRESETS.map(([k,n])=>'<button class="cd" data-envp="'+k+'"'+(k===cur?' style="border-color:var(--ac);background:#2a2740"':'')+'><b>'+n+'</b></button>').join('')+'</div>';
  h+=ENVK.envFields(P,'env').map(f=>envField(f,P)).join('');
  if(bn.length)h+='<button data-envbundle="1" style="width:100%;margin-top:10px">✨ Thêm hiệu ứng đi kèm: '+esc(bn.map(x=>FX.FX[x.fx].name).join(', '))+'</button>';
- return h+'<div class="hint">Nền chỉ là <b>địa điểm</b>. Sương mù, mờ ảo, biến dạng không khí, mây, bụi… nằm ở tab ✨ Hiệu ứng và dùng được với <b>mọi loại nền</b> (kể cả ảnh, video, ảnh 360°). Nút trên thêm sẵn vài hiệu ứng hợp với địa điểm vào timeline để bạn sửa / xoá.</div>'}
+ return h+scatterUI(s)+'<div class="hint">Nền chỉ là <b>địa điểm</b>. Sương mù, mờ ảo, biến dạng không khí, mây, bụi… nằm ở tab ✨ Hiệu ứng và dùng được với <b>mọi loại nền</b> (kể cả ảnh, video, ảnh 360°). Nút trên thêm sẵn vài hiệu ứng hợp với địa điểm vào timeline để bạn sửa / xoá.</div>'}
 
 function bgFit(el,s){const f=s.bgfit||'cover';if(el.tagName==='VIDEO')el.style.objectFit=f;else el.style.backgroundSize=f==='fill'?'100% 100%':f;el.style.transform='translate('+(s.bgx||0)+'%,'+(s.bgy||0)+'%) scale('+((s.bgz??100)/100)+')'}
 function bgApply(){const s=sc();if(!s)return;let b=null;for(const tr of s.tracks)for(const x of tr.items)if(x.type==='bg'&&t>=x.start&&t<x.start+x.dur)b=x;
@@ -490,7 +537,7 @@ async function importModels(fs){const out=[];
   const rec={id:uid(),name:f.name,type:'mdl',ext:f.name.split('.').pop().toLowerCase(),blob:f};await idb('readwrite',st=>st.put(rec));lmodels.push(rec);out.push(rec)}
  if(out.length)say('Đã nhập '+out.length+' mô hình — bấm thẻ hoặc kéo vào khung để đặt vào cảnh.');
  if(tab==='env'&&P)renderPanel();return out}
-const ecard=m=>'<div class="cd" draggable="true" data-addp="lib:'+esc(m.id)+'" title="'+esc(m.name)+'">'+(m.thumb?'<img alt="" loading="lazy" src="'+esc(m.thumb)+'" onerror="this.style.display=\'none\'">':'<div class="ic">📦</div>')+'<b>'+esc(m.name)+'</b></div>';
+const ecard=m=>'<div class="cd" draggable="true" data-addp="lib:'+esc(m.id)+'" title="'+esc(m.name)+'">'+(m.thumb?'<img alt="" loading="lazy" src="'+esc(m.thumb)+'" onerror="this.style.display=\'none\'">':'<div class="ic">📦</div>')+'<b>'+esc(m.name)+'</b><button class="x" data-lyadd="lib:'+esc(m.id)+'" title="Rải thành lớp (cây, đá, vật…) lên địa điểm">🌱</button></div>';
 function envHtml(){
  const st=LS.env,k=lfold(st.q).trim(),l=envLib.filter(m=>(!st.c||m.cat===st.c)&&(!k||lfold(m.name).includes(k))),n=Math.max(1,Math.ceil(l.length/LPAGE));
  st.p=Math.min(Math.max(st.p,0),n-1);
@@ -503,7 +550,8 @@ function envPanel(s){
  let h='<div class="hint">Bấm một mô hình để đặt vào cảnh “'+esc(s.name)+'”, hoặc kéo thẻ thả thẳng vào khung (vật rơi đúng chỗ thả trên mặt đất). Bấm vào vật trong khung để chọn; kéo thân vật để dời; dùng tay cầm 3 trục để dời ✥ / xoay ⟳ / đổi cỡ ⤢ (phím G / R / S, giữ Shift để xoay theo bước 15°).</div>';
  if(isP)h+='<label>Đang chọn: '+esc(it.name)+'</label>'+SCH.prop.map(([k,l,y])=>field(k,l,y,it[k])).join('')+'<div class="r" style="margin-top:8px"><button data-pre="rot">Đặt lại xoay</button><button data-pre="scl">Đặt lại cỡ</button><button data-pre="gnd">Đặt xuống đất</button></div>';
  h+='<label>Trong cảnh ('+s.props.length+')</label>'+(s.props.map(p=>'<div class="li'+onc(p.id)+'" data-psel="'+p.id+'"><span>📦 '+esc(p.name)+'</span><button data-plock="'+p.id+'" title="'+(p.fixed?'Đang khóa — bấm để mở khóa kéo thả':'Bấm để khóa, không kéo nhầm')+'">'+(p.fixed?'🔒':'🔓')+'</button><button data-pdup="'+p.id+'" title="Nhân bản">⧉</button><button class="del" data-prm="'+p.id+'" title="Xóa">✕</button></div>').join('')||'<div class="hint">Chưa có mô hình nào.</div>');
- h+='<label>Mô hình của bạn</label><input type="file" id="fm" accept="'+M.acceptOf(M.ITEM_EXTS)+'" multiple hidden><button id="fmb" class="pri" style="width:100%">+ Nhập mô hình từ máy (.glb .gltf .fbx .obj .dae .stl .ply .vrm)…</button><div class="grid">'+lmodels.map(m=>'<div class="cd" draggable="true" data-addp="loc:'+m.id+'" title="'+esc(m.name)+'"><div class="ic">📦</div><b>'+esc(m.name)+'</b><button class="del x" data-delmdl="'+m.id+'">✕</button></div>').join('')+'</div><div class="hint">Mô hình nhập từ máy chỉ lưu trong trình duyệt này; nếu muốn dùng lâu dài và trên máy khác, hãy tải lên Kho tài nguyên.</div>';
+ h+=scatterUI(s);
+ h+='<label>Mô hình của bạn</label><input type="file" id="fm" accept="'+M.acceptOf(M.ITEM_EXTS)+'" multiple hidden><button id="fmb" class="pri" style="width:100%">+ Nhập mô hình từ máy (.glb .gltf .fbx .obj .dae .stl .ply .vrm)…</button><div class="grid">'+lmodels.map(m=>'<div class="cd" draggable="true" data-addp="loc:'+m.id+'" title="'+esc(m.name)+'"><div class="ic">📦</div><b>'+esc(m.name)+'</b><button class="x" style="right:auto;left:8px" data-lyadd="loc:'+m.id+'" title="Rải thành lớp lên địa điểm">🌱</button><button class="del x" data-delmdl="'+m.id+'">✕</button></div>').join('')+'</div><div class="hint">Mô hình nhập từ máy chỉ lưu trong trình duyệt này; nếu muốn dùng lâu dài và trên máy khác, hãy tải lên Kho tài nguyên.</div>';
  return h+'<label>Thư viện GitHub</label>'+envHtml()}
 function envClick(el,s){
  const q=a=>el.closest('['+a+']');let b;
@@ -557,6 +605,7 @@ $('panel').ondragover=e=>e.preventDefault();$('panel').ondrop=e=>{e.preventDefau
 $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
  if(el.id==='fib')return $('fi').click();
  if(el.id==='fmb')return $('fm').click();
+ if(lyClick(el,s))return;
  if(envClick(el,s))return;
  if(el.id==='bgimp')return $('fbg').click();
  const gp=el.closest('[data-gp]');if(gp){[s.bg,s.bg2]=gp.dataset.gp.split(',');touch();renderPanel();apply();return}
@@ -593,6 +642,8 @@ $('panel').oninput=e=>{const el=e.target,d=el.dataset,s=sc();
  if(d.lq){LS[d.lq].q=el.value;LS[d.lq].p=0;const p=el.selectionStart;renderPanel();const n=document.querySelector('[data-lq="'+d.lq+'"]');if(n){n.focus();n.setSelectionRange(p,p)}return}
  if(d.lcat){LS[d.lcat].c=el.value;LS[d.lcat].p=0;renderPanel();return}
  if(el.type==='number'&&el.value==='')return;const v=el.type==='checkbox'?el.checked:el.type==='number'||el.type==='range'?+el.value:el.value;
+ if(d.lymodel){const L=lyFind(s,d.lymodel);if(L){const k=el.value.slice(0,3),id=el.value.slice(4),m=k==='lib'?envLib.find(x=>x.id===id):lmodels.find(x=>x.id===id);if(m){Object.assign(L,{src:k,ref:id,path:m.path||'',ext:m.ext,cat:m.cat||'',name:M.stripExt(m.name)});apply();touchSoon();renderPanel()}}return}
+ if(d.ly){const L=lyFind(s,d.lid);if(!L)return;L[d.ly]=v;document.querySelectorAll('#panel [data-ly="'+d.ly+'"][data-lid="'+d.lid+'"]').forEach(i=>{if(i!==el&&i.type!=='checkbox')i.value=i.type==='number'?r2(v):v});if(['drop','shape'].includes(d.ly))renderPanel();apply();setTimeout(lyCounts,80);touchSoon();return}
  if(d.env){const e=s.env||(s.env={preset:'sky'});e[d.env]=v;document.querySelectorAll('#panel [data-env="'+d.env+'"]').forEach(i=>{if(i!==el&&i.type!=='checkbox')i.value=i.type==='number'?r2(v):v});apply();touchSoon();return}
  if(d.k){const it=cur(),ty=stype();if(!it)return;if(['sx','sy','sz'].includes(d.k)&&it.lock&&it[d.k]>0&&v>0){const k=v/it[d.k];for(const a of['sx','sy','sz'])if(a!==d.k&&it[a]!==undefined)it[a]=Math.round(it[a]*k*1000)/1000}it[d.k]=v;if(d.k==='lt'){Object.assign(it,{distance:0,decay:2,angle:35,penumbra:.4},LDEF[v]);setTimeout(renderPanel,0)}if(d.k==='lang'){it.voice=DEFV[v]||DEFV.vi;setTimeout(renderPanel,0)}if(d.k==='ch'&&it.type==='face'){const rr=R[v];if(FR.isCx(it.expr)&&!(rr&&rr.exs&&rr.exs.some(e=>e.id===FR.cxId(it.expr))))it.expr='happy';setTimeout(renderPanel,0)}if(ty==='clip'&&d.k==='clip'){const a=manifest.animations.find(x=>x.id===v);if(a)it.dur=r2(a.duration);const l=loc();if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~'}if(ty==='char'||ty==='prop')place(it);
   if((it.start||0)+(it.dur||0)>s.duration)s.duration=Math.ceil((it.start||0)+it.dur);if(['start','dur','text','name','color','clip','who','expr','ch'].includes(d.k))renderTL();if(ty==='char'&&d.k==='name')renderTL();if(KALL.includes(d.k))autoKey(it);renderOv();apply();touchSoon();sync()}
@@ -667,7 +718,7 @@ async function exportVideo(fmt,onP){
   for(let k=0;k<P.scenes.length;k++){si=k;await loadScene();busy=true;const s=P.scenes[k];{const eu=envUrl(s);if(eu)await ENVE.preload(eu).catch(()=>{})}
    for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx){onP(0,'Tải ảnh biểu cảm…');await rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}}
    for(let j=0;j<nF[k];j++){if(XC)throw Error('Đã huỷ xuất.');if(ERR)throw ERR;
-    t=j/fps;{const vu=bgVidUrl(s,t);EXPV=vu?await vFrame(vu,t,true):null}await apply();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}await compose(c,s,t,W,H);
+    t=j/fps;{const vu=bgVidUrl(s,t);EXPV=vu?await vFrame(vu,t,true):null}await apply();await ENVE.settle();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}await compose(c,s,t,W,H);
     while(ve.encodeQueueSize>6)await new Promise(r=>setTimeout(r,4));
     const vf=new VideoFrame(cv,{timestamp:Math.round(n*1e6/fps),duration:Math.round(1e6/fps)});ve.encode(vf,{keyFrame:n%(fps*2)===0});vf.close();n++;
     if(n%4===0){onP(n/total,'Khung '+n+' / '+total);await new Promise(r=>setTimeout(r))}}}
