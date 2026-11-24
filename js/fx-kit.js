@@ -58,13 +58,26 @@ const fbm1 = (x, seed) => noise1(x, seed) * .6 + noise1(x * 2.3 + 7.1, seed + 3)
      'c' màu [.., mặc định]   'b' bật/tắt [.., mặc định]   's' lựa chọn [.., [[giá trị,nhãn],…], mặc định]
    Mọi hiệu ứng đều có: intensity (cường độ), speed (tốc độ), fi / fo (hiện dần / tắt dần), seed. */
 const EASE = [['smooth', 'Mượt'], ['lin', 'Đều'], ['in', 'Chậm → nhanh'], ['out', 'Nhanh → chậm']];
-const HOLD = ['b', 'hold', 'Giữ nguyên vị trí cuối sau khi kết thúc'];
+const HOLD = ['hold', 'Giữ nguyên vị trí cuối sau khi kết thúc', 'b'];
+/** Các hiệu ứng dựng bằng lớp hạt / cỏ → có thêm bộ thanh chỉnh chung (mật độ, kích thước, vật lý, độ đậm, xa gần). */
+const PART = new Set(['rain', 'snow', 'petals', 'leaves', 'fireflies', 'dust', 'fog', 'clouds', 'wind', 'fire', 'smokefire', 'smoke', 'explosion', 'rocks', 'grass']);
+export const hasLayers = id => PART.has(id);
+const COMMON = {dens: 1, sizeK: 1, velK: 1, windK: 1, opK: 1, near: 0, far: 0};
+const commonFields = id => {
+  const f = [['dens', 'Mật độ (số lượng hạt / ngọn)', 'fxr', .05, 4, .01], ['sizeK', 'Kích thước', 'fxr', .2, 4, .01]];
+  if (id !== 'grass') f.push(['velK', 'Tốc độ rơi / bay (vật lý)', 'fxr', 0, 4, .01]);
+  f.push(['windK', 'Mức chịu gió (vật lý)', 'fxr', 0, 4, .01]);
+  if (id !== 'grass') f.push(['opK', 'Độ đậm / độ trong', 'fxr', 0, 2, .01]);
+  f.push(['near', 'Mờ khi quá gần camera (m)', 'fxr', 0, 10, .1], ['far', 'Mờ dần khi ở xa camera (m, 0 = tắt)', 'fxr', 0, 150, 1]);
+  return f;
+};
 export const FX = {
   /* ---- thiên nhiên ---- */
   rain: {g: 'weather', ic: '🌧', name: 'Mưa', box: [14, 10, 14], pos: [0, 5, 0], fill: 1, def: {intensity: 1, speed: 1, color: '#bcd2ff'}, ps: [['len', 'Độ dài vệt mưa', 'r', .1, 1.5, .01, .55], ['slant', 'Độ xiên (m / s)', 'r', -6, 6, .1, 0], ['thick', 'Độ dày giọt', 'r', .2, 3, .05, 1]]},
   snow: {g: 'weather', ic: '❄️', name: 'Tuyết', box: [14, 9, 14], pos: [0, 4.5, 0], fill: 1, def: {intensity: 1, speed: 1, color: '#ffffff'}, ps: [['size', 'Cỡ bông tuyết', 'r', .3, 3, .05, 1], ['drift', 'Độ lắc ngang', 'r', 0, 3, .05, 1]]},
   petals: {g: 'weather', ic: '🌸', name: 'Hoa rơi', box: [10, 7, 10], pos: [0, 3.5, 0], fill: 1, def: {intensity: 1, speed: 1, color: '#ffb7d0'}, ps: [['size', 'Cỡ cánh hoa', 'r', .3, 3, .05, 1], ['color2', 'Màu phụ', 'c', '#ffe3ee'], ['drift', 'Độ lắc ngang', 'r', 0, 3, .05, 1]]},
   leaves: {g: 'weather', ic: '🍂', name: 'Lá rơi', box: [10, 7, 10], pos: [0, 3.5, 0], fill: 1, def: {intensity: 1, speed: 1, color: '#d9822b'}, ps: [['size', 'Cỡ lá', 'r', .3, 3, .05, 1], ['color2', 'Màu phụ', 'c', '#8aa832'], ['drift', 'Độ lắc ngang', 'r', 0, 3, .05, 1]]},
+  grass: {g: 'weather', ic: '🌱', name: 'Cỏ 3D', box: [10, .2, 10], pos: [0, 0, 0], fill: 1, fi: 1, fo: 1, def: {intensity: 1, speed: 1, color: '#3f8f2e'}, ps: [['color2', 'Màu ngọn cỏ', 'c', '#a6d65a'], ['height', 'Chiều cao cỏ (m)', 'r', .05, 2, .01, .45], ['width', 'Độ rộng ngọn', 'r', .2, 3, .05, 1], ['lean', 'Độ nghiêng ngẫu nhiên', 'r', 0, 1, .01, .35], ['sway', 'Độ đung đưa', 'r', 0, 3, .05, 1], ['stiff', 'Độ cứng (chống gió)', 'r', 0, 1, .01, .3], ['push', 'Rạp xuống khi nhân vật bước qua', 'r', 0, 1, .01, .8], ['pushR', 'Bán kính rạp quanh nhân vật (m)', 'r', .1, 3, .05, .8]], note: 'Cỏ mọc trên mặt phẳng của khung vùng (kéo scale X / Z để phủ rộng hơn, tăng “Mật độ” cho dày). Đung đưa theo khối Gió, rạp xuống quanh chân nhân vật / vật thể có xương trong cảnh.'},
   fireflies: {g: 'weather', ic: '✨', name: 'Đom đóm', box: [14, 5, 14], pos: [0, 2.5, 0], fill: 1, def: {intensity: 1, speed: 1, color: '#d6ff6a'}, ps: [['size', 'Cỡ chấm sáng', 'r', .3, 3, .05, 1], ['blink', 'Nhịp nhấp nháy', 'r', 0, 3, .05, 1]]},
   dust: {g: 'air', ic: '🌫', name: 'Bụi lơ lửng', box: [8, 4, 8], pos: [0, 2, 0], fill: 1, def: {intensity: 1, speed: 1, color: '#fff2cf'}, ps: [['size', 'Cỡ hạt', 'r', .3, 3, .05, 1]]},
   fog: {g: 'air', ic: '🌁', name: 'Sương mù', box: [16, 3, 16], pos: [0, 1.5, 0], fill: 1, fi: 1.5, fo: 1.5, def: {intensity: 1, speed: 1, color: '#c9d3df'}, ps: [['density', 'Độ đặc (cả mảng sương và màn sương phủ vật thể)', 'r', 0, 1, .01, .35], ['size', 'Cỡ mảng sương', 'r', .3, 3, .05, 1]]},
@@ -109,12 +122,14 @@ const MOVES = new Set(['pan', 'tilt', 'dolly', 'orbit', 'zoom', 'roll']);
 export function fxDefaults(id) {
   const d = FX[id], o = {fx: id, name: d.ic + ' ' + d.name, ...d.def, fi: nz(d.fi, .6), fo: nz(d.fo, .8), seed: 1, on: true};
   for (const p of d.ps) o[p[1 - 1]] = p[2] === 'c' ? p[3] : p[2] === 's' ? p[4] : p[2] === 'b' ? p[3] : p[6];
+  if (PART.has(id)) Object.assign(o, COMMON);
   if (isSpaceFx(id) && !d.noGizmo) Object.assign(o, {x: d.pos[0], y: d.pos[1], z: d.pos[2], rx: 0, rot: 0, rz: 0, sx: 1, sy: 1, sz: 1, lock: true, fixed: false, helper: true});
   return o;
 }
 /** Danh sách trường panel: mỗi phần tử [khoá, nhãn, kiểu, …] — kiểu 'fxr' (thanh trượt + số), 'fxs' (chọn), còn lại như field() của Studio. */
 export function fxFields(it) {
   const d = FX[it.fx]; if (!d) return [];
+  if (PART.has(it.fx)) for (const k in COMMON) if (it[k] === undefined) it[k] = COMMON[k];     // khối cũ chưa có các trường chung
   const f = [['name', 'Tên', 't'], ['on', 'Bật hiệu ứng', 'b'], ['intensity', 'Cường độ', 'fxr', 0, 3, .01], ['speed', 'Tốc độ', 'fxr', .1, 4, .01]];
   if (d.def.color !== undefined) f.push(['color', it.fx === 'sky' ? 'Màu bầu trời (đỉnh trời)' : it.fx === 'tint' ? 'Màu phủ' : 'Màu', 'c']);
   for (const p of d.ps) {
@@ -122,6 +137,7 @@ export function fxFields(it) {
     else if (p[2] === 's') f.push([p[0], p[1], 'fxs', p[3]]);
     else f.push([p[0], p[1], p[2]]);
   }
+  if (PART.has(it.fx)) f.push(...commonFields(it.fx));
   f.push(['fi', 'Hiện dần (s)', 'n'], ['fo', 'Tắt dần (s)', 'n'], ['seed', 'Hạt giống ngẫu nhiên (đổi để ra kiểu khác)', 'n'], ['start', 'Bắt đầu (s)', 'n'], ['dur', 'Độ dài (s)', 'n']);
   if (hasGizmo(it.fx)) f.push(['fixed', '🔒 Khóa kéo thả (không di chuyển / xoay / đổi cỡ bằng chuột)', 'b'], ['helper', 'Hiện khung vùng hiệu ứng trong khung', 'b'],
     ['x', 'Vị trí X (m)', 'n'], ['y', 'Vị trí Y (m)', 'n'], ['z', 'Vị trí Z (m)', 'n'],
@@ -208,7 +224,7 @@ export function camOffsets(items, t) {
    ============================================================ */
 const PART_VS = /* glsl */`
 attribute vec4 aR;
-uniform float uT, uInt, uSpeed, uScale, uSize, uSeed, uLife;
+uniform float uT, uInt, uSpeed, uScale, uSize, uSeed, uLife, uNear, uFar;
 uniform vec3 uBox, uVel, uAcc, uWind, uSway;
 uniform float uMode, uShape, uStretch, uGrow, uSpin, uTurb, uWindK, uFadeEdge, uPeriod, uBurstSpread, uDrag;
 uniform vec3 uTint1, uTint2;
@@ -280,7 +296,9 @@ void main(){
   } else { q = rot2(ang)*q; }
   vec3 pos = wp.xyz + camR*q.x + camU*q.y;
   gl_Position = projectionMatrix * viewMatrix * vec4(pos,1.);
-  vA = alpha * on;
+  float dc = length(pos - cameraPosition);
+  float fd = (uNear > 0. ? smoothstep(0., uNear, dc) : 1.) * (uFar > 0. ? 1. - smoothstep(uFar*.55, uFar, dc) : 1.);
+  vA = alpha * on * fd;
   vTint = mix(uTint1, uTint2, h11(aR.w*37.7+aR.y*11.3));
   if (on < 0.5) gl_Position = vec4(2.,2.,2.,1.);
 }`;
@@ -351,7 +369,7 @@ function layer(parent, cfg) {
     uMode: {value: cfg.mode || 0}, uShape: {value: cfg.shape || 0}, uStretch: {value: cfg.stretch || 0}, uGrow: {value: cfg.grow ?? 1}, uSpin: {value: cfg.spin || 0},
     uTurb: {value: cfg.turb || 0}, uWindK: {value: cfg.windK ?? 1}, uFadeEdge: {value: cfg.fadeEdge ?? .6}, uPeriod: {value: 0}, uBurstSpread: {value: cfg.burstSpread ?? .15}, uDrag: {value: cfg.drag || 0},
     uTint1: {value: c3('#ffffff')}, uTint2: {value: c3('#ffffff')}, uHot: {value: c3('#fff3b0')}, uMid: {value: c3('#ff8a1f')}, uCool: {value: c3('#3a0d05')},
-    uBright: {value: cfg.bright ?? 1}, uOpacity: {value: cfg.opacity ?? 1}, uBlink: {value: 0}
+    uBright: {value: cfg.bright ?? 1}, uOpacity: {value: cfg.opacity ?? 1}, uBlink: {value: 0}, uNear: {value: 0}, uFar: {value: 0}
   };
   const mat = new THREE.ShaderMaterial({
     uniforms: U, vertexShader: PART_VS, fragmentShader: PART_FS, transparent: true, depthWrite: false, depthTest: true,
@@ -360,7 +378,68 @@ function layer(parent, cfg) {
   const mesh = new THREE.Mesh(partGeometry(cfg.n, cfg.seed || 1), mat);
   mesh.frustumCulled = false; mesh.renderOrder = cfg.order ?? 30;
   parent.add(mesh);
-  return {mesh, U, dispose() { mesh.geometry.dispose(); mat.dispose(); mesh.removeFromParent(); }};
+  /* v0 / a0 / wk0 / o0: giá trị gốc, để các thanh “tốc độ / mức chịu gió / độ đậm” nhân lại từ đầu mỗi khung hình */
+  return {mesh, U, v0: U.uVel.value.clone(), a0: U.uAcc.value.clone(), wk0: U.uWindK.value, o0: U.uOpacity.value, dispose() { mesh.geometry.dispose(); mat.dispose(); mesh.removeFromParent(); }};
+}
+
+/* ---------------- Cỏ 3D: từng ngọn cỏ là một dải 5 đoạn, uốn theo gió + rạp quanh nhân vật (tính từ thời gian) ---------------- */
+const GRASS_VS = /* glsl */`
+attribute vec4 aR;
+uniform float uT, uInt, uSpeed, uScale, uSeed, uHeight, uWidth, uLean, uSway, uStiff, uPush, uPushR, uWindK, uNear, uFar;
+uniform vec3 uBox, uWind, uBase, uTip, uAct[6];
+varying vec3 vC; varying float vA;
+float h11(float n){ return fract(sin(n*127.1+311.7)*43758.5453); }
+void main(){
+  float on = step(aR.x, clamp(uInt*0.5, 0., 1.)) * step(0.0001, uInt);
+  vec3 L = vec3((h11(aR.w*131.3+uSeed)-.5)*uBox.x, 0., (h11(aR.z*977.1+aR.w*57.7+uSeed*3.1)-.5)*uBox.z);
+  vec3 root = (modelMatrix*vec4(L,1.)).xyz;
+  float t = position.y + .5, tp = t*t;
+  float H = uHeight*uScale*(.6+.8*aR.y);
+  float yaw = aR.z*6.2831 + aR.y*3.;
+  vec2 dir = vec2(cos(yaw), sin(yaw));
+  float ph = uT*uSpeed*(1.6+aR.y) + root.x*.7 + root.z*.5 + aR.w*6.2831;
+  float soft = 1. - uStiff*.85;
+  vec2 d = vec2(sin(ph), cos(ph*.83+1.))*uSway*.09*soft;
+  d += uWind.xz*uWindK*.075*soft;
+  d += (vec2(h11(aR.w*7.7+1.), h11(aR.w*9.3+2.)) - .5)*2.*uLean*.35;
+  d *= tp*H;
+  float flatk = 0.;
+  for (int i=0;i<6;i++){
+    if (uAct[i].z < .5) continue;
+    vec2 dv = root.xz - uAct[i].xy; float dist = length(dv);
+    float f = 1. - smoothstep(0., max(uPushR,.05), dist);
+    d += normalize(dv + vec2(1e-4))*f*uPush*.9*tp*H;
+    flatk = max(flatk, f*uPush);
+  }
+  float bl = length(d), mb = H*.85; if (bl > mb) { d *= mb/bl; bl = mb; }
+  float w = uWidth*uScale*.03*(1.-t*.92);
+  vec3 wp = root;
+  wp.xz += d + dir*position.x*w*2.;
+  wp.y += t*H*(1.-flatk*.55)*(1.-.35*clamp(bl/max(H,.01),0.,1.));
+  vC = mix(uBase, uTip, pow(t,.8))*(.75+.5*aR.z)*(.5+.5*t);
+  float dc = length(wp - cameraPosition);
+  vA = (uNear > 0. ? smoothstep(0., uNear, dc) : 1.) * (uFar > 0. ? 1. - smoothstep(uFar*.55, uFar, dc) : 1.);
+  gl_Position = projectionMatrix*viewMatrix*vec4(wp,1.);
+  if (on < .5) gl_Position = vec4(2.,2.,2.,1.);
+}`;
+const GRASS_FS = /* glsl */`
+precision highp float; varying vec3 vC; varying float vA;
+void main(){
+  if (vA < fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233)))*43758.5453)) discard;
+  gl_FragColor = vec4(vC, 1.);
+  #include <colorspace_fragment>
+}`;
+/** Các nhóm (Group) cấp cao nhất trong scene có xương (nhân vật / vật thể có skin) → vị trí để cỏ rạp quanh đó. */
+const _actorCache = new WeakMap();
+function findActors(scene, out) {
+  out.length = 0;
+  for (const g of scene.children) {
+    if (!g.isGroup || (g.name && g.name.startsWith('fx_')) || !g.visible) continue;
+    let v = _actorCache.get(g);
+    if (v === undefined) { v = false; g.traverse(o => { if (o.isSkinnedMesh) v = true; }); _actorCache.set(g, v); }
+    if (v && out.length < 6) out.push([g.position.x, g.position.z]);
+  }
+  return out;
 }
 
 /* ============================================================
@@ -585,6 +664,30 @@ function makeRuntime(it, scene) {
       };
       break;
     }
+    case 'grass': {
+      const N = 60000, q = new THREE.PlaneGeometry(1, 1, 1, 5), geo = new THREE.InstancedBufferGeometry();
+      geo.setIndex(q.index); geo.setAttribute('position', q.attributes.position); geo.setAttribute('uv', q.attributes.uv);
+      const R = rng(nz(it.seed, 1) * 7919 + 13), a = new Float32Array(N * 4);
+      for (let i = 0; i < N * 4; i++) a[i] = R();
+      geo.setAttribute('aR', new THREE.InstancedBufferAttribute(a, 4)); geo.instanceCount = N;
+      const U = {
+        uT: {value: 0}, uInt: {value: 1}, uSpeed: {value: 1}, uScale: {value: 1}, uSeed: {value: 0}, uBox: {value: new THREE.Vector3(1, 1, 1)}, uWind: {value: new THREE.Vector3()},
+        uHeight: {value: .45}, uWidth: {value: 1}, uLean: {value: .35}, uSway: {value: 1}, uStiff: {value: .3}, uPush: {value: .8}, uPushR: {value: .8}, uWindK: {value: 1}, uNear: {value: 0}, uFar: {value: 0},
+        uBase: {value: new THREE.Vector3()}, uTip: {value: new THREE.Vector3()}, uAct: {value: Array.from({length: 6}, () => new THREE.Vector3())},
+        uVel: {value: new THREE.Vector3()}, uAcc: {value: new THREE.Vector3()}, uOpacity: {value: 1}      // giữ cho vòng lặp chung; cỏ không dùng
+      };
+      const mat = new THREE.ShaderMaterial({uniforms: U, vertexShader: GRASS_VS, fragmentShader: GRASS_FS, side: THREE.DoubleSide, depthWrite: true, fog: false});
+      const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false; mesh.renderOrder = 26; g.add(mesh);
+      L.push({mesh, U, v0: new THREE.Vector3(), a0: new THREE.Vector3(), wk0: 1, o0: 1, dispose() { geo.dispose(); q.dispose(); mat.dispose(); mesh.removeFromParent(); }});
+      S.upd = it => {
+        U.uScale.value = nz(it.sizeK, 1);                   // cỏ không đổi cỡ theo scale của khung vùng (scale chỉ để phủ rộng)
+        setC({value: U.uBase.value}, it.color); setC({value: U.uTip.value}, it.color2 || '#a6d65a');
+        U.uHeight.value = nz(it.height, .45); U.uWidth.value = nz(it.width, 1); U.uLean.value = nz(it.lean, .35); U.uSway.value = nz(it.sway, 1);
+        U.uStiff.value = clamp(nz(it.stiff, .3), 0, 1); U.uPush.value = clamp(nz(it.push, .8), 0, 1); U.uPushR.value = nz(it.pushR, .8);
+      };
+      S.grass = U;
+      break;
+    }
     case 'sky': {
       const mat = new THREE.ShaderMaterial({
         uniforms: {uTop: {value: new THREE.Color('#2f7fe0')}, uHor: {value: new THREE.Color('#cfe6ff')}, uBot: {value: new THREE.Color('#9cb6c9')}, uSun: {value: new THREE.Vector3(0, .4, -1)}, uSunC: {value: new THREE.Color('#fff3c4')}, uT: {value: 0}, uCloud: {value: .5}, uStars: {value: 0}, uDark: {value: 1}, uStorm: {value: 0}},
@@ -703,7 +806,7 @@ export function createFxEngine(scene, camera) {
     /** Tính trạng thái ở thời điểm t (gọi mỗi khung hình, sau sync). */
     update(items, t, ctx = {}) {
       const wind = windAt(items, t), sc = screen.U;
-      let fogD = 0, fogC = null, flash = 0;
+      let fogD = 0, fogC = null, flash = 0, acts = null;
       sc.uVig.value = 0; sc.uGrain.value = 0; sc.uBars.value = 0; sc.uTint.value = 0; sc.uT.value = t;
       post.amp = 0; post.glow = 0; post.type = 0; post.speed = 1; post.t = t;
       if (ctx.view && ctx.view.w > 0 && ctx.view.h > 0) { sc.uAsp.value = ctx.view.w / ctx.view.h; sc.uRes.value.set(ctx.view.w, ctx.view.h); }
@@ -749,13 +852,19 @@ export function createFxEngine(scene, camera) {
         r.worldTop = r.g.position.y + bx[1] * Math.abs(r.g.scale.y) / 2;
         if (r.hp) { r.hpBox.scale.set(bx[0], bx[1], bx[2]); r.hpDot.scale.set(1 / (r.g.scale.x || 1), 1 / (r.g.scale.y || 1), 1 / (r.g.scale.z || 1)); }
         if (!active) continue;
+        /* thanh chỉnh chung: mật độ · kích thước · tốc độ (vật lý) · mức chịu gió · độ đậm · mờ theo khoảng cách */
+        const lay = r.L.length > 0, Id = I * (lay ? clamp(nz(it.dens, 1), 0, 8) : 1), sK = lay ? clamp(nz(it.sizeK, 1), .05, 8) : 1;
+        const vK = clamp(nz(it.velK, 1), 0, 8), wK = clamp(nz(it.windK, 1), 0, 8), oK = clamp(nz(it.opK, 1), 0, 4), nr = Math.max(0, nz(it.near, 0)), fr = Math.max(0, nz(it.far, 0));
+        if (r.grass) { if (!acts) findActors(scene, acts = []); r.grass.uAct.value.forEach((v, i) => acts[i] ? v.set(acts[i][0], acts[i][1], 1) : v.set(0, 0, 0)); }
         for (const l of r.L) {
           const U = l.U;
-          U.uBox.value.set(bx[0], bx[1], bx[2]); U.uT.value = lt; U.uSpeed.value = spd; U.uScale.value = kscale; U.uSeed.value = nz(it.seed, 1);
-          U.uWind.value.set(wind[0], 0, wind[1]); U.uInt.value = I;
+          U.uBox.value.set(bx[0], bx[1], bx[2]); U.uT.value = lt; U.uSpeed.value = spd; U.uScale.value = kscale * sK; U.uSeed.value = nz(it.seed, 1);
+          U.uWind.value.set(wind[0], 0, wind[1]); U.uInt.value = Id; U.uNear.value = nr; U.uFar.value = fr;
+          U.uVel.value.copy(l.v0); U.uAcc.value.copy(l.a0); U.uWindK.value = l.wk0; U.uOpacity.value = l.o0;
         }
-        if (r.upd) r.upd(it, I, t, wind, kscale, spd, lt);
-        if (it.fx === 'fog') { const dn = nz(it.density, .35) * I; if (dn > fogD) { fogD = dn; fogC = it.color; } }
+        if (r.upd) r.upd(it, Id, t, wind, kscale * sK, spd, lt);
+        for (const l of r.L) { const U = l.U; U.uVel.value.multiplyScalar(vK); U.uAcc.value.multiplyScalar(vK); U.uWindK.value *= wK; U.uOpacity.value *= oK; }
+        if (it.fx === 'fog') { const dn = nz(it.density, .35) * I * nz(it.dens, 1); if (dn > fogD) { fogD = dn; fogC = it.color; } }
         if (it.fx === 'lightning' && r.flashV) flash = Math.max(flash, clamp(r.flashV, 0, 1) * .55);
       }
       fog.density = fogD * .06; if (fogC) fog.color.set(fogC);

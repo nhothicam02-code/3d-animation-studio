@@ -45,7 +45,7 @@ export const ENV_PRESETS = [
   ['meadow', '🌿 Đồng cỏ'], ['trail', '🥾 Đường mòn'], ['plains', '🌾 Đồng bằng'], ['street', '🛣 Đường phố']
 ];
 const BASE = {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sc: '#fff4e0', light: 1, hk: 1, lk: 1, hc: '#ffffff', hg: '#666070', lc: '#ffffff', speed: 1,
-  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, rc: '#bff5ff', canopy: 0, dunes: 0, sea: 0, rot: 0, exp: 1, ibl: false, room: '', gnd: 0, gc2: '#c9a86a', hills: 0, bld: 0};
+  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, rc: '#bff5ff', canopy: 0, dunes: 0, sea: 0, rot: 0, exp: 1, ibl: false, room: '', gnd: 0, gc2: '#c9a86a', hills: 0, bld: 0, gdens: 1, gsize: 1, fdens: .035, pw: 1.15, pcurve: 1, gfar: 90, gh: 1.3, bdens: 22};
 const PRE = {
   sky: {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sun: .7, clouds: .5, lc: '#fff4e0', lk: 1.05, hc: '#bcd8ff', hg: '#6a6a58'},
   night: {c1: '#04081c', c2: '#1b2a52', c3: '#0a0f1e', sc: '#dfe8ff', sun: .8, az: 200, el: 30, stars: .9, clouds: .2, lc: '#8fa8ff', lk: .45, hc: '#4660a8', hg: '#101830', hk: .6},
@@ -61,7 +61,7 @@ const PRE = {
   meadow: {c1: '#3a8ee8', c2: '#dff0ff', c3: '#5fa83e', gc2: '#ffd84a', gnd: 1, hills: .5, sun: .7, el: 35, clouds: .45, lc: '#fff4dc', lk: 1.2, hc: '#c8e4ff', hg: '#5a7a3a'},
   trail: {c1: '#3a86d8', c2: '#d6ebff', c3: '#4f9438', gc2: '#b89868', gnd: 2, hills: .7, sun: .7, el: 32, clouds: .4, lc: '#fff2d6', lk: 1.15, hc: '#c4e0ff', hg: '#4a6a32'},
   plains: {c1: '#2f7fe0', c2: '#e4efff', c3: '#8aa84a', gc2: '#d6c060', gnd: 3, hills: .15, sun: .8, el: 40, clouds: .6, lc: '#fff4dc', lk: 1.3, hc: '#d2e6ff', hg: '#8a9a50'},
-  street: {c1: '#4a8ad8', c2: '#cfe0f0', c3: '#8a8e96', gc2: '#3a3d44', gnd: 4, bld: 1, sun: .6, el: 35, clouds: .3, lc: '#fff6e6', lk: 1.1, hc: '#d0e0f4', hg: '#6a6e76'},
+  street: {c1: '#4a8ad8', c2: '#cfe0f0', c3: '#8a8e96', gc2: '#3a3d44', gnd: 4, bld: 1, pw: 3.25, sun: .6, el: 35, clouds: .3, lc: '#fff6e6', lk: 1.1, hc: '#d0e0f4', hg: '#6a6e76'},
   pano: {}
 };
 /** "Thêm hiệu ứng đi kèm": mỗi địa điểm gợi ý vài khối hiệu ứng — thêm vào timeline để sửa / xoá tuỳ ý (không còn ẩn trong thanh trượt của nền). */
@@ -92,7 +92,17 @@ export function envFields(P, kind) {
   if (kind === 'pano') return [['rot', 'Xoay ảnh 360° (độ)', 'r', -180, 180, 1], ['exp', 'Độ sáng ảnh', 'r', 0, 3, .01], ['ibl', 'Dùng ảnh làm ánh sáng phản chiếu cho nhân vật', 'b']];
   const f = P.room ? [['c1', 'Màu trần', 'c'], ['c2', 'Màu tường', 'c'], ['c3', 'Màu sàn', 'c']] : [['c1', 'Màu đỉnh trời', 'c'], ['c2', 'Màu chân trời', 'c'], ['c3', 'Màu mặt đất', 'c']];
   f.push(['light', 'Cường độ ánh sáng', 'r', 0, 3, .01]);
-  if (!P.room && P.gnd) f.push(['gc2', P.gnd === 1 ? 'Màu hoa' : P.gnd === 4 ? 'Màu mặt đường' : P.gnd === 2 ? 'Màu đường mòn' : 'Màu ruộng', 'c'], ['hills', 'Đồi xa ở chân trời', 'r', 0, 1, .01]);
+  if (!P.room && P.gnd) {
+    f.push(['gc2', P.gnd === 1 ? 'Màu hoa' : P.gnd === 4 ? 'Màu mặt đường' : P.gnd === 2 ? 'Màu đường mòn' : 'Màu ruộng', 'c'],
+      ['gh', 'Độ cao mắt nhìn (m) — thấp: mặt đất kéo dài, cao: nhìn từ trên xuống', 'r', .3, 6, .05],
+      ['gfar', 'Tầm nhìn xa (m) — mặt đất hòa vào chân trời', 'r', 15, 400, 1],
+      ['gdens', 'Mật độ chi tiết mặt đất (cỏ, đá, hạt)', 'r', .2, 3, .01],
+      ['gsize', 'Kích thước chi tiết mặt đất', 'r', .3, 3, .01],
+      ['hills', 'Đồi xa ở chân trời', 'r', 0, 1, .01]);
+    if (P.gnd === 1) f.push(['fdens', 'Mật độ hoa', 'r', 0, .3, .002]);
+    if (P.gnd === 2) f.push(['pw', 'Độ rộng đường mòn (m)', 'r', .3, 4, .05], ['pcurve', 'Độ uốn đường mòn', 'r', 0, 3, .05]);
+    if (P.gnd === 4) f.push(['pw', 'Độ rộng lòng đường (m)', 'r', 1, 8, .05], ['bld', 'Chiều cao dãy nhà', 'r', 0, 2, .01], ['bdens', 'Mật độ nhà (số toà quanh tầm nhìn)', 'r', 6, 60, 1]);
+  }
   if (!P.room) f.push(['sun', 'Mặt trời / trăng (độ sáng)', 'r', 0, 2, .01], ['az', 'Hướng mặt trời (độ)', 'r', 0, 360, 1], ['el', 'Độ cao mặt trời (độ)', 'r', -10, 89, 1], ['sl', 'Ánh sáng lên nhân vật theo hướng mặt trời', 'b'],
     ['clouds', 'Mây', 'r', 0, 1, .01], ['stars', 'Sao', 'r', 0, 1, .01], ['rays', 'Tia sáng (dưới nước, xuyên lá)', 'r', 0, 1, .01], ['rc', 'Màu tia sáng', 'c'], ['canopy', 'Tán lá che nắng', 'r', 0, 1, .01],
     ['dunes', 'Đụn cát ở chân trời', 'r', 0, 1, .01], ['sea', 'Biển mây bên dưới', 'r', 0, 1, .01],
@@ -102,7 +112,7 @@ export function envFields(P, kind) {
 
 /* ---------------- Bầu trời bằng shader (có sương phủ về phía chân trời) ---------------- */
 const DOME_FS = `precision highp float; varying vec3 vD;
-uniform vec3 uTop,uHor,uBot,uSunC,uSunD,uFogC,uRayC; uniform float uT,uSun,uStars,uClouds,uRays,uCanopy,uFogK,uDunes,uSea,uGnd,uHills,uBld; uniform vec3 uGc2;
+uniform vec3 uTop,uHor,uBot,uSunC,uSunD,uFogC,uRayC; uniform float uT,uSun,uStars,uClouds,uRays,uCanopy,uFogK,uDunes,uSea,uGnd,uHills,uBld,uGDens,uGSize,uFDens,uPW,uPCurve,uGFar,uGH,uBDens; uniform vec3 uGc2;
 float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x),mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x),f.y);}
 float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*n2(p);p=p*2.03+vec2(7.1,3.3);a*=.5;}return s;}
@@ -125,7 +135,7 @@ void main(){
     col=mix(col,mix(uBot,uHor,.3)*(.9+.15*sd),smoothstep(.003,-.003,h-r1));
   }
   if(uBld>0.){                         // dãy nhà dọc phố
-    float az=atan(d.z,d.x); float cols=22.; float ci=floor(az*cols);
+    float az=atan(d.z,d.x); float cols=uBDens; float ci=floor(az*cols);
     float bh=uBld*(.03+.16*h21(vec2(ci,4.))); float fdist=h21(vec2(ci,9.))*.3;
     if(h<bh&&h>-.02){
       vec3 bc=mix(vec3(.55,.58,.64),uHor,.35+fdist)*(.8+.4*h21(vec2(ci,2.)));
@@ -136,38 +146,38 @@ void main(){
     }
   }
   if(uGnd>0.&&h<-.002){                // mặt đất theo phối cảnh (camera cao ~1.3 m)
-    float k=1.3/max(-h,.004); vec2 p=d.xz*k; vec3 g=uBot;
-    float nz=fbm(p*.9);
+    float k=uGH/max(-h,.004); vec2 p=d.xz*k; vec2 q=p/uGSize; vec3 g=uBot;
+    float nz=fbm(q*.9);
     if(uGnd<2.5){                      // đồng cỏ / đường mòn
-      g=mix(uBot*.72,uBot*1.28,nz)*(.92+.16*fbm(p*5.));
-      if(uGnd<1.5){ vec2 cell=floor(p*4.); float fh=h21(cell); vec2 fp=fract(p*4.)-.5; g=mix(g,uGc2,step(.965,fh)*smoothstep(.22,.1,length(fp))*smoothstep(40.,8.,k)); }
+      g=mix(uBot*.72,uBot*1.28,nz)*(.92+.16*fbm(q*5.*uGDens)); g*=1.-.12*step(.62,h21(floor(q*7.*uGDens)))*smoothstep(60.,6.,k);
+      if(uGnd<1.5){ vec2 cell=floor(q*4.); float fh=h21(cell); vec2 fp=fract(q*4.)-.5; g=mix(g,uGc2,step(1.-uFDens,fh)*smoothstep(.22,.1,length(fp))*smoothstep(40.,8.,k)); }
       else{
-        float cx=sin(p.y*.11)*2.2+sin(p.y*.04+1.)*3.; float dx=abs(p.x-cx);
-        float w=1.15+.25*sin(p.y*.3);
+        float cx=(sin(p.y*.11)*2.2+sin(p.y*.04+1.)*3.)*uPCurve; float dx=abs(p.x-cx);
+        float w=uPW*(1.+.2*sin(p.y*.3));
         float pm=smoothstep(w+.35,w-.2,dx+(nz-.5)*.5);
-        vec3 pc=uGc2*(.8+.35*fbm(p*3.5)); pc=mix(pc,pc*.6,smoothstep(.0,.04,.5-abs(fract(p.x*.9+nz)-.5))*.0);
+        vec3 pc=uGc2*(.8+.35*fbm(q*3.5));
         g=mix(g,pc,pm);
         g=mix(g,uBot*.55,smoothstep(w+.55,w+.25,dx)*smoothstep(w-.05,w+.25,dx)*.5); // mép cỏ đậm
       }
     } else if(uGnd<3.5){               // đồng bằng: ruộng ô vuông
-      vec2 fc=floor(p*.07+vec2(3.,7.)); float v=h21(fc);
+      vec2 fc=floor(q*.07+vec2(3.,7.)); float v=h21(fc);
       g=mix(uBot,uGc2,step(.45,v)*.8)*(.78+.4*v)*(.9+.2*nz);
-      vec2 fr=abs(fract(p*.07+vec2(3.,7.))-.5); g=mix(g,uBot*.55,smoothstep(.47,.5,max(fr.x,fr.y))*.6);
-      g*=.95+.1*fbm(p*6.);
+      vec2 fr=abs(fract(q*.07+vec2(3.,7.))-.5); g=mix(g,uBot*.55,smoothstep(.47,.5,max(fr.x,fr.y))*.6);
+      g*=.95+.1*fbm(q*6.*uGDens);
     } else {                           // đường phố
       float ax=abs(p.x); g=uBot*(.9+.15*fbm(p*3.));
-      float road=smoothstep(3.25,3.15,ax);
-      vec3 asp=uGc2*(.85+.3*fbm(p*8.));
+      float road=smoothstep(uPW,uPW-.1,ax);
+      vec3 asp=uGc2*(.85+.3*fbm(q*8.*uGDens));
       g=mix(g,asp,road);
       float dash=step(.5,fract(p.y*.2));
       g=mix(g,vec3(.95,.85,.3),smoothstep(.1,.06,ax)*dash*road);
-      g=mix(g,vec3(.92),smoothstep(.07,.03,abs(ax-2.95))*road);
-      float side=smoothstep(3.25,3.4,ax)*smoothstep(5.6,5.45,ax);   // vỉa hè
+      g=mix(g,vec3(.92),smoothstep(.07,.03,abs(ax-(uPW-.3)))*road);
+      float side=smoothstep(uPW,uPW+.15,ax)*smoothstep(uPW+2.35,uPW+2.2,ax);   // vỉa hè
       vec2 tl=abs(fract(vec2(p.x*.9,p.y*.9))-.5); g=mix(g,g*.82,side*smoothstep(.46,.5,max(tl.x,tl.y)));
-      g=mix(g,vec3(.62,.62,.6),smoothstep(3.3,3.2,ax)*step(3.2,ax)*.6);
+      g=mix(g,vec3(.62,.62,.6),smoothstep(uPW+.05,uPW-.05,ax)*step(uPW-.05,ax)*.6);
     }
     g*=.9+.2*sd;
-    col=mix(col,mix(g,uHor,smoothstep(10.,90.,k)),smoothstep(-.0005,-.006,h));
+    col=mix(col,mix(g,uHor,smoothstep(10.,uGFar,k)),smoothstep(-.0005,-.006,h));
   }
   if(uSea>0.&&h<.03){                  // biển mây bên dưới tầm mắt
     float hh=max(-h,0.); vec2 q=d.xz/(hh+.16)*1.3+vec2(uT*.01,0.);
@@ -342,7 +352,7 @@ export function createEnvEngine(scene, camera, renderer) {
   const fogC = new THREE.Color(1, 1, 1);
 
   /* --- bầu trời môi trường --- */
-  const U = {uTop: {value: C('#2f7fe0')}, uHor: {value: C('#cfe6ff')}, uBot: {value: C('#7d8f6a')}, uSunC: {value: C('#fff4e0')}, uSunD: {value: new THREE.Vector3(0, 1, 0)}, uT: {value: 0}, uSun: {value: 0}, uStars: {value: 0}, uClouds: {value: 0}, uRays: {value: 0}, uCanopy: {value: 0}, uRayC: {value: C('#bff5ff')}, uDunes: {value: 0}, uSea: {value: 0}, uGnd: {value: 0}, uHills: {value: 0}, uBld: {value: 0}, uGc2: {value: C('#c9a86a')}, uFogC: {value: new THREE.Color(1, 1, 1)}, uFogK: {value: 0}};
+  const U = {uTop: {value: C('#2f7fe0')}, uHor: {value: C('#cfe6ff')}, uBot: {value: C('#7d8f6a')}, uSunC: {value: C('#fff4e0')}, uSunD: {value: new THREE.Vector3(0, 1, 0)}, uT: {value: 0}, uSun: {value: 0}, uStars: {value: 0}, uClouds: {value: 0}, uRays: {value: 0}, uCanopy: {value: 0}, uRayC: {value: C('#bff5ff')}, uDunes: {value: 0}, uSea: {value: 0}, uGnd: {value: 0}, uHills: {value: 0}, uBld: {value: 0}, uGDens: {value: 1}, uGSize: {value: 1}, uFDens: {value: .035}, uPW: {value: 1.15}, uPCurve: {value: 1}, uGFar: {value: 90}, uGH: {value: 1.3}, uBDens: {value: 22}, uGc2: {value: C('#c9a86a')}, uFogC: {value: new THREE.Color(1, 1, 1)}, uFogK: {value: 0}};
   const dome = new THREE.Mesh(new THREE.SphereGeometry(100, 48, 24), new THREE.ShaderMaterial({uniforms: U, vertexShader: 'varying vec3 vD; void main(){ vD=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }', fragmentShader: DOME_FS, side: THREE.BackSide, depthTest: false, depthWrite: false, fog: false}));
   dome.renderOrder = -1001; dome.frustumCulled = false; dome.visible = false; dome.name = 'env_dome';
 
@@ -410,6 +420,7 @@ export function createEnvEngine(scene, camera, renderer) {
         U.uTop.value.set(P.c1); U.uHor.value.set(P.c2); U.uBot.value.set(P.c3); U.uSunC.value.set(P.sc); U.uT.value = tt;
         const el = P.el * DEG, az = P.az * DEG; U.uSunD.value.set(Math.cos(el) * Math.cos(az), Math.sin(el), -Math.cos(el) * Math.sin(az));
         U.uSun.value = P.sun; U.uStars.value = P.stars; U.uClouds.value = P.clouds; U.uRays.value = P.rays; U.uCanopy.value = P.canopy; U.uRayC.value.set(P.rc); U.uDunes.value = P.dunes; U.uSea.value = P.sea; U.uGnd.value = P.gnd; U.uHills.value = P.hills; U.uBld.value = P.bld; U.uGc2.value.set(P.gc2);
+        U.uGDens.value = P.gdens; U.uGSize.value = P.gsize; U.uFDens.value = P.fdens; U.uPW.value = P.pw; U.uPCurve.value = P.pcurve; U.uGFar.value = P.gfar; U.uGH.value = P.gh; U.uBDens.value = P.bdens;
         U.uFogK.value = K; U.uFogC.value.copy(fogC);
       }
 
