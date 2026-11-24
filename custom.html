@@ -430,6 +430,8 @@ $('presetList').onclick = e => {
 };
 const parseItem = (ext, buf) => M.parseModel(ext, buf);
 const slotLabel = id => ((K.SLOTS.find(x => x.id === id) || {}).label) || 'Đồ';
+/** Nhắc riêng cho bao tay gắn cứng: không có skin nên ngón tay không cử động được. */
+const handNote = (slot, p) => ((K.HAND_SLOTS.has(slot) || slot === 'gloves') && p && p._rt && !p._rt.skinned ? ' Lưu ý: bao tay gắn cứng chỉ xoay theo bàn tay, ngón tay không cử động — muốn ngón tay chuyển động hãy nhập file có skin cùng bộ xương với nhân vật (tên xương giống nhau).' : '');
 const pairMsg = (head, pair) => head + ' · tự tách thành ' + pair.map(q => '“' + q.label + '” → ' + K.BONE_LABELS[q.bone]).join(' và ') +
   (pair.mode === 'plane' ? ' (hai chiếc dính liền nên cắt theo mặt phẳng giữa)' : '') + '. Không đúng ý thì bỏ tick “Tự tách…” rồi nhập lại.';
 $('importFile').onchange = async e => {
@@ -454,7 +456,7 @@ $('importFile').onchange = async e => {
     S.groups.push(g); pieces.forEach(q => K.mountPiece(g, q, S.rig));
     dirty(); select(g.id, p.uid);
     if (pair) say($('importStatus'), pairMsg('Đã nhập ' + f.name, pair), 'good');
-    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã nhập ' + f.name + ' · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Cần thì chỉnh vị trí / xoay / tỉ lệ (1 = nguyên bản) ở bảng bên phải. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
+    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã nhập ' + f.name + ' · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Cần thì chỉnh vị trí / xoay / tỉ lệ (1 = nguyên bản) ở bảng bên phải. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.' + handNote(S.slot, p), 'good');
   } catch (err) { say($('importStatus'), 'Không nhập được: ' + err.message, 'bad'); }
   e.target.value = '';
 };
@@ -505,7 +507,7 @@ $('libGrid').onclick = async e => {
     const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: it.category, preset: 'import', name: it.name, color: '#ffffff', color2: '#ffffff', blend: 0, blendMode: 'mix', visible: true, pieces};
     S.groups.push(g); pieces.forEach(q => K.mountPiece(g, q, S.rig)); dirty(); select(g.id, p.uid);
     if (pair) say($('importStatus'), pairMsg('Đã thêm “' + it.name + '”', pair), 'good');
-    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã thêm “' + it.name + '” · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Chỉnh vị trí / xoay / tỉ lệ (1 = nguyên bản) ở bảng bên phải. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.', 'good');
+    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã thêm “' + it.name + '” · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Chỉnh vị trí / xoay / tỉ lệ (1 = nguyên bản) ở bảng bên phải. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.' + handNote(it.category, p), 'good');
   } catch (err) { say($('importStatus'), 'Không thêm được: ' + err.message, 'bad'); }
 };
 const libItem = id => S.lib.find(x => x.id === id);

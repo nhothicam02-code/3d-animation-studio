@@ -61,3 +61,12 @@ Dùng chung ô "🧵 Vật lý vải / tóc / đuôi" ở trang Custom. Bộ thu
 - Kiểm thử lõi mô phỏng (không cần trình duyệt): `node tests/strand-core.test.mjs`.
 
 File thay đổi: js/strand-core.js (MỚI), js/cloth-physics.js, js/character-kit.js, custom.html, tests/strand-core.test.mjs (MỚI). studio.html không cần sửa.
+
+## Bao tay trái / bao tay phải (2 danh mục riêng)
+Danh mục mới **Bao tay trái** (`gloveL`) và **Bao tay phải** (`gloveR`) nằm cạnh "Bao tay (đôi)" (giữ lại để nhân vật đã lưu vẫn mở được). Có ở Custom và ở Kho tài nguyên (upload đồ vào đúng danh mục).
+- **Gắn cứng vào xương**: nhập file không skin → tự gắn vào bàn tay đúng bên (trái → xương bàn tay trái, phải → bàn tay phải). Nếu file xuất cùng hệ trục với nhân vật (nằm gần bàn tay) thì giữ đúng chỗ gốc; nếu không thì căn tâm vào bàn tay, chỉnh Vị trí / Xoay / Tỉ lệ ở bảng bên phải. Bao tay gắn cứng chỉ xoay theo bàn tay, ngón tay không cử động (giao diện có nhắc).
+- **Nhập có skin cùng bộ xương** (như áo, váy, quần): xuất từ Blender cùng armature, cùng pose gốc, scale 1, có skin weight, giữ xương ngón tay → Custom tự nhận khi ≥ 50% tên xương trùng, bao tay biến dạng và cử động ngón theo nhân vật. Chỉnh vị trí / xoay / tỉ lệ như đồ skin khác; ẩn phần bàn tay bị che ở mục "Phần cơ thể".
+- Mẫu dựng sẵn: Bao tay trái / phải, Bao tay dài trái / phải.
+- Mỗi danh mục là một bộ riêng: đeo bao tay trái kiểu A, bao tay phải kiểu B được.
+
+File thay đổi: js/character-kit.js, custom.html.
