@@ -68,3 +68,16 @@ Mức mở (dùng được ngay):
 - khoảng nghỉ = Basis, không cần shape key
 
 Gợi ý bước làm: làm `jawOpen` trước → thử nhép → rồi mới làm 7 viseme.
+
+## 3. Biểu cảm keyshape mẫu (trang Custom)
+
+Tab **🦴 Keyshape** có thêm ô **✨ Tạo từ mẫu có sẵn…**. Chọn một mẫu → tạo biểu cảm mới đã dựng sẵn keyframe, chỉnh tiếp trên timeline nếu muốn, rồi bấm **Lưu biểu cảm** như bình thường (lưu cùng nhân vật, dùng được trong Studio).
+
+Mẫu: Bình thường (chớp mắt) · Vui · Cười lớn · Cười ngượng · Buồn · Giận · Ngạc nhiên · Nháy mắt (trái) · Chu môi / hôn · Đang nói (nhép mẫu) · Thử nhép a e i o u m f.
+
+- Mẫu dùng đúng tên keyshape ở mục 2. Model thiếu keyshape nào thì keyshape đó bị bỏ qua và được liệt kê trong dòng trạng thái.
+- Có tên thay thế: `browInnerUp`, `browOuterUp`, `browDown`, `mouthSmile`, `mouthFrown`, `eyeBlink`, `mouthOpen`, `aa`, `A`, `Happy`, `Sad`, `Angry`, `Blink`.
+- Mẫu **Thử nhép** lần lượt bật từng viseme (a, e, i, o, u, m/b/p, f/v): dùng để kiểm tra các viseme đã làm trong Blender.
+- Chưa import model có keyshape vẫn tạo được mẫu (giữ tên chuẩn) — chỉ không xem trước được.
+
+File thay đổi: `custom.html`. File mới: `js/face-presets.js`. Thêm/sửa mẫu: sửa mảng `KS_PRESETS` trong file này.

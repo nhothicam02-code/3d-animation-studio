@@ -158,6 +158,7 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
 <h2>Biểu cảm <small id="exCount"></small> <button id="exReload" class="quiet" style="float:right;padding:3px 8px;font-size:11px;text-transform:none" title="Quét lại thư mục faces/ trên GitHub">↻ Quét ảnh</button></h2>
   <div class="extabs"><button id="tabTex" class="on" data-extab="texture">🖼 Texture</button><button id="tabKey" data-extab="keyshape">🦴 Keyshape</button></div>
   <div class="field"><div class="row"><select id="exSel"></select><button id="exNew">＋ Mới</button></div></div>
+  <div class="field hide" id="exPresetRow"><select id="exPreset"><option value="">✨ Tạo từ mẫu có sẵn…</option></select></div>
   <datalist id="morphNames"></datalist>
   <div class="editor off" id="exEd">
    <div class="field"><label>Tên biểu cảm</label><input id="exName" maxlength="40" placeholder="Ví dụ: Vui, Buồn, Cười ngượng…"></div>
@@ -196,6 +197,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {mapClip} from './js/retarget.js';
 import * as K from './js/character-kit.js';
 import * as F from './js/face-kit.js';
+import {KS_PRESETS, buildPreset} from './js/face-presets.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -733,6 +735,7 @@ function ksSync() { const c = EX.cur; if (c) $('ksDur').value = r2(c.duration ||
 
 function exRender() {
   const e = EX.cur, ks = EX.mode === 'keyshape';
+  $('exPresetRow').classList.toggle('hide', !ks);
   const list = S.expr.filter(x => modeOf(x) === EX.mode);
   $('tabTex').classList.toggle('on', !ks); $('tabKey').classList.toggle('on', ks);
   $('exCount').textContent = '(' + list.length + ')';
@@ -1561,6 +1564,14 @@ $('exNew').onclick = () => {
     ? {id: exNewId(), name: '', mode: 'keyshape', loop: true, duration: F.DEFAULT_DURATION, ease: 'smooth', parts: {}, tracks: {}}
     : {id: exNewId(), name: '', mode: 'texture', v: 2, loop: true, parts: {}, layers: {}};
   exReset(); EX.isNew = true; EX.edited = false; exRender(); $('exName').focus();
+};
+$('exPreset').innerHTML += KS_PRESETS.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+$('exPreset').onchange = e => {
+  const p = KS_PRESETS.find(x => x.id === e.target.value); e.target.value = '';
+  if (!p || !exGuard()) return;
+  const r = buildPreset(p, EX.morphs, exNewId(p.name));
+  EX.cur = r.expr; exReset(); EX.isNew = true; EX.edited = true; exRender();
+  exSay('Đã tạo “' + p.name + '” từ mẫu (' + Object.keys(r.expr.tracks).length + ' keyshape).' + (r.missing.length ? ' Model chưa có: ' + r.missing.join(', ') + ' — đã bỏ qua.' : '') + ' Chỉnh tiếp nếu muốn rồi bấm Lưu biểu cảm.', r.missing.length ? '' : 'good');
 };
 $('exName').oninput = e => exNameSet(e.target.value, e.target);
 $('exLoop').onchange = e => { if (EX.cur) { EX.cur.loop = e.target.checked; EX.t = 0; exEdited(); } };
