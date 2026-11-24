@@ -36,3 +36,13 @@ Một file giày chứa cả đôi (không skin) sẽ được tự tách làm h
 - Dữ liệu lưu vẫn là 1 file giày + 2 piece có trường `split: "l" | "r"`; studio.html dựng lại đúng khi nạp.
 
 File thay đổi: js/pair-split.js (MỚI), js/character-kit.js, custom.html, studio.html.
+
+## Vật lý vải (váy, áo choàng, khăn, vạt áo…)
+Trang Custom → chọn một món → tick "🧵 Vật lý vải (áp dụng cả bộ)". Thông số lưu theo bộ (trường `phys` trong json nhân vật) và studio.html tự chạy khi dựng cảnh, kể cả lúc xuất video.
+- Đồ CỨNG (không skin, vd váy dạng mesh): lưới hạt 16×6 bám vào eo, mô phỏng lò xo + ràng buộc khoảng cách + va chạm đùi/cẳng chân/hông; độ lệch được nội suy lên toàn bộ đỉnh trong vertex shader nên mesh nặng vẫn mượt. Lưới hình trụ quanh tâm hộp bao, hợp váy / áo choàng / khăn; hàng trên cùng ghim cứng.
+- Đồ SKIN có xương riêng (vạt váy, dây, đuôi áo): các xương riêng đó đung đưa kiểu spring-bone. Đồ skin không có xương riêng chưa mô phỏng được: thêm xương vạt trong Blender rồi xuất lại.
+- Thông số: Độ cứng (kéo về dáng gốc), Độ nặng (trọng lực), Cản gió, Biên độ tối đa (cm), Va chạm chân/hông. "Thả lại vải" đặt về dáng gốc.
+- Kéo thanh thời gian / đổi cảnh nhảy xa → vải tự đặt lại. Bóng đổ và chọn bằng chuột vẫn theo dáng gốc (chưa theo vải).
+- Gọi trong code: `K.stepPhysics(dt)` mỗi khung hình sau khi cập nhật animation (custom.html, studio.html đã gọi).
+
+File thay đổi: js/cloth-physics.js (MỚI), js/character-kit.js, custom.html, studio.html.

@@ -255,6 +255,7 @@ async function nextScene(){playing=false;si++;renderAll();await loadScene(true)}
 function seek(v){t=Math.min(Math.max(0,v),sc().duration);for(const k in AU)AU[k].pause();for(const k in spoken)delete spoken[k];window.speechSynthesis&&speechSynthesis.cancel();apply();renderOv();syncTp()}
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.06);
  if(P&&playing&&!busy){t+=dt;const s=sc();if(t>=s.duration){t=s.duration;if(allMode&&si<P.scenes.length-1){nextScene();return}pause()}apply();renderOv();syncTp();audioSync()}
+ K.stepPhysics(P&&playing&&!busy&&!EXP?dt:0);
  if(EXP)return;controls.update();updCbox();updGiz();renderer.render(tscene,camera)}
 $('bPlay').onclick=()=>play(false);$('bAll').onclick=()=>{if(si){si=0;renderAll();loadScene().then(()=>play(true))}else play(true)};$('bPause').onclick=pause;
 
@@ -618,7 +619,7 @@ async function exportVideo(fmt,onP){
  try{await Promise.all(FONTS.map(x=>document.fonts.load('40px "'+x+'"').catch(()=>{})));let n=0;
   for(let k=0;k<P.scenes.length;k++){si=k;await loadScene();busy=true;const s=P.scenes[k];
    for(let j=0;j<nF[k];j++){if(XC)throw Error('Đã huỷ xuất.');if(ERR)throw ERR;
-    t=j/fps;await apply();if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;renderer.render(tscene,camera);await compose(c,s,t,W,H);
+    t=j/fps;await apply();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;renderer.render(tscene,camera);await compose(c,s,t,W,H);
     while(ve.encodeQueueSize>6)await new Promise(r=>setTimeout(r,4));
     const vf=new VideoFrame(cv,{timestamp:Math.round(n*1e6/fps),duration:Math.round(1e6/fps)});ve.encode(vf,{keyFrame:n%(fps*2)===0});vf.close();n++;
     if(n%4===0){onP(n/total,'Khung '+n+' / '+total);await new Promise(r=>setTimeout(r))}}}

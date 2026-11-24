@@ -142,6 +142,15 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
   <div class="row" style="margin-top:10px"><div style="flex:2"><label>Blend màu (đồ thư viện / nhập) <span id="blendVal">0%</span></label><input type="range" id="blend" min="0" max="100" step="1" value="0"></div><div><label>Kiểu</label><select id="blendMode"><option value="mix">Pha trộn</option><option value="multiply">Nhân màu</option></select></div></div>
   <div class="row" style="margin-top:10px"><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="vP" checked> Hiện mảnh</label><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="vG" checked> Hiện cả bộ</label></div>
   <div class="row" style="margin-top:10px"><button id="resetP" style="flex:1">↺ Đặt lại</button><button id="delP" class="danger" style="flex:1">Xóa mảnh</button><button id="delG" class="danger" style="flex:1">Xóa cả bộ</button></div>
+  <div class="field" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(128,128,128,.3)">
+    <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="phOn"> 🧵 Vật lý vải (áp dụng cả bộ)</label>
+    <div id="phBox" style="display:none;margin-top:8px">
+      <div class="row"><div><label>Độ cứng <span id="phStiffV"></span></label><input type="range" id="phStiff" min="0" max="100" step="1"></div><div><label>Độ nặng <span id="phWeightV"></span></label><input type="range" id="phWeight" min="0" max="200" step="5"></div></div>
+      <div class="row" style="margin-top:8px"><div><label>Cản gió <span id="phDragV"></span></label><input type="range" id="phDrag" min="0" max="60" step="1"></div><div><label>Biên độ tối đa <span id="phReachV"></span></label><input type="range" id="phReach" min="5" max="60" step="1"></div></div>
+      <div class="row" style="margin-top:8px"><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="phCol"> Va chạm chân / hông</label><button id="phReset" style="flex:1">↺ Thả lại vải</button></div>
+      <div class="note" id="phNote"></div>
+    </div>
+  </div>
   <div class="note">Mẹo: bấm trực tiếp vào món đồ trên màn hình để chọn nhanh. Màu áp dụng cho cả bộ.</div>
  </div>
 <h2>Biểu cảm <small id="exCount"></small> <button id="exReload" class="quiet" style="float:right;padding:3px 8px;font-size:11px;text-transform:none" title="Quét lại thư mục faces/ trên GitHub">↻ Quét ảnh</button></h2>
@@ -239,6 +248,7 @@ function setupScene() {
     faceTick(dt);
     if ($('auto').checked) { S.spin = (S.spin + dt * 36) % 360; syncSpin(); }
     spinG.rotation.y = S.spin * D2R;
+    K.stepPhysics(dt);   // vật lý vải (chạy cả khi tạm dừng để vải lắng xuống)
     controls.update();
     if (selBox.visible) selBox.update();
     renderer.render(scene, camera);
@@ -346,7 +356,35 @@ function fillEditor() {
   const imported = !!p.file; $('col2').disabled = imported; $('blend').disabled = $('blendMode').disabled = !imported;
   $('blend').value = Math.round((g.blend || 0) * 100); $('blendVal').textContent = $('blend').value + '%'; $('blendMode').value = g.blendMode || 'mix';
   $('vP').checked = p.visible !== false; $('vG').checked = g.visible !== false;
+  fillPhys(g);
 }
+/* ---------------- Vật lý vải (theo cả bộ: group.phys) ---------------- */
+function fillPhys(g) {
+  const P = {...K.PHYS_DEFAULT, ...(g.phys || {})}, on = !!P.on;
+  $('phOn').checked = on; $('phBox').style.display = on ? 'block' : 'none';
+  $('phStiff').value = Math.round(P.stiff * 100); $('phStiffV').textContent = Math.round(P.stiff * 100) + '%';
+  $('phWeight').value = Math.round(P.weight * 100); $('phWeightV').textContent = Math.round(P.weight * 100) + '%';
+  $('phDrag').value = Math.round(P.drag * 100); $('phDragV').textContent = Math.round(P.drag * 100) + '%';
+  $('phReach').value = Math.round(P.reach * 100); $('phReachV').textContent = Math.round(P.reach * 100) + ' cm';
+  $('phCol').checked = P.collide !== false;
+  const i = K.physInfo(g), t = [];
+  if (i.grid) t.push('Đồ cứng (' + i.grid + ' mảnh): bề mặt rung theo lưới hạt, hợp với váy, áo choàng, khăn…');
+  if (i.bones) t.push('Đồ skin có ' + i.boneCount + ' xương riêng: các xương này đung đưa như lò xo.');
+  if (i.none) t.push('Đồ skin không có xương riêng (' + i.none + ' mảnh): chưa mô phỏng được. Thêm xương vạt váy / dây trong Blender rồi xuất lại.');
+  $('phNote').textContent = on ? t.join(' ') : '';
+}
+function setPhys(patch) {
+  const {g} = curSel(); if (!g) return;
+  g.phys = {...K.PHYS_DEFAULT, ...(g.phys || {}), ...patch};
+  g.pieces.forEach(q => K.applyPiece(g, q)); dirty(); fillPhys(g);
+}
+$('phOn').onchange = e => setPhys({on: e.target.checked});
+$('phStiff').oninput = e => setPhys({stiff: e.target.value / 100});
+$('phWeight').oninput = e => setPhys({weight: e.target.value / 100});
+$('phDrag').oninput = e => setPhys({drag: e.target.value / 100});
+$('phReach').oninput = e => setPhys({reach: e.target.value / 100});
+$('phCol').onchange = e => setPhys({collide: e.target.checked});
+$('phReset').onclick = () => { const {g} = curSel(); if (g) K.resetPhysics(g); };
 function bindNum(id, apply) { $(id).oninput = e => { const {g, p} = curSel(); const v = parseFloat(String(e.target.value).replace(',', '.')); if (!p || !Number.isFinite(v)) return; apply(p, v); K.applyPiece(g, p); dirty(); }; }
 ['px', 'py', 'pz'].forEach((id, i) => bindNum(id, (p, v) => p.pos[i] = v));
 ['rx', 'ry', 'rz'].forEach((id, i) => bindNum(id, (p, v) => p.rot[i] = v));
