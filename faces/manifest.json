@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-24T04:41:06.101Z",
+  "parts": {
+    "mask": {
+      "bieu-cam-mwszj6yz": [
+        "faces/mask/bieu-cam-mwszj6yz/01.png",
+        "faces/mask/bieu-cam-mwszj6yz/02.png",
+        "faces/mask/bieu-cam-mwszj6yz/03.png",
+        "faces/mask/bieu-cam-mwszj6yz/04.png",
+        "faces/mask/bieu-cam-mwszj6yz/05.png",
+        "faces/mask/bieu-cam-mwszj6yz/06.png",
+        "faces/mask/bieu-cam-mwszj6yz/07.png",
+        "faces/mask/bieu-cam-mwszj6yz/08.png",
+        "faces/mask/bieu-cam-mwszj6yz/09.png",
+        "faces/mask/bieu-cam-mwszj6yz/10.png",
+        "faces/mask/bieu-cam-mwszj6yz/11.png",
+        "faces/mask/bieu-cam-mwszj6yz/12.png",
+        "faces/mask/bieu-cam-mwszj6yz/13.png",
+        "faces/mask/bieu-cam-mwszj6yz/14.png",
+        "faces/mask/bieu-cam-mwszj6yz/15.png",
+        "faces/mask/bieu-cam-mwszj6yz/16.png",
+        "faces/mask/bieu-cam-mwszj6yz/17.png",
+        "faces/mask/bieu-cam-mwszj6yz/18.png",
+        "faces/mask/bieu-cam-mwszj6yz/19.png",
+        "faces/mask/bieu-cam-mwszj6yz/20.png",
+        "faces/mask/bieu-cam-mwszj6yz/21.png",
+        "faces/mask/bieu-cam-mwszj6yz/22.png",
+        "faces/mask/bieu-cam-mwszj6yz/23.png",
+        "faces/mask/bieu-cam-mwszj6yz/24.png",
+        "faces/mask/bieu-cam-mwszj6yz/25.png",
+        "faces/mask/bieu-cam-mwszj6yz/26.png",
+        "faces/mask/bieu-cam-mwszj6yz/27.png",
+        "faces/mask/bieu-cam-mwszj6yz/28.png",
+        "faces/mask/bieu-cam-mwszj6yz/29.png",
+        "faces/mask/bieu-cam-mwszj6yz/30.png",
+        "faces/mask/bieu-cam-mwszj6yz/31.png"
+      ],
+      "gian-du": [
+        "faces/mask/gian-du/01.png"
+      ],
+      "ma-hong": [
+        "faces/mask/ma-hong/01.png"
+      ]
+    },
+    "browL": {
+      "buon": [
+        "faces/browL/buon/01.png"
+      ],
+      "gian": [
+        "faces/browL/gian/01.png"
+      ],
+      "ngac-nhien": [
+        "faces/browL/ngac-nhien/01.png"
+      ],
+      "thuong": [
+        "faces/browL/thuong/01.png"
+      ]
+    },
+    "browR": {
+      "buon": [
+        "faces/browR/buon/01.png"
+      ],
+      "gian": [
+        "faces/browR/gian/01.png"
+      ],
+      "ngac-nhien": [
+        "faces/browR/ngac-nhien/01.png"
+      ],
+      "thuong": [
+        "faces/browR/thuong/01.png"
+      ]
+    },
+    "eyeL": {
+      "buon": [
+        "faces/eyeL/buon/01.png"
+      ],
+      "chop": [
+        "faces/eyeL/chop/01.png",
+        "faces/eyeL/chop/02.png",
+        "faces/eyeL/chop/03.png",
+        "faces/eyeL/chop/04.png",
+        "faces/eyeL/chop/05.png"
+      ],
+      "mo": [
+        "faces/eyeL/mo/01.png"
+      ],
+      "nham": [
+        "faces/eyeL/nham/01.png"
+      ],
+      "trong": [
+        "faces/eyeL/trong/01.png"
+      ],
+      "vui": [
+        "faces/eyeL/vui/01.png"
+      ]
+    },
+    "eyeR": {
+      "buon": [
+        "faces/eyeR/buon/01.png"
+      ],
+      "chop": [
+        "faces/eyeR/chop/01.png",
+        "faces/eyeR/chop/02.png",
+        "faces/eyeR/chop/03.png",
+        "faces/eyeR/chop/04.png",
+        "faces/eyeR/chop/05.png"
+      ],
+      "mo": [
+        "faces/eyeR/mo/01.png"
+      ],
+      "nham": [
+        "faces/eyeR/nham/01.png"
+      ],
+      "trong": [
+        "faces/eyeR/trong/01.png"
+      ],
+      "vui": [
+        "faces/eyeR/vui/01.png"
+      ]
+    },
+    "nose": {
+      "thuong": [
+        "faces/nose/thuong/01.png"
+      ],
+      "to": [
+        "faces/nose/to/01.png"
+      ]
+    },
+    "mouth": {
+      "binh-thuong": [
+        "faces/mouth/binh-thuong/01.png"
+      ],
+      "buon": [
+        "faces/mouth/buon/01.png"
+      ],
+      "cuoi": [
+        "faces/mouth/cuoi/01.png"
+      ],
+      "cuoi-lon": [
+        "faces/mouth/cuoi-lon/01.png"
+      ],
+      "mo-to": [
+        "faces/mouth/mo-to/01.png"
+      ],
+      "nhep": [
+        "faces/mouth/nhep/01.png",
+        "faces/mouth/nhep/02.png",
+        "faces/mouth/nhep/03.png",
+        "faces/mouth/nhep/04.png"
+      ],
+      "noi": [
+        "faces/mouth/noi/01.png",
+        "faces/mouth/noi/02.png",
+        "faces/mouth/noi/03.png",
+        "faces/mouth/noi/04.png"
+      ]
+    }
+  }
+}
