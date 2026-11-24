@@ -20,3 +20,14 @@ Xuất từ Blender CÙNG armature (tên xương giống nhân vật), cùng pos
 có skin weight. Upload vào danh mục Áo/Quần/Váy... Custom tự nhận khi >= 50% tên xương trùng.
 Xương riêng của đồ (vạt áo, dây...) mà nhân vật không có sẽ được giữ và gắn dưới xương cha tương ứng.
 Đồ không có skin (mũ, tóc, kính, giày...) vẫn gắn cứng vào 1 xương như cũ.
+
+## Giày / tất gắn cứng: tự tách trái – phải
+Một file giày chứa cả đôi (không skin) sẽ được tự tách làm hai nửa khi nhập ở trang Custom (mục Giày, Tất):
+- "Giày trái" gắn vào xương bàn chân trái, "Giày phải" gắn vào bàn chân phải → mỗi chiếc đi theo chân của nó.
+- Tách theo khoảng hở giữa hai chiếc. Nếu hai chiếc dính liền thành một khối thì cắt theo mặt phẳng giữa (chỉ khi hộp bao đủ rộng giống một cặp).
+- Nếu file xuất cùng hệ trục với nhân vật (gần xương bàn chân) thì mỗi chiếc nằm đúng chỗ gốc; không thì căn tâm vào xương, chỉnh vị trí ở bảng bên phải như đồ thường.
+- Muốn giữ nguyên một mảnh: bỏ tick "Tự tách giày/tất gắn cứng thành trái – phải" trước khi nhập.
+- Một chiếc giày đơn, hoặc đồ có skin, không bị tách.
+- Dữ liệu lưu vẫn là 1 file giày + 2 piece có trường `split: "l" | "r"`; studio.html dựng lại đúng khi nạp.
+
+File thay đổi: js/pair-split.js (MỚI), js/character-kit.js, custom.html, studio.html.

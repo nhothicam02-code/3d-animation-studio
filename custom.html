@@ -102,6 +102,7 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
  <div class="note">Item lấy từ <a href="./library.html">Kho tài nguyên</a> (đồng bộ GitHub). <a href="./library.html">＋ Thêm item mới</a></div>
  <label>Nhập mô hình riêng (.glb, .gltf, .fbx, .obj, .dae, .stl, .ply, .vrm) vào mục đang chọn</label>
  <input type="file" id="importFile" accept=".glb,.gltf,.fbx,.obj,.dae,.stl,.ply,.vrm">
+ <label style="display:flex;gap:7px;align-items:center;margin:7px 0 0;font-size:12px;cursor:pointer"><input type="checkbox" id="autoSplit" checked style="width:auto;margin:0"> Tự tách giày/tất gắn cứng thành trái – phải</label>
  <div class="status" id="importStatus">Mô hình nhập sẽ gắn cứng vào một xương. Đơn vị: mét (file cm được tự giảm 0.01).</div>
 
  <h2>Bối cảnh xem trước</h2>
@@ -376,6 +377,9 @@ $('presetList').onclick = e => {
   dirty(); select(g.id, g.pieces[0].uid);
 };
 const parseItem = (ext, buf) => M.parseModel(ext, buf);
+const slotLabel = id => ((K.SLOTS.find(x => x.id === id) || {}).label) || 'Đồ';
+const pairMsg = (head, pair) => head + ' · tự tách thành ' + pair.map(q => '“' + q.label + '” → ' + K.BONE_LABELS[q.bone]).join(' và ') +
+  (pair.mode === 'plane' ? ' (hai chiếc dính liền nên cắt theo mặt phẳng giữa)' : '') + '. Không đúng ý thì bỏ tick “Tự tách…” rồi nhập lại.';
 $('importFile').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -384,12 +388,21 @@ $('importFile').onchange = async e => {
     const buf = await f.arrayBuffer();
     const fit = K.fitImported(await parseItem(ext, buf));
     const bone = DEFAULT_BONE[S.slot] || 'hips';
-    const p = {...K.newPiece('file', f.name, S.rig.bone(bone) ? bone : 'hips'), file: {name: f.name, ext}, scale: fit.autoScale};
-    p._obj = fit.obj; p._bytes = new Uint8Array(buf); p._autoScale = fit.autoScale;
-    const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: S.slot, preset: 'import', name: f.name.replace(/\.[^.]+$/, ''), color: '#ffffff', color2: '#ffffff', visible: true, pieces: [p]};
-    S.groups.push(g); K.mountPiece(g, p, S.rig);
+    const file = {name: f.name, ext}, bytes = new Uint8Array(buf);
+    // giày/tất gắn cứng gồm cả hai chiếc trong một file → tự tách thành trái/phải, mỗi chiếc gắn vào bàn chân của nó
+    const pair = $('autoSplit').checked ? K.pairPieces(S.slot, fit, S.rig, slotLabel(S.slot), file) : null;
+    let pieces;
+    if (pair) { pieces = pair; pieces.forEach(q => { q._bytes = bytes; }); }
+    else {
+      const q = {...K.newPiece('file', f.name, S.rig.bone(bone) ? bone : 'hips'), file, scale: fit.autoScale};
+      q._obj = fit.obj; q._bytes = bytes; q._autoScale = fit.autoScale; pieces = [q];
+    }
+    const p = pieces[0];
+    const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: S.slot, preset: 'import', name: f.name.replace(/\.[^.]+$/, ''), color: '#ffffff', color2: '#ffffff', visible: true, pieces};
+    S.groups.push(g); pieces.forEach(q => K.mountPiece(g, q, S.rig));
     dirty(); select(g.id, p.uid);
-    say($('importStatus'), p._rt && p._rt.skinned ? 'Đã nhập ' + f.name + ' · đồ có skin: ôm theo xương và biến dạng cùng cơ thể (không cần chỉnh vị trí). Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
+    if (pair) say($('importStatus'), pairMsg('Đã nhập ' + f.name, pair), 'good');
+    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã nhập ' + f.name + ' · đồ có skin: ôm theo xương và biến dạng cùng cơ thể (không cần chỉnh vị trí). Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã nhập ' + f.name + ' · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Đổi xương/tỉ lệ ở bảng bên phải.', 'good');
   } catch (err) { say($('importStatus'), 'Không nhập được: ' + err.message, 'bad'); }
   e.target.value = '';
 };
@@ -428,11 +441,19 @@ $('libGrid').onclick = async e => {
   try {
     const fit = K.fitImported(await parseItem(it.ext, await K.fetchRepoBytes(it.path)));
     const want = it.bone || DEFAULT_BONE[it.category] || 'hips', bone = S.rig.bone(want) ? want : 'hips';
-    const p = {...K.newPiece('file', it.name, bone), file: {name: it.name + '.' + it.ext, ext: it.ext, path: it.path, lib: it.id}, scale: fit.autoScale};
-    p._obj = fit.obj; p._autoScale = fit.autoScale;
-    const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: it.category, preset: 'import', name: it.name, color: '#ffffff', color2: '#ffffff', blend: 0, blendMode: 'mix', visible: true, pieces: [p]};
-    S.groups.push(g); K.mountPiece(g, p, S.rig); dirty(); select(g.id, p.uid);
-    say($('importStatus'), p._rt && p._rt.skinned ? 'Đã thêm “' + it.name + '” · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.', 'good');
+    const file = {name: it.name + '.' + it.ext, ext: it.ext, path: it.path, lib: it.id};
+    const pair = $('autoSplit').checked ? K.pairPieces(it.category, fit, S.rig, slotLabel(it.category), file) : null;
+    let pieces;
+    if (pair) pieces = pair;
+    else {
+      const q = {...K.newPiece('file', it.name, bone), file, scale: fit.autoScale};
+      q._obj = fit.obj; q._autoScale = fit.autoScale; pieces = [q];
+    }
+    const p = pieces[0];
+    const g = {id: 'g' + Math.random().toString(36).slice(2, 9), slot: it.category, preset: 'import', name: it.name, color: '#ffffff', color2: '#ffffff', blend: 0, blendMode: 'mix', visible: true, pieces};
+    S.groups.push(g); pieces.forEach(q => K.mountPiece(g, q, S.rig)); dirty(); select(g.id, p.uid);
+    if (pair) say($('importStatus'), pairMsg('Đã thêm “' + it.name + '”', pair), 'good');
+    else say($('importStatus'), p._rt && p._rt.skinned ? 'Đã thêm “' + it.name + '” · đồ có skin: ôm theo xương và biến dạng cùng cơ thể. Ẩn phần thân bị che ở mục “Phần cơ thể”.' : 'Đã thêm “' + it.name + '” · gắn vào xương “' + K.BONE_LABELS[p.bone] + '”. Chỉnh vị trí/blend màu ở bảng bên phải.', 'good');
   } catch (err) { say($('importStatus'), 'Không thêm được: ' + err.message, 'bad'); }
 };
 const libItem = id => S.lib.find(x => x.id === id);
@@ -530,11 +551,13 @@ async function saveCharacter(st = $('saveStatus')) {
     if (!S.charId || S.charId.split('-').slice(0, -1).join('-') !== slugName) S.charId = slugName + '-' + Date.now().toString(36);
     const id = S.charId;
     // 1) tải các mô hình nhập lên
+    const uploaded = new Map();   // đồ cặp tách trái/phải: hai piece dùng chung một Uint8Array → chỉ tải lên một lần
     for (const g of S.groups) for (const p of g.pieces) if (p.file && p._bytes) {
+      if (uploaded.has(p._bytes)) { p.file.path = uploaded.get(p._bytes); p._bytes = null; continue; }
       say(st, 'Đang tải lên ' + p.file.name + '…');
       const path = 'characters/items/' + id + '-' + K.slug(p.file.name.replace(/\.[^.]+$/, '')) + '-' + p.uid + '.' + p.file.ext;
       await K.ghPutBytes(path, p._bytes, 'Add custom item ' + p.file.name);
-      p.file.path = path; p._bytes = null;
+      uploaded.set(p._bytes, path); p.file.path = path; p._bytes = null;
     }
     // 2) thumbnail + dữ liệu nhân vật
     say(st, 'Đang lưu dữ liệu nhân vật…');
@@ -571,13 +594,18 @@ async function loadSaved(id) {
   S.groups = doc.items; S.sel = null; S.charId = doc.id || id; S.hiddenMeshes = new Set(Array.isArray(doc.hiddenMeshes) ? doc.hiddenMeshes : []);
   S.expr = Array.isArray(doc.expressions) ? doc.expressions.map(upExpr) : []; S.fit = {...F.FACE_FIT, ...(doc.face || {})};
   EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
+  const pairObj = new Map();   // đồ cặp (giày/tất tách trái-phải): hai piece cùng file → chỉ tải + parse một lần
+  const loadObj = async p => {
+    const r = await fetch('./' + p.file.path.split('/').map(encodeURIComponent).join('/') + '?v=' + Date.now());
+    if (!r.ok) throw Error(r.status);
+    return K.fitImported(await parseItem(p.file.ext, await r.arrayBuffer())).obj;
+  };
   for (const g of S.groups) for (const p of g.pieces) {
     p.pos = p.pos || [0, 0, 0]; p.rot = p.rot || [0, 0, 0]; p.scale = p.scale || 1;
     if (p.file && p.file.path) {
       try {
-        const r = await fetch('./' + p.file.path.split('/').map(encodeURIComponent).join('/') + '?v=' + Date.now());
-        if (!r.ok) throw Error(r.status);
-        p._obj = K.fitImported(await parseItem(p.file.ext, await r.arrayBuffer())).obj;
+        if (p.split) { if (!pairObj.has(p.file.path)) pairObj.set(p.file.path, loadObj(p)); p._obj = await pairObj.get(p.file.path); }
+        else p._obj = await loadObj(p);
       } catch (err) { console.warn('Không tải được mô hình đồ', p.file.path, err); }
     }
   }

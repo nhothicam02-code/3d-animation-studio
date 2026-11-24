@@ -172,14 +172,15 @@ const getCustom=e=>CC[e.id]||(CC[e.id]=K.readJSON(e.dataPath).then(d=>{if(!d||!A
 const getItemBytes=p=>IB[p]||(IB[p]=K.fetchRepoBytes(p).catch(x=>{delete IB[p];throw x}));
 const parseItem=(ext,buf)=>M.parseModel(ext,buf);
 async function dressCustom(o,ch,mats,my){
- const doc=await getCustom(ch.custom),warn=[],wrap=K.normalizeModel(o,1.8);          // giống hệt trang Custom: cao 1.8, quay mặt +Z
+ const doc=await getCustom(ch.custom),warn=[],pairObj={},wrap=K.normalizeModel(o,1.8);   // pairObj: đồ cặp tách trái/phải dùng chung 1 lần parse
+           // giống hệt trang Custom: cao 1.8, quay mặt +Z
  o.traverse(n=>{if(n.isSkinnedMesh)n.frustumCulled=false});
  const rig=K.buildRig(o),groups=JSON.parse(JSON.stringify(doc.items)),res={wrap,warn,ver:doc.updatedAt||''};
  for(const g of groups)for(const p of g.pieces||[]){
   p.pos=p.pos||[0,0,0];p.rot=p.rot||[0,0,0];p.scale=p.scale||1;
   if(p.file){
    if(!p.file.path){warn.push((p.label||'đồ')+': chưa có file trên GitHub');continue}
-   try{p._obj=K.fitImported(await parseItem(p.file.ext,await getItemBytes(p.file.path))).obj}catch(e){warn.push((p.label||p.file.path)+': '+e.message);continue}
+   try{if(p.split){const k=p.file.path;pairObj[k]=pairObj[k]||getItemBytes(k).then(b=>parseItem(p.file.ext,b)).then(m=>K.fitImported(m).obj);p._obj=await pairObj[k]}else p._obj=K.fitImported(await parseItem(p.file.ext,await getItemBytes(p.file.path))).obj}catch(e){warn.push((p.label||p.file.path)+': '+e.message);continue}
    if(my!==tok)return res}
   const rt=K.mountPiece(g,p,rig);
   if(!rt){warn.push((g.name||'đồ')+' › '+(p.label||p.part)+': không gắn được vào xương');continue}
