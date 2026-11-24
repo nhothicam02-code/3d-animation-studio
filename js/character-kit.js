@@ -61,6 +61,43 @@ export async function ghPutDataUrl(path, dataUrl, message) {
   const sha = await currentSha(path);
   return gh(path, {method: 'PUT', body: {message, content: dataUrl.split(',')[1], branch: 'main', ...(sha ? {sha} : {})}});
 }
+/** Xóa một file trên GitHub. File không tồn tại → bỏ qua (trả false) nên bấm xóa lại để tiếp tục là an toàn. */
+export async function ghDelete(path, message) {
+  const sha = await currentSha(path);
+  if (!sha) return false;
+  await gh(path, {method: 'DELETE', body: {message: message || 'Delete ' + path, sha, branch: 'main'}});
+  return true;
+}
+/** Liệt kê thư mục (không đệ quy) — dùng được cả khi chưa có token (repo public). */
+export async function listDir(dir) {
+  const {repo, token} = auth();
+  try {
+    const r = await fetch('https://api.github.com/repos/' + repo + '/contents/' + encPath(dir) + '?ref=main', {cache: 'no-store', headers: token ? {Authorization: 'Bearer ' + token} : undefined});
+    if (r.ok) { const a = await r.json(); return Array.isArray(a) ? a : []; }
+  } catch (e) { /* trả mảng rỗng */ }
+  return [];
+}
+/** Mọi file bên trong một thư mục (đệ quy). */
+export async function ghListTree(dir) {
+  let list;
+  try { list = await gh(dir); } catch (e) { if (/not found/i.test(e.message)) return []; throw e; }
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const x of list) { if (x.type === 'dir') out.push(...await ghListTree(x.path)); else if (x.type === 'file') out.push(x.path); }
+  return out;
+}
+/** GitHub không có “xóa thư mục”: xóa lần lượt từng file trong thư mục. */
+export async function ghDeleteTree(dir, message, onProgress) {
+  const files = await ghListTree(dir); let n = 0;
+  for (const p of files) { if (onProgress) onProgress(++n, files.length, p); await ghDelete(p, message); }
+  return files.length;
+}
+/** Xóa danh sách file (bỏ đường dẫn rỗng / trùng). */
+export async function ghDeleteMany(paths, message, onProgress) {
+  const list = [...new Set(paths.filter(Boolean))]; let n = 0;
+  for (const p of list) { if (onProgress) onProgress(++n, list.length, p); await ghDelete(p, message); }
+  return list.length;
+}
 /** Đọc JSON mới nhất: ưu tiên API (khi có token, không bị cache), sau đó raw.githubusercontent, cuối cùng file tương đối. */
 export async function readJSON(path, fallback = null) {
   const {token, repo} = auth();
