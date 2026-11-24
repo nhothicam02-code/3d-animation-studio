@@ -198,14 +198,14 @@ export function boneOptions(rig) {
    ============================================================ */
 export const SLOTS = [
   {id: 'hat', label: 'Mũ', icon: '🎩'}, {id: 'hair', label: 'Tóc', icon: '💇'}, {id: 'mask', label: 'Mặt nạ', icon: '🎭'}, {id: 'scarf', label: 'Khăn choàng', icon: '🧣'}, {id: 'jacket', label: 'Áo khoác', icon: '🧥'},
-  {id: 'sleeves', label: 'Tay áo', icon: '💪'}, {id: 'gloves', label: 'Bao tay', icon: '🧤'}, {id: 'outer', label: 'Áo ngoài', icon: '👕'},
+  {id: 'sleeves', label: 'Tay áo', icon: '💪'}, {id: 'gloves', label: 'Bao tay (đôi)', icon: '🧤'}, {id: 'gloveL', label: 'Bao tay trái', icon: '🧤'}, {id: 'gloveR', label: 'Bao tay phải', icon: '🧤'}, {id: 'outer', label: 'Áo ngoài', icon: '👕'},
   {id: 'under', label: 'Áo lót', icon: '🎽'}, {id: 'brief', label: 'Quần lót', icon: '🩲'}, {id: 'shorts', label: 'Quần ngắn', icon: '🩳'},
   {id: 'pants', label: 'Quần dài', icon: '👖'}, {id: 'skirt', label: 'Váy', icon: '👗'}, {id: 'socks', label: 'Vớ', icon: '🧦'},
   {id: 'shoes', label: 'Giày', icon: '👟'}, {id: 'belt', label: 'Thắt lưng', icon: '🥋'}, {id: 'tail', label: 'Đuôi', icon: '🦊'},
   {id: 'acc', label: 'Phụ kiện', icon: '👓'}, {id: 'ear', label: 'Hoa tai', icon: '💎'}
 ];
 /** Xương gắn mặc định cho từng danh mục (dùng chung cho Custom, Studio…). */
-export const DEFAULT_BONE = {hat: 'head', scarf: 'neck', jacket: 'spine2', outer: 'spine2', under: 'spine2', sleeves: 'lArm', gloves: 'lHand', hair: 'head', mask: 'head', brief: 'hips', shorts: 'hips', pants: 'hips', skirt: 'hips', socks: 'lFoot', shoes: 'lFoot', belt: 'hips', tail: 'hips', acc: 'head', ear: 'head'};
+export const DEFAULT_BONE = {hat: 'head', scarf: 'neck', jacket: 'spine2', outer: 'spine2', under: 'spine2', sleeves: 'lArm', gloves: 'lHand', gloveL: 'lHand', gloveR: 'rHand', hair: 'head', mask: 'head', brief: 'hips', shorts: 'hips', pants: 'hips', skirt: 'hips', socks: 'lFoot', shoes: 'lFoot', belt: 'hips', tail: 'hips', acc: 'head', ear: 'head'};
 
 const P = (part, label, bone, prims, side) => ({part, label, bone, prims, side});
 const LR = fn => [fn('l', 'trái'), fn('r', 'phải')];
@@ -216,6 +216,9 @@ const arm = (r, upto = 1, key = 'Arm') => s => P('arm' + s, 'Tay áo ' + (s === 
 const fore = r => s => P('fore' + s, 'Cổ tay áo ' + (s === 'l' ? 'trái' : 'phải'), s + 'Fore', [{t: 'tube', to: s + 'Hand', r0: r * 0.95, r1: r * 0.85}], s);
 const thigh = (r, upto = 1) => s => P('thigh' + s, 'Ống quần đùi ' + (s === 'l' ? 'trái' : 'phải'), s + 'Up', [{t: 'tube', to: s + 'Leg', r0: r * 1.08, r1: r * 0.84, upto}], s);
 const calf = r => s => P('calf' + s, 'Ống quần cẳng ' + (s === 'l' ? 'trái' : 'phải'), s + 'Leg', [{t: 'tube', to: s + 'Foot', r0: r * 0.88, r1: r * 0.68}], s);
+const sideVi = s => (s === 'l' ? 'trái' : 'phải');
+const gMitten = s => P('hand' + s, 'Bao tay ' + sideVi(s), s + 'Hand', [{t: 'tube', along: s + 'Fore', len: 0.17, r0: 0.042, r1: 0.038, sz: 0.6}], s);
+const gMittenLong = s => P('handlong' + s, 'Bao tay dài ' + sideVi(s), s + 'Hand', [{t: 'tube', along: s + 'Fore', len: 0.17, r0: 0.042, r1: 0.038, sz: 0.6}], s);
 const pelvis = (h = 0.2, y = 0.03, r = 0.16) => P('pelvis', 'Hông', 'hips', [{t: 'cyl', rt: r, rb: r * 0.95, h, c: [0, y, 0], s: [1.08, 1, 0.78]}]);
 
 /**
@@ -276,6 +279,11 @@ export const PRESETS = [
   {id: 'glove-mitten', slot: 'gloves', name: 'Bao tay', color: '#2d3436', color2: '#636e72', pieces: LR(s => P('hand' + s, 'Bao tay ' + (s === 'l' ? 'trái' : 'phải'), s + 'Hand', [{t: 'tube', along: s + 'Fore', len: 0.17, r0: 0.042, r1: 0.038, sz: 0.6}], s))},
   {id: 'glove-long', slot: 'gloves', name: 'Bao tay dài', color: '#6d214f', color2: '#b33771', pieces: LR(s => P('handlong' + s, 'Bao tay dài ' + (s === 'l' ? 'trái' : 'phải'), s + 'Hand', [
     {t: 'tube', along: s + 'Fore', len: 0.17, r0: 0.042, r1: 0.038, sz: 0.6}], s)).concat(LR(fore(0.05)))},
+  // ---- Bao tay trái / phải (mỗi bên một danh mục riêng)
+  {id: 'gloveL-mitten', slot: 'gloveL', name: 'Bao tay trái', color: '#2d3436', color2: '#636e72', pieces: [gMitten('l')]},
+  {id: 'gloveL-long', slot: 'gloveL', name: 'Bao tay dài trái', color: '#6d214f', color2: '#b33771', pieces: [gMittenLong('l'), fore(0.05)('l')]},
+  {id: 'gloveR-mitten', slot: 'gloveR', name: 'Bao tay phải', color: '#2d3436', color2: '#636e72', pieces: [gMitten('r')]},
+  {id: 'gloveR-long', slot: 'gloveR', name: 'Bao tay dài phải', color: '#6d214f', color2: '#b33771', pieces: [gMittenLong('r'), fore(0.05)('r')]},
   // ---- Áo ngoài
   {id: 'shirt-tee', slot: 'outer', name: 'Áo thun', color: '#ffffff', color2: '#dfe6e9', pieces: [torsoLow(0.155, 0.7), torsoUp(0.152, 0.7), ...LR(arm(0.062, 0.5))]},
   {id: 'shirt-long', slot: 'outer', name: 'Áo sơ mi dài tay', color: '#74b9ff', color2: '#ffffff', pieces: [torsoLow(0.157, 0.7), torsoUp(0.154, 0.7), P('collar', 'Cổ áo', 'neck', [{t: 'cyl', rt: 0.062, rb: 0.078, h: 0.05, c: [0, 0.025, 0], open: true, col: 2}]), ...LR(arm(0.06)), ...LR(fore(0.052))]},
@@ -500,6 +508,8 @@ function applySkinOffset(rt, piece) {
     if (none) mesh.bindMatrix.copy(base); else mesh.bindMatrix.multiplyMatrices(_skA, base);
   }
 }
+/** Danh mục bao tay từng bên: gắn cứng vào bàn tay mặc định (DEFAULT_BONE), hoặc nhập file skin cùng xương để ngón tay cử động. */
+export const HAND_SLOTS = new Set(['gloveL', 'gloveR']);
 const PAIR_ANCHOR_MAX = 0.5;   // mét: nửa tách ra cách xương xa hơn mức này thì coi như file không cùng hệ trục với nhân vật
 /** Nửa trái/phải của piece.split, tính một lần cho mỗi _obj (nhớ trong piece._half). null nếu file không còn tách được. */
 function halfOf(piece, rig) {
@@ -536,9 +546,11 @@ export function mountPiece(group, piece, rig, parent) {
     if (piece.split && !half) return null;   // file không còn tách được: bỏ qua thay vì gắn cả đôi vào một chân
     if (half) { obj = half.obj; anchor = half.anchor; }
     else {
-      // Đồ có skin trùng tên xương với nhân vật (áo, quần, váy…) → bind vào xương nhân vật, biến dạng theo cơ thể
+      // Đồ có skin trùng tên xương với nhân vật (áo, quần, váy, bao tay…) → bind vào xương nhân vật, biến dạng theo cơ thể
       const sk = bindSkinnedItem(obj, rig);
       if (sk) return mountSkinned(group, piece, rig, sk.content, sk.extra);
+      // bao tay trái / phải gắn cứng: file xuất cùng hệ trục với nhân vật (gần bàn tay) thì giữ đúng chỗ gốc; không thì căn tâm vào xương bàn tay
+      if (HAND_SLOTS.has(group.slot) && obj.userData && obj.userData.fitCenter) anchor = obj.userData.fitCenter.clone().multiplyScalar(obj.userData.autoScale || 1);
     }
     // nhân bản vật liệu để có thể pha màu (blend) mà không làm hỏng bản gốc
     const tint = [];
