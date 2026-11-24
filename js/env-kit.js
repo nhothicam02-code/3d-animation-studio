@@ -8,7 +8,7 @@ import * as THREE from 'three';
    Các loại nền (s.bgt):
      'color' 'grad' 'img' 'vid'   nền phẳng — vẽ BÊN TRONG WebGL (không còn lớp HTML riêng),
                                   nên sương mù, mờ ảo, biến dạng không khí… áp được lên ảnh / video.
-     'env'                        môi trường 3D: bầu trời / đêm sao / studio / nhà / lớp học / bóng râm / nắng gắt / dưới nước.
+     'env'                        môi trường 3D: bầu trời / đêm sao / studio / nhà / lớp học / bóng râm / nắng gắt / sa mạc / rừng rậm / trên mây / dưới nước.
      'pano'                       ảnh 360° (equirectangular 2:1), xoay được, tuỳ chọn làm ánh sáng phản chiếu.
 
    Thứ tự vẽ mỗi khung hình (render):
@@ -41,10 +41,10 @@ const sh = (c, k) => { const o = new THREE.Color(c); o.multiplyScalar(k); return
 /** Chỉ còn các ĐỊA ĐIỂM. Sương mù / mờ ảo / hơi nóng / sóng nước chuyển sang tab Hiệu ứng (xem ENV_BUNDLES). */
 export const ENV_PRESETS = [
   ['sky', '☀️ Bầu trời'], ['night', '🌙 Đêm sao'], ['studio', '🎬 Studio'], ['house', '🏠 Trong nhà'],
-  ['classroom', '🏫 Lớp học'], ['shade', '🌳 Bóng râm'], ['sun', '🔆 Nắng gắt'], ['underwater', '🌊 Dưới nước']
+  ['classroom', '🏫 Lớp học'], ['shade', '🌳 Bóng râm'], ['sun', '🔆 Nắng gắt'], ['desert', '🏜 Sa mạc'], ['jungle', '🌴 Rừng rậm'], ['cloudsea', '☁️ Trên mây'], ['underwater', '🌊 Dưới nước']
 ];
 const BASE = {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sc: '#fff4e0', light: 1, hk: 1, lk: 1, hc: '#ffffff', hg: '#666070', lc: '#ffffff', speed: 1,
-  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, canopy: 0, rot: 0, exp: 1, ibl: false, room: ''};
+  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, rc: '#bff5ff', canopy: 0, dunes: 0, sea: 0, rot: 0, exp: 1, ibl: false, room: ''};
 const PRE = {
   sky: {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sun: .7, clouds: .5, lc: '#fff4e0', lk: 1.05, hc: '#bcd8ff', hg: '#6a6a58'},
   night: {c1: '#04081c', c2: '#1b2a52', c3: '#0a0f1e', sc: '#dfe8ff', sun: .8, az: 200, el: 30, stars: .9, clouds: .2, lc: '#8fa8ff', lk: .45, hc: '#4660a8', hg: '#101830', hk: .6},
@@ -53,6 +53,9 @@ const PRE = {
   classroom: {room: 'classroom', c1: '#f2f2ee', c2: '#e9e4cf', c3: '#b7a98f', hc: '#f4f8ff', hg: '#8a8a80', hk: 1.2, lc: '#ffffff', lk: .8},
   shade: {c1: '#5d8f86', c2: '#a9c4bd', c3: '#3b5a3d', canopy: .55, sun: 0, lc: '#bcd4ff', lk: .5, hc: '#a6c8c0', hg: '#30463a', hk: .9},
   sun: {c1: '#6ab2ff', c2: '#fff7e0', c3: '#c9b27a', sc: '#fff3cf', sun: 1.2, el: 38, clouds: .1, lc: '#fff1c8', lk: 1.8, hc: '#ffffff', hg: '#c9a86a', hk: .8},
+  desert: {c1: '#3f86d6', c2: '#ffe2b8', c3: '#d9b072', sc: '#fff1cc', sun: 1.1, el: 42, az: 140, clouds: .08, dunes: 1, lc: '#fff0cc', lk: 1.7, hc: '#ffeccc', hg: '#c9a266', hk: .9},
+  jungle: {c1: '#2d6a3f', c2: '#9fc77a', c3: '#1b3a22', sc: '#fff0b0', sun: .3, el: 55, az: 100, canopy: .8, rays: .5, rc: '#fff0a8', lc: '#d9f0b0', lk: .55, hc: '#8fc08a', hg: '#22381f', hk: .85},
+  cloudsea: {c1: '#1e5fc0', c2: '#bfe0ff', c3: '#a9c3e6', sc: '#fff6dc', sun: 1.2, el: 30, az: 120, clouds: .15, sea: 1, lc: '#fff4dc', lk: 1.6, hc: '#cfe6ff', hg: '#dfeaff', hk: 1.1},
   underwater: {c1: '#06385a', c2: '#1b8aa6', c3: '#0a3a4a', rays: .8, el: 80, lc: '#9fe6ff', lk: .9, hc: '#5fc3dc', hg: '#0b3346', hk: .9},
   pano: {}
 };
@@ -65,6 +68,9 @@ export const ENV_BUNDLES = {
   classroom: [{fx: 'dust'}],
   shade: [{fx: 'fog', color: '#a9c4bd', density: .15}, {fx: 'glow', intensity: .2}],
   sun: [{fx: 'distort', kind: 'heat', intensity: .3}, {fx: 'glow', intensity: .35}],
+  desert: [{fx: 'distort', kind: 'heat', intensity: .35}, {fx: 'dust', color: '#e8c98a'}, {fx: 'fog', color: '#f0d8a8', density: .1}, {fx: 'glow', intensity: .3}],
+  jungle: [{fx: 'fog', color: '#a8c98a', density: .22}, {fx: 'leaves'}, {fx: 'dust', color: '#fff2b0'}, {fx: 'glow', intensity: .15}],
+  cloudsea: [{fx: 'glow', intensity: .25}],
   underwater: [{fx: 'fog', color: '#1b8aa6', density: .5}, {fx: 'distort', kind: 'wave', intensity: .35}, {fx: 'glow', intensity: .25}]
 };
 export const envBundle = k => ENV_BUNDLES[k] || [];
@@ -78,14 +84,15 @@ export function envFields(P, kind) {
   const f = P.room ? [['c1', 'Màu trần', 'c'], ['c2', 'Màu tường', 'c'], ['c3', 'Màu sàn', 'c']] : [['c1', 'Màu đỉnh trời', 'c'], ['c2', 'Màu chân trời', 'c'], ['c3', 'Màu mặt đất', 'c']];
   f.push(['light', 'Cường độ ánh sáng', 'r', 0, 3, .01]);
   if (!P.room) f.push(['sun', 'Mặt trời / trăng (độ sáng)', 'r', 0, 2, .01], ['az', 'Hướng mặt trời (độ)', 'r', 0, 360, 1], ['el', 'Độ cao mặt trời (độ)', 'r', -10, 89, 1], ['sl', 'Ánh sáng lên nhân vật theo hướng mặt trời', 'b'],
-    ['clouds', 'Mây', 'r', 0, 1, .01], ['stars', 'Sao', 'r', 0, 1, .01], ['rays', 'Tia sáng dưới nước', 'r', 0, 1, .01], ['canopy', 'Tán lá che nắng', 'r', 0, 1, .01],
+    ['clouds', 'Mây', 'r', 0, 1, .01], ['stars', 'Sao', 'r', 0, 1, .01], ['rays', 'Tia sáng (dưới nước, xuyên lá)', 'r', 0, 1, .01], ['rc', 'Màu tia sáng', 'c'], ['canopy', 'Tán lá che nắng', 'r', 0, 1, .01],
+    ['dunes', 'Đụn cát ở chân trời', 'r', 0, 1, .01], ['sea', 'Biển mây bên dưới', 'r', 0, 1, .01],
     ['speed', 'Tốc độ chuyển động (mây, tia sáng)', 'r', 0, 4, .05]);
   return f;
 }
 
 /* ---------------- Bầu trời bằng shader (có sương phủ về phía chân trời) ---------------- */
 const DOME_FS = `precision highp float; varying vec3 vD;
-uniform vec3 uTop,uHor,uBot,uSunC,uSunD,uFogC; uniform float uT,uSun,uStars,uClouds,uRays,uCanopy,uFogK;
+uniform vec3 uTop,uHor,uBot,uSunC,uSunD,uFogC,uRayC; uniform float uT,uSun,uStars,uClouds,uRays,uCanopy,uFogK,uDunes,uSea;
 float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x),mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x),f.y);}
 float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*n2(p);p=p*2.03+vec2(7.1,3.3);a*=.5;}return s;}
@@ -94,6 +101,20 @@ void main(){
   vec3 col=mix(uHor,uTop,pow(clamp(h,0.,1.),.55));
   col=mix(col,uBot,smoothstep(.02,-.25,h));
   float sd=max(dot(d,uSunD),0.);
+  if(uDunes>0.){                       // hai lớp đụn cát: xa (nhạt, mờ) và gần
+    float az=atan(d.z,d.x);
+    float r0=uDunes*(.014+.016*sin(az*3.+1.)+.008*sin(az*8.+.5)), r1=uDunes*(-.012+.022*sin(az*2.+4.)+.010*sin(az*5.+2.));
+    vec3 sandF=mix(uBot,uHor,.45)*(.9+.2*sd), sandN=uBot*(.8+.35*sd)*(.94+.06*sin(az*40.+h*200.));
+    col=mix(col,sandF,smoothstep(.003,-.003,h-r0));
+    col=mix(col,sandN,smoothstep(.003,-.003,h-r1));
+  }
+  if(uSea>0.&&h<.03){                  // biển mây bên dưới tầm mắt
+    float hh=max(-h,0.); vec2 q=d.xz/(hh+.16)*1.3+vec2(uT*.01,0.);
+    float cm=smoothstep(.32,.72,fbm(q*1.4));
+    vec3 cc=mix(uBot*.9,mix(vec3(1.),uHor,.25)*(.88+.3*pow(sd,2.)),cm);
+    cc=mix(uHor,cc,smoothstep(0.,.1,hh));
+    col=mix(col,cc,smoothstep(.03,-.03,h)*uSea);
+  }
   if(uStars>0.&&h>-.05){
     vec3 p=d*95.,ip=floor(p),f=fract(p)-.5; float r=h21(ip.xy+ip.z*13.7);
     float st=smoothstep(.2,0.,length(f))*step(.975,r)*(.55+.45*sin(uT*2.+r*60.));
@@ -106,7 +127,7 @@ void main(){
   }
   if(uRays>0.){
     float ray=pow(clamp(fbm(vec2(d.x/(h+.4)*3.+uT*.07,d.z/(h+.4)*.6))*1.8-.45,0.,1.),2.);
-    col+=vec3(.5,.9,1.)*ray*uRays*smoothstep(0.,.5,h)*.5;
+    col+=uRayC*ray*uRays*smoothstep(0.,.5,h)*.5;
   }
   if(uCanopy>0.&&h>.15){
     vec2 q=d.xz/(h+.1)*2.2; float l=smoothstep(.45,.55,fbm(q*3.+vec2(uT*.03)));
@@ -260,7 +281,7 @@ export function createEnvEngine(scene, camera, renderer) {
   const fogC = new THREE.Color(1, 1, 1);
 
   /* --- bầu trời môi trường --- */
-  const U = {uTop: {value: C('#2f7fe0')}, uHor: {value: C('#cfe6ff')}, uBot: {value: C('#7d8f6a')}, uSunC: {value: C('#fff4e0')}, uSunD: {value: new THREE.Vector3(0, 1, 0)}, uT: {value: 0}, uSun: {value: 0}, uStars: {value: 0}, uClouds: {value: 0}, uRays: {value: 0}, uCanopy: {value: 0}, uFogC: {value: new THREE.Color(1, 1, 1)}, uFogK: {value: 0}};
+  const U = {uTop: {value: C('#2f7fe0')}, uHor: {value: C('#cfe6ff')}, uBot: {value: C('#7d8f6a')}, uSunC: {value: C('#fff4e0')}, uSunD: {value: new THREE.Vector3(0, 1, 0)}, uT: {value: 0}, uSun: {value: 0}, uStars: {value: 0}, uClouds: {value: 0}, uRays: {value: 0}, uCanopy: {value: 0}, uRayC: {value: C('#bff5ff')}, uDunes: {value: 0}, uSea: {value: 0}, uFogC: {value: new THREE.Color(1, 1, 1)}, uFogK: {value: 0}};
   const dome = new THREE.Mesh(new THREE.SphereGeometry(100, 48, 24), new THREE.ShaderMaterial({uniforms: U, vertexShader: 'varying vec3 vD; void main(){ vD=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }', fragmentShader: DOME_FS, side: THREE.BackSide, depthTest: false, depthWrite: false, fog: false}));
   dome.renderOrder = -1001; dome.frustumCulled = false; dome.visible = false; dome.name = 'env_dome';
 
@@ -327,7 +348,7 @@ export function createEnvEngine(scene, camera, renderer) {
       if (dome.visible) {
         U.uTop.value.set(P.c1); U.uHor.value.set(P.c2); U.uBot.value.set(P.c3); U.uSunC.value.set(P.sc); U.uT.value = tt;
         const el = P.el * DEG, az = P.az * DEG; U.uSunD.value.set(Math.cos(el) * Math.cos(az), Math.sin(el), -Math.cos(el) * Math.sin(az));
-        U.uSun.value = P.sun; U.uStars.value = P.stars; U.uClouds.value = P.clouds; U.uRays.value = P.rays; U.uCanopy.value = P.canopy;
+        U.uSun.value = P.sun; U.uStars.value = P.stars; U.uClouds.value = P.clouds; U.uRays.value = P.rays; U.uCanopy.value = P.canopy; U.uRayC.value.set(P.rc); U.uDunes.value = P.dunes; U.uSea.value = P.sea;
         U.uFogK.value = K; U.uFogC.value.copy(fogC);
       }
 
