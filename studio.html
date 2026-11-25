@@ -36,12 +36,13 @@ aside{grid-row:1;grid-column:2;background:var(--panel);border-left:1px solid var
 .k-dlg{background:#2f8f6b}.k-txt{background:#b8884b}.k-aud{background:#a64b8f}.k-tts{background:#7d4bb8}.k-img{background:#3b8fb0}.k-vid{background:#b04b5a}.k-bg{background:#555a70}.k-face{background:#c2763f}.k-fx{background:#2f7fa8}#ph{position:absolute;top:0;bottom:0;width:2px;background:#ff5d73;z-index:4;pointer-events:none}
 @media(max-width:850px){#ed{height:auto;grid-template-columns:1fr;grid-template-rows:60vh auto 290px}aside{grid-row:2;grid-column:1;border-left:0;border-top:1px solid var(--line)}#tlw{grid-row:3}}
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;width:min(440px,92vw);padding:16px}dialog::backdrop{background:#000a}dialog h3{margin:0 0 4px}header nav button.on{border-color:#6fd3a0}.chk{display:flex;gap:8px;align-items:center;color:var(--text);font-size:12px}#ghSt{min-height:30px;white-space:pre-wrap}
+#vg{position:absolute;right:8px;top:48px;z-index:5;width:110px}#vgc{width:110px;height:110px;display:block;cursor:pointer}#vgb{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:2px}#vgb button{padding:3px 0;font-size:11px}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script></head><body>
 <header><div class="brand"><span>3DiS</span> / FILM STUDIO</div><nav><a href="./index.html">Thư viện</a><a href="./library.html">Kho tài nguyên</a><button id="bRefresh" title="Tải lại danh sách nhân vật, nhân vật Custom, clip và nguồn media từ GitHub mà không cần mở lại trang">↻ Làm mới thư viện</button><button id="bGh" class="pri" title="Lưu dự án (JSON) vào thư mục projects/ trên GitHub — dùng token trong Cài đặt của trang Thư viện">☁ Lưu lên GitHub</button></nav></header>
 <section id="vList"><div class="bar"><h1>Dự án phim 3D</h1><div class="r"><button id="bLoad" title="Tải lại danh sách dự án từ GitHub">↻ Tải từ GitHub</button><button id="bNew">+ Dự án mới</button><button id="bImp">Nhập JSON</button><input type="file" id="fImp" accept=".json" hidden></div></div><div class="meta" id="syncSt" style="margin:-6px 0 12px;white-space:pre-wrap"></div><div class="cards" id="list"></div></section>
 <section id="vEd" hidden><div id="ed">
-<div id="stage"><div id="gt"><button data-g="move" title="Di chuyển (G)">✥</button><button data-g="rot" title="Xoay (R)">⟳</button><button data-g="scl" title="Scale (S)">⤢</button></div><div id="frame"><div id="bgl"></div><div id="vp"></div><div id="ovl"></div><div id="cbox" hidden><i class="rh"></i></div><div id="flab"></div></div><div id="say"></div></div>
+<div id="stage"><div id="gt"><button data-g="move" title="Di chuyển (G)">✥</button><button data-g="rot" title="Xoay (R)">⟳</button><button data-g="scl" title="Scale (S)">⤢</button></div><div id="vg"><canvas id="vgc" width="220" height="220" title="Bấm vào trục để nhìn từ hướng đó"></canvas><div id="vgb"><button data-vv="+z" title="Nhìn từ phía trước (Numpad 1)">Front</button><button data-vv="+x" title="Nhìn từ bên phải (Numpad 3)">Side</button><button data-vv="+y" title="Nhìn từ trên xuống (Numpad 7)">Top</button><button data-vv="reset" title="Về góc camera của cảnh (đã lưu hoặc tự động)">↺ Reset</button></div></div><div id="frame"><div id="bgl"></div><div id="vp"></div><div id="ovl"></div><div id="cbox" hidden><i class="rh"></i></div><div id="flab"></div></div><div id="say"></div></div>
 <aside><div class="r" style="margin-bottom:8px"><a href="#" id="back" style="flex:none">← Dự án</a><b id="pn" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></b></div><div class="tabs" id="tabs"></div><div id="panel"></div></aside>
 <div id="tlw"><div id="tt"><button data-tv="tl" class="on">Timeline</button><button data-tv="kf">Keyframe</button><span id="kfc" hidden><button id="kAuto" class="on" title="Tự động ghi key khi bạn kéo / xoay / đổi cỡ (chỉ với nhóm đã có key)">● Auto Key</button><button data-ki="pos" title="Chèn key Vị trí cho đối tượng đang chọn tại đường xanh">◆ Vị trí</button><button data-ki="rot" title="Chèn key Xoay">◆ Xoay</button><button data-ki="scl" title="Chèn key Scale">◆ Scale</button><button data-ki="all" class="pri" title="Chèn key Vị trí + Xoay + Scale (phím I)">◆ Tất cả (I)</button><select id="kEase" title="Kiểu nội suy của key đã chọn tới key kế tiếp"><option value="ease">Mượt</option><option value="lin">Tuyến tính</option><option value="hold">Giữ nguyên</option></select><button id="kDel" class="del" title="Xóa key đã chọn (Delete)">Xóa key</button><span class="hint" id="kInfo" style="margin:0"></span></span></div><div id="tb"><button id="bPlay" class="pri">▶ Cảnh</button><button id="bAll">▶ Phim</button><button id="bExp" title="Xuất MP4 / WebM — dựng offline từng khung hình">⬇ Xuất video</button><button id="bPause">Ⅱ</button><button id="bUn" title="Hoàn tác (Ctrl+Z)">↶</button><button id="bRe" title="Làm lại (Ctrl+Y)">↷</button><span id="tm"></span><div id="sc"></div><input type="range" id="zoom" min="20" max="200" value="60" style="flex:none;width:90px" title="Thu phóng"></div><div id="tl"></div><div id="kf" hidden></div></div>
 </div></section>
@@ -163,8 +164,8 @@ function route(){const m=location.hash.match(/#p=(\w+)/),p=m&&projects.find(x=>x
 addEventListener('hashchange',route);$('back').onclick=e=>{e.preventDefault();location.hash=''};
 
 /* ---------- Khung + 3D ---------- */
-let renderer,tscene,camera,controls,GRID,SG,FXE,ENVE,EXPV=null,FXI=[],FXT=0;const R={},AU={},OV={},clock=new THREE.Clock(),fbx={},jc={};let tok=0;
-function initThree(){if(renderer)return;renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('vp').appendChild(renderer.domElement);tscene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,16/9,.01,500);const hl=new THREE.HemisphereLight(0xffffff,0x666070,2),l=new THREE.DirectionalLight(0xffffff,2.2);l.position.set(3,6,5);BL.push(hl,l);tscene.add(hl,l);SG=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:.45}));SG.rotation.x=-Math.PI/2;SG.position.y=.002;SG.receiveShadow=true;SG.visible=false;tscene.add(SG);tscene.add(GRID=new THREE.GridHelper(20,20,0x444a60,0x2a2e3e));controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;FXE=FX.createFxEngine(tscene,camera);ENVE=ENVK.createEnvEngine(tscene,camera,renderer);ENVE.setLights(hl,l);buildGiz();new ResizeObserver(layout).observe($('stage'));tick()}
+let SB,renderer,tscene,camera,controls,GRID,SG,FXE,ENVE,EXPV=null,FXI=[],FXT=0;const R={},AU={},OV={},clock=new THREE.Clock(),fbx={},jc={};let tok=0;
+function initThree(){if(renderer)return;renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('vp').appendChild(renderer.domElement);tscene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,16/9,.01,500);const hl=new THREE.HemisphereLight(0xffffff,0x666070,2),l=new THREE.DirectionalLight(0xffffff,2.2);l.position.set(3,6,5);BL.push(hl,l);tscene.add(hl,l);SG=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:.45}));SG.rotation.x=-Math.PI/2;SG.position.y=.002;SG.receiveShadow=true;SG.visible=false;tscene.add(SG);tscene.add(GRID=new THREE.GridHelper(20,20,0x444a60,0x2a2e3e));SB=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0x9a83ff,depthTest:false,transparent:true}));SB.renderOrder=997;SB.visible=false;tscene.add(SB);controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;FXE=FX.createFxEngine(tscene,camera);ENVE=ENVK.createEnvEngine(tscene,camera,renderer);ENVE.setLights(hl,l);buildGiz();new ResizeObserver(layout).observe($('stage'));tick()}
 function layout(){if(!P||!renderer||EXP)return;const st=$('stage'),W=st.clientWidth-28,H=st.clientHeight-28,f=P.fmt,ar=f.w/f.h;if(W<60||H<60)return;let w=W,h=w/ar;if(h>H){h=H;w=h*ar}const fr=$('frame');fr.style.width=w+'px';fr.style.height=h+'px';fr.style.setProperty('--k',h/f.h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);camera.aspect=ar;camera.updateProjectionMatrix();$('flab').textContent=f.w+'×'+f.h+' · '+f.aspect+' · '+f.fps+'fps'}
 function autoCam(){const s=sc(),xs=s.chars.map(c=>c.x),a=Math.min(...xs,0),b=Math.max(...xs,0),cx=(a+b)/2,th=Math.tan(camera.fov*Math.PI/360),d=Math.max(1/th,((b-a)/2+.9)/(th*camera.aspect))*1.2;camera.position.set(cx,1.3,d);controls.target.set(cx,.9,0);controls.update()}
 const getF=f=>fbx[f]||(fbx[f]=M.loadModelUrl('./characters/'+encodeURIComponent(f),f).catch(()=>M.loadModelUrl('./'+encodeURIComponent(f),f)));
@@ -190,13 +191,15 @@ async function dressCustom(o,ch,mats,my){
   rt.content.traverse(n=>{if(n.isMesh&&n.material)mats.push(...[].concat(n.material))})}   // để chỉnh độ mờ cả đồ
  try{const fx=FR.createFaceRuntime({model:o,wrap,rig,doc});if(fx){res.fx=fx;res.exs=fx.list}}catch(e){warn.push('Biểu cảm Custom: '+e.message)}
  return res}
+/* Hộp bao CHÍNH XÁC của nhân vật có xương: cập nhật ma trận + skeleton rồi tính lại hộp bao của SkinnedMesh (three.js cache hộp này, nếu tính sớm/sai thì pivot lệch). */
+function bodyBox(o){o.updateMatrixWorld(true);o.traverse(n=>{if(n.isSkinnedMesh&&n.skeleton&&typeof n.computeBoundingBox==='function'){n.skeleton.update();n.boundingBox=null;n.computeBoundingBox()}});return new THREE.Box3().setFromObject(o)}
 async function addRt(ch,my){const o=skClone(await getF(ch.file));if(my!==tok)return;const mats=[];o.traverse(n=>{if(n.material){n.material=Array.isArray(n.material)?n.material.map(m=>m.clone()):n.material.clone();mats.push(...[].concat(n.material))}});
  let w=null,ver='',fx=null,exs=null;
  if(ch.custom){try{const d=await dressCustom(o,ch,mats,my);w=d.wrap;ver=d.ver;fx=d.fx||null;exs=d.exs||null;if(d.warn.length)say('⚠ '+ch.name+': '+d.warn.join(' · '))}catch(e){say('Lỗi nhân vật Custom “'+ch.name+'”: '+e.message+' — đang dùng nhân vật gốc.')}}
  if(my!==tok)return;
  const g=new THREE.Group();let fit;
  if(w){g.add(w);fit=1.7/1.8}
- else{const bx=new THREE.Box3().setFromObject(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());o.position.set(-c.x,-bx.min.y,-c.z);g.add(o);fit=1.7/Math.max(sz.y,.001)}
+ else{o.position.set(0,0,0);const bx=bodyBox(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());o.position.set(-c.x,-bx.min.y,-c.z);g.add(o);fit=1.7/Math.max(sz.y,.001);bodyBox(g)}
  tscene.add(g);R[ch.id]={g,o,w,ver,mats,fit,fx,exs,mx:new THREE.AnimationMixer(o),cur:'~',clips:{}};place(ch);faceInit(R[ch.id])}
 async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){if(R[k].fx)R[k].fx.dispose();tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;say(s.chars.length||s.props.length?'Đang tải cảnh…':'Thêm nhân vật ở tab “Nhân vật”, mô hình ở tab “Bối cảnh”.');
  await Promise.all([...s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')})),...s.props.map(pr=>addProp(pr,my).catch(e=>{err=1;say('Lỗi mô hình “'+pr.name+'”: '+e.message)}))]);if(my!==tok)return;busy=false;for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx)rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&(s.chars.length||s.props.length))say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
@@ -220,7 +223,6 @@ function renderOv(){if(!P)return;const s=sc(),on={};
    if(it.type==='vid'){const want=Math.max(0,t-it.start);m.volume=Math.min(1,Math.max(0,it.vol??1));m.muted=!(act&&playing);if(act&&playing){if(m.paused)m.play().catch(()=>{});if(Math.abs(m.currentTime-want)>.35)m.currentTime=want}else{if(!m.paused)m.pause();if(Math.abs(m.currentTime-want)>.05)try{m.currentTime=want}catch{}}}}
   let h=el.querySelector('.rh');if(isS&&!h){h=document.createElement('i');h.className='rh';el.appendChild(h);const g=document.createElement('b');g.className='sh';el.appendChild(g)}if(!isS&&h){h.remove();const g=el.querySelector('.sh');g&&g.remove()}}
  for(const k in OV)if(!on[k]){OV[k].remove();delete OV[k]}}
-function updCbox(){const b=$('cbox'),r=sel&&R[sel.id];if(!r){b.hidden=true;return}const bx=new THREE.Box3().setFromObject(r.g),W=renderer.domElement.clientWidth,H=renderer.domElement.clientHeight,v=new THREE.Vector3();let a=[1e9,1e9,-1e9,-1e9];for(let i=0;i<8;i++){v.set(i&1?bx.max.x:bx.min.x,i&2?bx.max.y:bx.min.y,i&4?bx.max.z:bx.min.z).project(camera);const x=(v.x+1)/2*W,y=(1-v.y)/2*H;a=[Math.min(a[0],x),Math.min(a[1],y),Math.max(a[2],x),Math.max(a[3],y)]}b.hidden=false;Object.assign(b.style,{left:a[0]+'px',top:a[1]+'px',width:a[2]-a[0]+'px',height:a[3]-a[1]+'px'})}
 
 /* ---------- Gizmo 3D (di chuyển / xoay / scale tại pivot) + Undo/Redo ---------- */
 let gzG,tool='move',H=[],hi=0;const AXV=[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],COL=[0xff4d5e,0x6fdc5a,0x4d8dff],TI={move:0,rot:1,scl:2};
@@ -260,8 +262,44 @@ function seek(v){t=Math.min(Math.max(0,v),sc().duration);for(const k in AU)AU[k]
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.06);
  if(P&&playing&&!busy){t+=dt;const s=sc();if(t>=s.duration){t=s.duration;if(allMode&&si<P.scenes.length-1){nextScene();return}pause()}apply();renderOv();syncTp();audioSync()}
  K.stepPhysics(P&&playing&&!busy&&!EXP?dt:0);
- if(EXP)return;controls.update();const co=fxCamOn();updCbox();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
+ if(EXP)return;vgStep(dt);controls.update();const co=fxCamOn();updSel3D();drawVG();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
 $('bPlay').onclick=()=>play(false);$('bAll').onclick=()=>{if(si){si=0;renderAll();loadScene().then(()=>play(true))}else play(true)};$('bPause').onclick=pause;
+
+/* ---------- Box viền 3D quanh đối tượng đang chọn (bám theo xoay / scale của vật) ---------- */
+const _sbR=new THREE.Euler();
+function updSel3D(){if(!SB)return;const r=sel&&P&&R[sel.id];if(!r||r.lt||!(r.w||r.o)||EXP){SB.visible=false;return}
+ const g=r.g,root=r.w||r.o;_sbR.copy(g.rotation);g.rotation.set(0,0,0);g.updateMatrixWorld(true);
+ const bx=new THREE.Box3().setFromObject(root);g.rotation.copy(_sbR);
+ if(bx.isEmpty()){SB.visible=false;return}
+ const sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());
+ SB.visible=true;SB.scale.set(Math.max(sz.x,.02)+.04,Math.max(sz.y,.02)+.04,Math.max(sz.z,.02)+.04);SB.quaternion.copy(g.quaternion);
+ SB.position.copy(c.sub(g.position).applyQuaternion(g.quaternion).add(g.position));
+ const it=cur();SB.material.color.set(it&&it.fixed?0x9da3b4:0x9a83ff)}
+
+/* ---------- Gizmo trục viewport: bấm trục / nút để về Front, Side, Top… ---------- */
+const VGC=$('vgc'),VG={pts:[],hov:null,a:null},VAX=[['x','#ff5d73',[1,0,0]],['y','#8bd650',[0,1,0]],['z','#4d8dff',[0,0,1]]],VNAME={'+z':'Front','-z':'Back','+x':'Right','-x':'Left','+y':'Top','-y':'Bottom'},_vq=new THREE.Quaternion();
+function drawVG(){if(!P||!camera)return;const g=VGC.getContext('2d'),q=_vq.copy(camera.quaternion).invert(),R=36,C=55,pts=[];g.setTransform(2,0,0,2,0,0);g.clearRect(0,0,110,110);
+ for(const[n,col,a]of VAX)for(const sg of[1,-1]){const v=new THREE.Vector3(a[0]*sg,a[1]*sg,a[2]*sg).applyQuaternion(q);pts.push({id:(sg>0?'+':'-')+n,n,col,sg,x:C+v.x*R,y:C-v.y*R,z:v.z})}
+ pts.sort((a,b)=>a.z-b.z);VG.pts=pts;g.lineWidth=2.5;g.lineCap='round';
+ for(const p of pts)if(p.sg>0){g.strokeStyle=p.col;g.beginPath();g.moveTo(C,C);g.lineTo(p.x,p.y);g.stroke()}
+ for(const p of pts){g.beginPath();g.arc(p.x,p.y,p.sg>0?10:7,0,7);
+  if(p.sg>0){g.fillStyle=p.col;g.fill()}else{g.fillStyle=p.col+'55';g.fill();g.lineWidth=1.5;g.strokeStyle=p.col;g.stroke()}
+  if(VG.hov===p.id){g.lineWidth=2;g.strokeStyle='#fff';g.stroke()}
+  if(p.sg>0){g.fillStyle='#10121a';g.font='bold 12px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(p.n.toUpperCase(),p.x,p.y+.5)}}}
+function vgHit(e){const b=VGC.getBoundingClientRect(),x=(e.clientX-b.left)/b.width*110,y=(e.clientY-b.top)/b.height*110;
+ for(let i=VG.pts.length-1;i>=0;i--){const p=VG.pts[i];if(Math.hypot(p.x-x,p.y-y)<=(p.sg>0?11:8))return p}return null}
+function viewAxis(id){const d=new THREE.Vector3(id[1]==='x'?1:0,id[1]==='y'?1:0,id[1]==='z'?1:0).multiplyScalar(id[0]==='-'?-1:1);
+ if(id[1]==='y')d.z=.001;   /* tránh nhìn thẳng song song trục lên → camera không bị lật */
+ d.normalize();const dist=Math.max(.5,camera.position.distanceTo(controls.target));
+ VG.a={from:camera.position.clone().sub(controls.target).normalize(),to:d,k:0,dist};say('Góc nhìn: '+VNAME[id]);setTimeout(()=>{if($('say').textContent==='Góc nhìn: '+VNAME[id])say('')},1500)}
+function vgReset(){VG.a=null;const s=sc();if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();say('Đã về góc camera của cảnh.');setTimeout(()=>say(''),1500)}
+function vgStep(dt){const a=VG.a;if(!a)return;a.k=Math.min(1,a.k+dt/.28);const e=a.k*a.k*(3-2*a.k),q=new THREE.Quaternion().slerp(new THREE.Quaternion().setFromUnitVectors(a.from,a.to),e);
+ camera.position.copy(controls.target).addScaledVector(a.from.clone().applyQuaternion(q),a.dist);if(a.k>=1)VG.a=null}
+VGC.onpointermove=e=>{const h=vgHit(e);VG.hov=h&&h.id};VGC.onpointerleave=()=>{VG.hov=null};
+VGC.onclick=e=>{const h=vgHit(e);if(h)viewAxis(h.id)};
+$('vgb').onclick=e=>{const v=e.target.dataset.vv;if(v)v==='reset'?vgReset():viewAxis(v)};
+$('vp').addEventListener('pointerdown',()=>{VG.a=null},true);
+addEventListener('keydown',e=>{if(!P||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;const m={Numpad1:'z',Numpad3:'x',Numpad7:'y'}[e.code];if(m){e.preventDefault();viewAxis((e.ctrlKey?'-':'+')+m)}});
 
 /* ---------- Chọn / kéo / xoay trong khung ---------- */
 function loc(){if(!sel||!P)return null;const s=sc();let l=s.chars.find(c=>c.id===sel.id);if(l)return{it:l,list:s.chars};l=s.props.find(c=>c.id===sel.id);if(l)return{it:l,list:s.props,prop:1};l=(s.lights||[]).find(c=>c.id===sel.id);if(l)return{it:l,list:s.lights,light:1};for(const c of s.chars){l=c.clips.find(x=>x.id===sel.id);if(l)return{it:l,list:c.clips,ch:c}}for(const tr of s.tracks){l=tr.items.find(x=>x.id===sel.id);if(l)return{it:l,list:tr.items,tr}}return null}
@@ -275,7 +313,7 @@ $('frame').addEventListener('pointerdown',e=>{const h=e.target.closest('.rh'),sh
  if(sh){const it=cur();if(it){const b=sh.parentElement.getBoundingClientRect(),c=[b.left+b.width/2,b.top+b.height/2];vd={m:'sz',it,w:it.w,s:it.size||40,c,d0:Math.hypot(e.clientX-c[0],e.clientY-c[1])};hit=true}}
  else if(h){const it=cur();if(it){if(h.parentElement.id==='cbox')vd={m:'rc',it,x:e.clientX,r:it.rot||0};else{const b=h.parentElement.getBoundingClientRect();vd={m:'r2',it,c:[b.left+b.width/2,b.top+b.height/2]}}hit=true}}
  else if(o){setSel(o.dataset.id,'props');const it=cur();if(it){vd={m:'m2',it,x:e.clientX,y:e.clientY,ox:it.x,oy:it.y};hit=true}}
- else if(e.target===renderer.domElement){const gh=gizHit(e);if(gh!==null){vd=gizStart(e,gh);hit=true}else{const ch=pick(e);if(ch){setSel(ch.id,isProp(ch.id)?'env':'props');if(ch.fixed){vd=null}else{ndc(e);ray.ray.intersectPlane(plane,pt);vd={m:'mc',it:ch,ox:ch.x-pt.x,oz:ch.z-pt.z};hit=true}}else vd={m:'bg',x:e.clientX,y:e.clientY}}}
+ else if(e.target===renderer.domElement){const gh=gizHit(e);if(gh!==null){vd=gizStart(e,gh);hit=true}else{const ch=pick(e);if(ch){setSel(ch.id,'props');if(ch.fixed){vd=null}else{ndc(e);ray.ray.intersectPlane(plane,pt);vd={m:'mc',it:ch,ox:ch.x-pt.x,oz:ch.z-pt.z};hit=true}}else vd={m:'bg',x:e.clientX,y:e.clientY}}}
  if(hit){e.stopPropagation();e.preventDefault()}},true);
 addEventListener('pointermove',e=>{if(!vd||vd.m==='bg')return;const fr=$('frame').getBoundingClientRect(),it=vd.it;
  if(vd.m==='m2'){it.x=r2(vd.ox+(e.clientX-vd.x)/fr.width*100);it.y=r2(vd.oy+(e.clientY-vd.y)/fr.height*100);renderOv()}
@@ -632,7 +670,7 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
   if(m==='down'&&si<P.scenes.length-1){[P.scenes[si+1],P.scenes[si]]=[P.scenes[si],P.scenes[si+1]];si++}
   touch();sel=null;renderAll();loadScene()}
  if(el.id==='exp')dl(P.name+'.film.json',P);
- if(el.id==='snap'){const o=renderer.domElement;renderer.setPixelRatio(1);renderer.setSize(P.fmt.w,P.fmt.h,false);gzG.visible=false;FXE.hideHelpers();{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}o.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=P.name+'.png';a.click()});layout();fxStep()}};
+ if(el.id==='snap'){const o=renderer.domElement;renderer.setPixelRatio(1);renderer.setSize(P.fmt.w,P.fmt.h,false);gzG.visible=false;SB.visible=false;FXE.hideHelpers();{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}o.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=P.name+'.png';a.click()});layout();fxStep()}};
 /* chỉnh thông số realtime */
 $('panel').oninput=e=>{const el=e.target,d=el.dataset,s=sc();
  if(el.id==='fi'){importFiles([...el.files]);el.value='';return}
@@ -718,7 +756,7 @@ async function exportVideo(fmt,onP){
   for(let k=0;k<P.scenes.length;k++){si=k;await loadScene();busy=true;const s=P.scenes[k];{const eu=envUrl(s);if(eu)await ENVE.preload(eu).catch(()=>{})}
    for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx){onP(0,'Tải ảnh biểu cảm…');await rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}}
    for(let j=0;j<nF[k];j++){if(XC)throw Error('Đã huỷ xuất.');if(ERR)throw ERR;
-    t=j/fps;{const vu=bgVidUrl(s,t);EXPV=vu?await vFrame(vu,t,true):null}await apply();await ENVE.settle();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}await compose(c,s,t,W,H);
+    t=j/fps;{const vu=bgVidUrl(s,t);EXPV=vu?await vFrame(vu,t,true):null}await apply();await ENVE.settle();K.stepPhysics(1/fps);if(GRID)GRID.visible=false;if(gzG)gzG.visible=false;if(SB)SB.visible=false;{const co=fxCamOn();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}await compose(c,s,t,W,H);
     while(ve.encodeQueueSize>6)await new Promise(r=>setTimeout(r,4));
     const vf=new VideoFrame(cv,{timestamp:Math.round(n*1e6/fps),duration:Math.round(1e6/fps)});ve.encode(vf,{keyFrame:n%(fps*2)===0});vf.close();n++;
     if(n%4===0){onP(n/total,'Khung '+n+' / '+total);await new Promise(r=>setTimeout(r))}}}
