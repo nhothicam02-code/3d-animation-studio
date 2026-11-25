@@ -203,11 +203,65 @@ function openCharDetail(it) {
     '<div class="meta">🧍 Nhân vật · ' + (custom ? 'Custom · ' + r.items + ' món đồ (tóc, mũ, trang phục…)' : 'Model gốc') + (it.createdAt ? ' · ' + new Date(it.createdAt).toLocaleDateString('vi-VN') : '') + '</div>' +
     '<div class="meta">Nhân vật gốc: ' + esc(base) + '</div>' +
     '<div class="row"><a href="./custom.html?' + (custom ? 'char=' + q(r.id) : 'model=' + q(r.file)) + '"><button type="button" class="primary">✦ ' + (custom ? 'Mở để chỉnh trong Custom' : 'Custom nhân vật này') + '</button></a>' +
-    '<a href="./apply.html?model=' + q(base) + '"><button type="button">▶ Xem animation</button></a><a href="./studio.html"><button type="button">🎬 Dùng trong Studio</button></a><button class="danger" id="dPurge" style="margin-left:auto">🗑 Xóa vĩnh viễn</button></div><div class="status hide" id="dStatus"></div>';
+    '<a href="./apply.html?model=' + q(base) + '"><button type="button">▶ Xem animation</button></a><a href="./studio.html"><button type="button">🎬 Dùng trong Studio</button></a><button type="button" id="dEdit" style="margin-left:auto" title="Đổi tên, đổi ảnh đại diện">✏️ Chỉnh sửa</button><button class="danger" id="dPurge">🗑 Xóa vĩnh viễn</button></div><div id="dEditBox"></div><div class="status hide" id="dStatus"></div>';
   $('detail').classList.add('open');
   $('dPurge').onclick = () => purgeChar(it);
-  const t = $('dThumb'), tp = thumbPath(it);
-  if (!tp) t.remove(); else if (/^data:/.test(tp)) t.src = tp; else K.setSrc(t, tp, () => t.remove());
+  $('dEdit').onclick = () => editChar(it);
+  const t = $('dThumb'), tp = thumbPath(it), fr = S.fresh.get(it.id);
+  if (fr && fr.thumb) t.src = fr.thumb; else if (!tp) t.remove(); else if (/^data:/.test(tp)) t.src = tp; else K.setSrc(t, tp, () => t.remove());
+}
+/* ---------------- Chỉnh sửa nhân vật: đổi tên + đổi ảnh đại diện ---------------- */
+const imgToThumb = (file, type) => new Promise((res, rej) => {
+  const u = URL.createObjectURL(file), im = new Image();
+  im.onload = () => { const k = Math.min(1, 512 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL(type, .88)); };
+  im.onerror = () => { URL.revokeObjectURL(u); rej(Error('không đọc được file ảnh')); };
+  im.src = u;
+});
+function editChar(it) {
+  const r = it.ref, custom = r.type === 'custom', box = $('dEditBox');
+  box.innerHTML = '<div class="row" style="align-items:flex-end"><div class="f"><label>Tên hiển thị</label><input id="eName" type="text" maxlength="60" value="' + esc(it.name) + '"></div>' +
+    '<div class="f"><label>Ảnh đại diện mới (tùy chọn)</label><input id="eThumb" type="file" accept="image/png,image/jpeg,image/webp"></div></div>' +
+    '<div class="meta" style="margin-top:8px">' + (custom ? 'Đổi tên sẽ ghi vào dữ liệu Custom của nhân vật.' : 'Model gốc: chỉ đổi tên hiển thị trong kho; tên file giữ nguyên nên dự án và nhân vật Custom đang dùng không bị hỏng.') + ' Trang phục, biểu cảm, keyshape chỉnh trong Custom.</div>' +
+    '<div class="row"><button type="button" class="primary" id="eSave">💾 Lưu thay đổi</button><button type="button" class="quiet" id="eCancel">Hủy</button></div>';
+  $('eCancel').onclick = () => { box.innerHTML = ''; };
+  $('eSave').onclick = () => saveChar(it);
+  $('eName').focus();
+}
+async function saveChar(it) {
+  if (!K.auth().token) { alert('Cần GitHub token (trang Thư viện → ⚙ Cài đặt).'); return; }
+  const r = it.ref, custom = r.type === 'custom', name = $('eName').value.trim().slice(0, 60), file = $('eThumb').files[0];
+  if (!name) { alert('Tên không được để trống.'); return; }
+  const nameChanged = name !== it.name;
+  if (!nameChanged && !file) { $('dEditBox').innerHTML = ''; return; }
+  const st = $('dStatus'), btns = [...$('dBody').querySelectorAll('button')];
+  btns.forEach(b => { b.disabled = true; }); st.classList.remove('hide');
+  try {
+    let tp = thumbPath(it), data = null;
+    if (file) {
+      if (!/^image\//.test(file.type)) throw Error('file ảnh không hợp lệ');
+      const jpg = /\.jpe?g$/i.test(tp || '');
+      data = await imgToThumb(file, jpg ? 'image/jpeg' : 'image/png');
+      if (!tp || /^data:/.test(tp)) tp = custom ? 'characters/custom/thumbs/' + r.id + '.png' : 'library/thumbnails/characters/' + K.slug(M.stripExt(r.file)) + '.png';
+      say(st, 'Đang tải ảnh đại diện…'); await K.ghPutDataUrl(tp, data, 'Update character thumbnail ' + name);
+    }
+    say(st, 'Đang lưu thông tin…');
+    if (custom) {
+      const dataPath = 'characters/custom/' + r.id + '.json';
+      if (nameChanged) { const doc = await K.readJSON(dataPath, null); if (doc) { doc.name = name; await K.ghPutText(dataPath, JSON.stringify(doc, null, 2), 'Rename custom character ' + name); } }
+      const idx = (await K.readJSON('characters/custom/index.json', {version: 1, characters: []})) || {version: 1, characters: []}, c = (idx.characters || []).find(x => x.id === r.id);
+      if (c) { c.name = name; if (data) c.thumbnail = './' + tp; await K.ghPutText('characters/custom/index.json', JSON.stringify(idx, null, 2), 'Update custom character ' + name); }
+    } else {
+      const m = (await K.readJSON('library/manifest.json', {version: 1, characters: {}})) || {version: 1, characters: {}};
+      m.characters = m.characters || {};
+      const e = m.characters[r.file] = {...(m.characters[r.file] || {})};
+      if (name === M.stripExt(r.file)) delete e.displayName; else e.displayName = name;
+      if (data) e.thumbnail = './' + tp;
+      await K.ghPutText('library/manifest.json', JSON.stringify(m, null, 2), 'Update character ' + r.file);
+    }
+    it.name = name; if (data) { it.thumbPath = tp; S.fresh.set(it.id, {thumb: data}); }
+    $('dTitle').textContent = name; const t = $('dThumb'); if (t && data) t.src = data;
+    $('dEditBox').innerHTML = ''; say(st, '✓ Đã lưu thay đổi.', 'good'); btns.forEach(b => { b.disabled = false; }); render();
+  } catch (e) { say(st, 'Chưa lưu được: ' + e.message, 'bad'); btns.forEach(b => { b.disabled = false; }); }
 }
 async function removeItem(id) {
   if (!K.auth().token) { alert('Cần GitHub token (trang Thư viện → ⚙ Cài đặt).'); return; }
@@ -502,7 +556,7 @@ async function loadChars() {
   try {
     const [m, ci, models] = await Promise.all([K.readJSON('library/manifest.json', {characters: {}}), K.readJSON('characters/custom/index.json', {characters: []}), K.listModels().catch(() => [])]);
     const mc = (m && m.characters) || {}, names = models.length ? models : Object.keys(mc), out = [];
-    for (const n of names) { const e = mc[n] || {}; out.push({id: 'char:' + n, name: M.stripExt(n), category: CHAR_CAT.id, kind: 'character', ext: M.isPackFile(n) ? 'pack' : (M.extOf(n) || 'fbx'), size: 0, thumbPath: String(e.thumbnail || '').replace(/^\.\//, ''), createdAt: e.updatedAt || '', ref: {type: 'base', file: n}}); }
+    for (const n of names) { const e = mc[n] || {}; out.push({id: 'char:' + n, name: e.displayName || M.stripExt(n), category: CHAR_CAT.id, kind: 'character', ext: M.isPackFile(n) ? 'pack' : (M.extOf(n) || 'fbx'), size: 0, thumbPath: String(e.thumbnail || '').replace(/^\.\//, ''), createdAt: e.updatedAt || '', ref: {type: 'base', file: n}}); }
     for (const c of (ci && ci.characters) || []) out.push({id: 'char:custom:' + c.id, name: c.name, category: CHAR_CAT.id, kind: 'character', ext: 'custom', size: 0, thumbPath: String(c.thumbnail || '').replace(/^\.\//, ''), createdAt: c.updatedAt || '', ref: {type: 'custom', id: c.id, base: c.base, items: c.items || 0}});
     for (const x of S.newChars) if (!out.some(o => o.id === x.id)) out.unshift(x);
     S.chars = out; render();
