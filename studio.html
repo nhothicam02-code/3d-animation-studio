@@ -21,7 +21,7 @@ label{display:block;color:var(--muted);font-size:11px;margin:10px 0 4px}.r{displ
 aside{grid-row:1;grid-column:2;background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:10px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}.tabs button{padding:7px 0;font-size:11px}.tabs .on{background:var(--ac);color:#171322}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.cd{position:relative;padding:6px;text-align:left;font-weight:500;background:var(--p2);border:1px solid var(--line);border-radius:8px;cursor:pointer}.cd:hover{border-color:var(--ac)}.cd img,.cd video{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px;background:#303241;display:block}.cd b{display:block;margin-top:5px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cd .ic{aspect-ratio:16/10;display:grid;place-items:center;font-size:26px;background:#303241;border-radius:6px}.cd .x{position:absolute;right:8px;top:8px;padding:0 6px}.hint{color:var(--muted);font-size:11px;line-height:1.5;margin-top:8px}
 .li{display:flex;gap:6px;align-items:center;padding:6px 8px;margin-top:6px;border:1px solid var(--line);border-radius:8px;cursor:pointer}.li.on{border-color:var(--ac);background:#2a2740}.li span{flex:1}
-#tlw{grid-column:1/-1;grid-row:2;display:flex;flex-direction:column;background:var(--panel);border-top:1px solid var(--line);min-height:0}#tb{display:flex;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}#sc{display:flex;gap:4px;overflow-x:auto;flex:1}#sc button{flex:none;font-weight:500}#sc .on{border-color:var(--ac);background:#2a2740}#tm{font-size:12px;color:var(--muted);min-width:78px}
+#tlw{grid-column:1/-1;grid-row:2;display:flex;flex-direction:column;background:var(--panel);border-top:1px solid var(--line);min-height:0}#tb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}#sc{display:flex;gap:4px;overflow-x:auto;flex:1;min-width:140px}#sc button{flex:none;font-weight:500}#sc .on{border-color:var(--ac);background:#2a2740}#tm{font-size:12px;color:var(--muted);min-width:78px}
 #tl,#kf{flex:1;overflow:auto;user-select:none}
 #tt{display:flex;gap:6px;align-items:center;padding:5px 10px 0;flex-wrap:wrap;background:var(--panel)}#tt>button{padding:4px 14px;font-weight:700}#tt>button.on{background:var(--ac);color:#171322}
 #kfc{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-left:8px}#kfc button,#kfc select{padding:3px 9px;font-size:12px}#kfc select{width:auto}#kfc .on{border-color:#ff5d73;color:#ff8585}
@@ -44,7 +44,7 @@ dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);bo
 <section id="vEd" hidden><div id="ed">
 <div id="stage"><div id="gt"><button data-g="move" title="Di chuyển (G)">✥</button><button data-g="rot" title="Xoay (R)">⟳</button><button data-g="scl" title="Scale (S)">⤢</button></div><div id="vg"><canvas id="vgc" width="220" height="220" title="Bấm vào trục để nhìn từ hướng đó"></canvas><div id="vgb"><button data-vv="+z" title="Nhìn từ phía trước (Numpad 1)">Front</button><button data-vv="+x" title="Nhìn từ bên phải (Numpad 3)">Side</button><button data-vv="+y" title="Nhìn từ trên xuống (Numpad 7)">Top</button><button data-vv="reset" title="Về góc camera của cảnh (đã lưu hoặc tự động)">↺ Reset</button></div></div><div id="frame"><div id="bgl"></div><div id="vp"></div><div id="ovl"></div><div id="cbox" hidden><i class="rh"></i></div><div id="flab"></div></div><div id="say"></div></div>
 <aside><div class="r" style="margin-bottom:8px"><a href="#" id="back" style="flex:none">← Dự án</a><b id="pn" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></b></div><div class="tabs" id="tabs"></div><div id="panel"></div></aside>
-<div id="tlw"><div id="tt"><button data-tv="tl" class="on">Timeline</button><button data-tv="kf">Keyframe</button><span id="kfc" hidden><button id="kAuto" class="on" title="Tự động ghi key khi bạn kéo / xoay / đổi cỡ (chỉ với nhóm đã có key)">● Auto Key</button><button data-ki="pos" title="Chèn key Vị trí cho đối tượng đang chọn tại đường xanh">◆ Vị trí</button><button data-ki="rot" title="Chèn key Xoay">◆ Xoay</button><button data-ki="scl" title="Chèn key Scale">◆ Scale</button><button data-ki="all" class="pri" title="Chèn key Vị trí + Xoay + Scale (phím I)">◆ Tất cả (I)</button><select id="kEase" title="Kiểu nội suy của key đã chọn tới key kế tiếp"><option value="ease">Mượt</option><option value="lin">Tuyến tính</option><option value="hold">Giữ nguyên</option></select><button id="kDel" class="del" title="Xóa key đã chọn (Delete)">Xóa key</button><span class="hint" id="kInfo" style="margin:0"></span></span></div><div id="tb"><button id="bPlay" class="pri">▶ Cảnh</button><button id="bAll">▶ Phim</button><button id="bExp" title="Xuất MP4 / WebM — dựng offline từng khung hình">⬇ Xuất video</button><button id="bPause">Ⅱ</button><button id="bUn" title="Hoàn tác (Ctrl+Z)">↶</button><button id="bRe" title="Làm lại (Ctrl+Y)">↷</button><span id="tm"></span><div id="sc"></div><input type="range" id="zoom" min="20" max="200" value="60" style="flex:none;width:90px" title="Thu phóng"></div><div id="tl"></div><div id="kf" hidden></div></div>
+<div id="tlw"><div id="tt"><button data-tv="tl" class="on">Timeline</button><button data-tv="kf">Keyframe</button><span id="kfc" hidden><button id="kAuto" class="on" title="Tự động ghi key khi bạn kéo / xoay / đổi cỡ (chỉ với nhóm đã có key)">● Auto Key</button><button data-ki="pos" title="Chèn key Vị trí cho đối tượng đang chọn tại đường xanh">◆ Vị trí</button><button data-ki="rot" title="Chèn key Xoay">◆ Xoay</button><button data-ki="scl" title="Chèn key Scale">◆ Scale</button><button data-ki="all" class="pri" title="Chèn key Vị trí + Xoay + Scale (phím I)">◆ Tất cả (I)</button><select id="kEase" title="Kiểu nội suy của key đã chọn tới key kế tiếp"><option value="ease">Mượt</option><option value="lin">Tuyến tính</option><option value="hold">Giữ nguyên</option></select><button id="kDel" class="del" title="Xóa key đã chọn (Delete)">Xóa key</button><span class="hint" id="kInfo" style="margin:0"></span></span></div><div id="tb"><button id="bPlay" class="pri">▶ Cảnh</button><button id="bAll">▶ Phim</button><button id="bExp" title="Xuất MP4 / WebM — dựng offline từng khung hình">⬇ Xuất video</button><button id="bPause">Ⅱ</button><button id="bUn" title="Hoàn tác (Ctrl+Z)">↶</button><button id="bRe" title="Làm lại (Ctrl+Y)">↷</button><button id="bSplit" title="Chia đôi clip / khối đang chọn tại đường chạy (phím K)">║ Split</button><button id="bCut" title="Cắt (Ctrl+X)">✂ Cắt</button><button id="bCopy" title="Sao chép (Ctrl+C)">⧉ Copy</button><button id="bPaste" title="Dán tại đường chạy (Ctrl+V)">📋 Dán</button><span id="tm"></span><div id="sc"></div><input type="range" id="zoom" min="20" max="200" value="60" style="flex:none;width:90px" title="Thu phóng"></div><div id="tl"></div><div id="kf" hidden></div></div>
 </div></section>
 <input type="file" id="fVoice" accept=".wav,.mp3,audio/wav,audio/mpeg" hidden>
 <dialog id="dExp"><h3>Xuất video</h3><div class="hint">Dựng từng khung hình ngoài thời gian thực → không lag, khựng hay rớt/nhảy frame (có thể lâu hơn thời lượng phim). Lưới, gizmo và khung chọn tự tắt khi xuất.</div><label>Định dạng</label><select id="xf"><option value="mp4">MP4 (H.264 + AAC)</option><option value="webm">WebM (VP9 + Opus)</option></select><progress id="xp" max="1" value="0" style="width:100%;margin-top:12px"></progress><div class="hint" id="xs"></div><div class="r" style="margin-top:10px"><button id="xGo" class="pri">Bắt đầu xuất</button><button id="xX">Đóng / Huỷ</button></div></dialog>
@@ -207,7 +207,7 @@ async function getClip(r,id){if(id in r.clips)return r.clips[id];const e=manifes
 async function apply(){if(!P)return;const s=sc(),tt=Math.floor(t*P.fmt.fps+1e-6)/P.fmt.fps;kfApply(s,tt);lightsSync(s);
  for(const ch of s.chars){const r=R[ch.id];if(!r)continue;const top=ch.clips.filter(c=>c.clip&&c.start<=tt+1e-6).sort((a,b)=>b.start-a.start)[0],key=top?top.id+top.clip:'';
   if(key!==r.cur){r.cur=key;r.mx.stopAllAction();r.act=null;if(top){const c=await getClip(r,top.clip);if(c&&r.cur===key){r.act=r.mx.clipAction(c);r.act.play()}}}
-  if(r.act&&top&&r.cur===top.id+top.clip){const d=r.act.getClip().duration,x=Math.min(tt-top.start,top.dur);r.act.time=top.loop?x%d:Math.min(x,d);r.mx.update(0)}}
+  if(r.act&&top&&r.cur===top.id+top.clip){const d=r.act.getClip().duration,x=Math.min(tt-top.start,top.dur)+(top.off||0);r.act.time=top.loop?x%d:Math.min(x,d);r.mx.update(0)}}
  faceApply(s,tt);let b=null;for(const tr of s.tracks)for(const x of tr.items)if(x.type==='bg'&&tt>=x.start&&tt<x.start+x.dur)b=x;tscene.background=null;bgApply();fxStep(s,tt)}
 
 /* ---------- Lớp 2D trong khung (text, ảnh, video) ---------- */
@@ -220,7 +220,7 @@ function renderOv(){if(!P)return;const s=sc(),on={};
   if(el._c!==css){el.style.cssText=css;el._c=css}
   const k=it.type==='dlg'?it.who+'|'+it.text:it.text;if(tx&&el._k!==k){el._k=k;el.firstChild.innerHTML=it.type==='dlg'?'<b>'+esc(it.who)+':</b> '+esc(it.text):esc(it.text)}
   if(it.type==='img'||it.type==='vid'){const m=el.firstChild,u=srcOf(it)||'';if(m._s!==u){m._s=u;u?m.src=u:m.removeAttribute('src')}
-   if(it.type==='vid'){const want=Math.max(0,t-it.start);m.volume=Math.min(1,Math.max(0,it.vol??1));m.muted=!(act&&playing);if(act&&playing){if(m.paused)m.play().catch(()=>{});if(Math.abs(m.currentTime-want)>.35)m.currentTime=want}else{if(!m.paused)m.pause();if(Math.abs(m.currentTime-want)>.05)try{m.currentTime=want}catch{}}}}
+   if(it.type==='vid'){const want=Math.max(0,t-it.start)+(it.off||0);m.volume=Math.min(1,Math.max(0,it.vol??1));m.muted=!(act&&playing);if(act&&playing){if(m.paused)m.play().catch(()=>{});if(Math.abs(m.currentTime-want)>.35)m.currentTime=want}else{if(!m.paused)m.pause();if(Math.abs(m.currentTime-want)>.05)try{m.currentTime=want}catch{}}}}
   let h=el.querySelector('.rh');if(isS&&!h){h=document.createElement('i');h.className='rh';el.appendChild(h);const g=document.createElement('b');g.className='sh';el.appendChild(g)}if(!isS&&h){h.remove();const g=el.querySelector('.sh');g&&g.remove()}}
  for(const k in OV)if(!on[k]){OV[k].remove();delete OV[k]}}
 
@@ -251,7 +251,7 @@ addEventListener('keydown',e=>{if(!P)return;const g=document.activeElement,tg=g&
 const estDur=(tx,rate)=>Math.max(1,r2(String(tx).length*.08/(rate||1)));
 const eff=it=>(+it.rate||1)/((it.baked&&it.baked.rate)||1);
 let PV;function speak(a){const u=srcOf(a);if(!u){say('Chưa có file giọng — bấm “Tự tạo giọng” hoặc “Tải wav/mp3”.');return}if(PV)PV.pause();PV=new Audio(u);PV.volume=Math.min(1,a.vol??1);PV.playbackRate=eff(a);PV.preservesPitch=true;PV.play().catch(()=>{})}
-function audioSync(){const s=sc(),live={};for(const tr of s.tracks)for(const a of tr.items){if(a.type==='aud'||a.type==='tts'){live[a.id]=1;const e=AU[a.id]||(AU[a.id]=new Audio()),u=srcOf(a);if(u&&e.dataset.u!==u){e.dataset.u=u;e.src=u}e.volume=Math.min(1,Math.max(0,+a.vol||0));e.playbackRate=eff(a);e.preservesPitch=true;const on=playing&&u&&t>=a.start&&t<a.start+a.dur;if(on&&e.paused){try{e.currentTime=t-a.start}catch{}e.play().catch(()=>{})}if(!on&&!e.paused)e.pause()}
+function audioSync(){const s=sc(),live={};for(const tr of s.tracks)for(const a of tr.items){if(a.type==='aud'||a.type==='tts'){live[a.id]=1;const e=AU[a.id]||(AU[a.id]=new Audio()),u=srcOf(a);if(u&&e.dataset.u!==u){e.dataset.u=u;e.src=u}e.volume=Math.min(1,Math.max(0,+a.vol||0));e.playbackRate=eff(a);e.preservesPitch=true;const on=playing&&u&&t>=a.start&&t<a.start+a.dur;if(on&&e.paused){try{e.currentTime=(t-a.start)*eff(a)+(a.off||0)}catch{}e.play().catch(()=>{})}if(!on&&!e.paused)e.pause()}
 }
  for(const k in AU)if(!live[k]){AU[k].pause();delete AU[k]}}
 function syncTp(){if(!P)return;$('tm').textContent=fmt(t)+' / '+fmt(sc().duration);const h=$('ph');if(h)h.style.left=(LW+t*pps)+'px';const k=$('kph');if(k){k.style.left=(LW+t*pps)+'px';k.firstChild.textContent=curF()+1}}
@@ -358,9 +358,28 @@ addEventListener('keydown',e=>{
  if(TLV==='kf'&&KF.sel.size)return;                          // đang chọn keyframe → không đụng tới
  if(k==='c'&&String(getSelection()).length)return;           // đang bôi đen chữ → copy chữ như thường
  e.preventDefault();
- if(k==='v')return cbPaste();
+ cbAct(k)});
+function cbAct(k){if(!P)return;if(k==='v')return cbPaste();
  if(!sel||!loc())return cbToast('Chọn một clip hoặc đối tượng trước (bấm vào nó trong khung hoặc trên timeline).');
- if(cbCopy(k==='x')){const lb=CB.label;if(k==='x'){remove()}cbToast((k==='x'?'Đã cắt ':'Đã sao chép ')+lb+' — Ctrl+V để dán tại đường chạy')}});
+ if(cbCopy(k==='x')){const lb=CB.label;if(k==='x')remove();cbToast((k==='x'?'Đã cắt ':'Đã sao chép ')+lb+' — Ctrl+V để dán tại đường chạy')}}
+$('bCut').onclick=()=>cbAct('x');$('bCopy').onclick=()=>cbAct('c');$('bPaste').onclick=()=>cbAct('v');
+
+/* ---------- Split: chia đôi clip / khối đang chọn tại đường chạy (nút Split hoặc phím K) ---------- */
+function splitAtPlayhead(){
+ const l=loc();if(!l||!(l.ch||l.tr))return cbToast('Chọn một clip hoặc khối trên timeline, rồi đặt đường chạy vào giữa nó.');
+ const it=l.it,tt=snap(t),end=it.start+it.dur,fr=1/P.fmt.fps;
+ if(tt<=it.start+fr*.5||tt>=end-fr*.5)return cbToast('Đưa đường chạy (đường xanh/đỏ) vào bên trong clip / khối rồi bấm Split.');
+ const step=tt-it.start,b=cbDeep(it),ty=l.ch?'clip':it.type;
+ b.id=uid();b.start=tt;b.dur=end-tt;kfReid(b);
+ if(ty==='clip'||ty==='vid')b.off=(+it.off||0)+step;                 // phần sau phát tiếp từ chỗ cắt, không lặp lại từ đầu
+ else if(ty==='aud'||ty==='tts')b.off=(+it.off||0)+step*eff(it);
+ it.dur=step;l.list.splice(l.list.indexOf(it)+1,0,b);
+ sel={id:b.id};touch();setSel(b.id,l.ch?'clip':'props');if(l.ch&&R[l.ch.id])R[l.ch.id].cur='~';apply();
+ cbToast('Đã chia đôi tại '+fmt(tt)+' (chọn phần sau)')}
+$('bSplit').onclick=splitAtPlayhead;
+addEventListener('keydown',e=>{if(!P||EXP||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey||e.key.toLowerCase()!=='k')return;
+ const g=document.activeElement,tg=g&&g.tagName;if(tg==='TEXTAREA'||tg==='SELECT'||(tg==='INPUT'&&!/^(checkbox|range|button|radio|color)$/.test(g.type))||(g&&g.isContentEditable)||document.querySelector('dialog[open]'))return;
+ e.preventDefault();splitAtPlayhead()});
 
 /* ---------- Timeline (track không giới hạn) ---------- */
 const cname=id=>(manifest.animations.find(x=>x.id===id)||{name:'(chưa chọn)'}).name,onc=id=>sel&&sel.id===id?' on':'';
@@ -769,7 +788,7 @@ async function compose(c,s,tt,W,H){
  c.drawImage(renderer.domElement,0,0,W,H);
  const its=s.tracks.flatMap(tr=>tr.items).filter(x=>V2.includes(x.type)&&tt>=x.start&&tt<x.start+x.dur).sort((a,b)=>(a.zi||0)-(b.zi||0));
  for(const it of its){c.save();c.globalAlpha=it.opacity??1;c.translate(it.x/100*W,it.y/100*H);c.rotate((it.rot||0)*Math.PI/180);c.scale(it.sx??1,it.sy??1);
-  if(it.type==='img'||it.type==='vid'){const u2=srcOf(it);if(u2){const im=it.type==='vid'?await vFrame(u2,tt-it.start):await loadImg(u2),iw=im&&(im.videoWidth||im.naturalWidth);if(iw){const w=W*(it.w||30)/100,h=w*(im.videoHeight||im.naturalHeight)/iw;c.drawImage(im,-w/2,-h/2,w,h)}}}
+  if(it.type==='img'||it.type==='vid'){const u2=srcOf(it);if(u2){const im=it.type==='vid'?await vFrame(u2,tt-it.start+(it.off||0)):await loadImg(u2),iw=im&&(im.videoWidth||im.naturalWidth);if(iw){const w=W*(it.w||30)/100,h=w*(im.videoHeight||im.naturalHeight)/iw;c.drawImage(im,-w/2,-h/2,w,h)}}}
   else{const sz=+it.size||40,txt=it.type==='dlg'?it.who+': '+it.text:it.text;c.font=(it.italic?'italic ':'')+(it.bold?800:400)+' '+sz+'px "'+(it.font||'Be Vietnam Pro')+'",sans-serif';c.fillStyle=it.color;c.textAlign='center';c.textBaseline='middle';
    const ln=[];for(const p of String(txt).split('\n')){let l='';for(const w of p.split(' ')){const q=l?l+' '+w:w;if(l&&c.measureText(q).width>W*.92){ln.push(l);l=w}else l=q}ln.push(l)}
    const lh=sz*1.25,top=-ln.length*lh/2;
@@ -778,7 +797,7 @@ async function compose(c,s,tt,W,H){
   c.restore()}}
 async function mixAudio(SR,total,sceneDur){const oc=new OfflineAudioContext(2,Math.ceil(total*SR),SR);let n=0,off=0;
  for(let k=0;k<P.scenes.length;k++){for(const tr of P.scenes[k].tracks)for(const it of tr.items){if(!['aud','tts','vid'].includes(it.type))continue;const u=srcOf(it);if(!u)continue;
-  try{const buf=DEC[u]||(DEC[u]=await new OfflineAudioContext(2,1,SR).decodeAudioData(await(await fetch(u)).arrayBuffer())),sr=oc.createBufferSource(),g=oc.createGain(),rate=it.type==='tts'?eff(it):1;sr.buffer=buf;sr.playbackRate.value=rate;g.gain.value=Math.min(1,Math.max(0,+(it.vol??1)));sr.connect(g).connect(oc.destination);sr.start(off+it.start,0,Math.min(it.dur*rate,buf.duration));n++}catch{}}
+  try{const buf=DEC[u]||(DEC[u]=await new OfflineAudioContext(2,1,SR).decodeAudioData(await(await fetch(u)).arrayBuffer())),sr=oc.createBufferSource(),g=oc.createGain(),rate=it.type==='tts'?eff(it):1;sr.buffer=buf;sr.playbackRate.value=rate;g.gain.value=Math.min(1,Math.max(0,+(it.vol??1)));sr.connect(g).connect(oc.destination);{const o0=+it.off||0,d0=Math.min(it.dur*rate,buf.duration-o0);if(d0<=0)continue;sr.start(off+it.start,o0,d0)}n++}catch{}}
   off+=sceneDur[k]}
  return n?await oc.startRendering():null}
 async function exportVideo(fmt,onP){
@@ -833,14 +852,14 @@ function drawFace(c,F,C){C=C||{};const g=c.getContext('2d'),eo=Math.max(0,Math.m
  const s=F.smile,o=Math.max(0,F.open),w=62,y0=190-s*12;
  if(!C.ovhM&&!(C.ovMc&&o<=.06))T(128,190,'ovM',()=>{g.lineWidth=8;g.strokeStyle='#5a1c1c';g.beginPath();g.moveTo(128-w,y0);
   if(o>.06){g.quadraticCurveTo(128,190+s*36-o*4,128+w,y0);g.quadraticCurveTo(128,190+o*70+Math.max(0,s)*14,128-w,y0);g.fillStyle='#7a2a2a';g.fill()}else g.quadraticCurveTo(128,190+s*36,128+w,y0);g.stroke()})}
-function faceApply(s,tt){const all=s.tracks.flatMap(tr=>tr.items),fall=all.filter(x=>x.type==='face'),fs=fall.filter(x=>!FR.isCx(x.expr)),fc=fall.filter(x=>FR.isCx(x.expr)),sp=all.filter(x=>x.type==='tts'&&x.ch&&x.lip!==false);const lipOf=id=>{let o=-1;for(const x of sp){if(x.ch!==id||tt<x.start||tt>=x.start+x.dur)continue;const u=srcOf(x);if(u)o=Math.max(o,Math.min(1,envAt(u,(tt-x.start)*eff(x))*1.5))}return o<0?null:{open:o}};
+function faceApply(s,tt){const all=s.tracks.flatMap(tr=>tr.items),fall=all.filter(x=>x.type==='face'),fs=fall.filter(x=>!FR.isCx(x.expr)),fc=fall.filter(x=>FR.isCx(x.expr)),sp=all.filter(x=>x.type==='tts'&&x.ch&&x.lip!==false);const lipOf=id=>{let o=-1;for(const x of sp){if(x.ch!==id||tt<x.start||tt>=x.start+x.dur)continue;const u=srcOf(x);if(u)o=Math.max(o,Math.min(1,envAt(u,(tt-x.start)*eff(x)+(x.off||0))*1.5))}return o<0?null:{open:o}};
  for(const ch of s.chars){const r=R[ch.id];let hasC=false;
   if(r&&r.fx){const cx=fc.find(x=>x.ch===ch.id&&tt>=x.start&&tt<x.start+x.dur&&r.fx.has(FR.cxId(x.expr)));
    if(cx){const k=tt-cx.start,rp=Math.min(.2,cx.dur/3),w=Math.max(0,Math.min(1,k/rp,(cx.dur-k)/rp));hasC=true;r.fx.apply(r.fx.get(FR.cxId(cx.expr)),k,Math.min(1,w*(+cx.amt||1)),lipOf(ch.id))}else r.fx.apply(null)}
   if(!r||!(r.hd||(r.mm&&r.mm.length)))continue;const mine=fs.filter(x=>x.ch===ch.id),spk=sp.filter(x=>x.ch===ch.id);if(!mine.length&&!spk.length&&!r.fa)continue;
   const F={smile:0,open:0,brow:0,eye:1,hp:0,hy:0,hr:0};
   for(const x of mine){if(tt<x.start||tt>=x.start+x.dur)continue;const k=tt-x.start,rp=Math.min(.2,x.dur/3),w=(+x.amt||1)*Math.max(0,Math.min(1,k/rp,(x.dur-k)/rp)),p=(PRE[x.expr]||PRE.neutral)(k);for(const key in F)F[key]+=(p[key]||0)*w}
-  for(const x of spk){if(tt<x.start||tt>=x.start+x.dur)continue;const u=srcOf(x),e=u?Math.min(1,envAt(u,(tt-x.start)*eff(x))*1.5):0;if(u)F.open+=e*.9;
+  for(const x of spk){if(tt<x.start||tt>=x.start+x.dur)continue;const u=srcOf(x),e=u?Math.min(1,envAt(u,(tt-x.start)*eff(x)+(x.off||0))*1.5):0;if(u)F.open+=e*.9;
    if(x.hb!==false){const k=tt-x.start,w=Math.max(0,Math.min(1,k/.2,(x.dur-k)/.2))*(x.hbs==null?1:+x.hbs);F.hp+=(e*.07+.012*Math.sin(tt*2.3))*w;F.hy+=.035*Math.sin(tt*1.3)*w;F.hr+=.03*Math.sin(tt*1.9+1.2)*w}}
   const any=mine.length||spk.length;if(any){const ph=tt%3.7;if(ph<.14)F.eye*=1-Math.sin(Math.PI*ph/.14)}r.fa=!!any;
   if(r.hd){r.g.updateMatrixWorld(true);if(!r.act)r.hd.quaternion.copy(r.hq0);
