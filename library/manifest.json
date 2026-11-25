@@ -23,10 +23,6 @@
     "g1test.character.json": {
       "thumbnail": "./library/thumbnails/characters/g1test.png",
       "updatedAt": "2026-11-24T04:33:58.874Z"
-    },
-    "con_chon.character.json": {
-      "thumbnail": "./library/thumbnails/characters/con-chon.png",
-      "updatedAt": "2026-11-25T15:04:55.900Z"
     }
   },
   "animations": [
