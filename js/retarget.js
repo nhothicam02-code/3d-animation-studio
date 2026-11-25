@@ -12,7 +12,7 @@ for(const tr of source.tracks){let p;try{p=THREE.PropertyBinding.parseTrackName(
  if(rs){const Rs=new THREE.Quaternion().fromArray(rs,0),Ps=new THREE.Quaternion().fromArray(rs,4),Rt=new THREE.Quaternion(),Pt=new THREE.Quaternion();dest.getWorldQuaternion(Rt);if(dest.parent)dest.parent.getWorldQuaternion(Pt);
   const left=Pt.clone().invert().multiply(Ps),right=Rs.clone().invert().multiply(Rt);
   if(p.propertyName==='quaternion'){for(let i=0;i<t.values.length;i+=4){qa.fromArray(t.values,i).premultiply(left).multiply(right).normalize().toArray(t.values,i)}retargeted++}
-  else if(p.propertyName==='position'){const x0=t.values[0],z0=t.values[2];for(let i=0;i<t.values.length;i+=3){va.set(t.values[i]-x0,t.values[i+1],t.values[i+2]-z0).multiplyScalar(ratio).applyQuaternion(left).toArray(t.values,i)}retargeted++}
+  else if(p.propertyName==='position'){const x0=t.values[0],y0=t.values[1],z0=t.values[2];let sy=0;for(let i=1;i<t.values.length;i+=3)sy+=Math.abs(t.values[i]);const small=sy/(t.values.length/3)<5,k=small?100:1;for(let i=0;i<t.values.length;i+=3){va.set((t.values[i]-x0)*k,small?MIXAMO_HIPS_H+(t.values[i+1]-y0)*k:t.values[i+1],(t.values[i+2]-z0)*k).multiplyScalar(ratio).applyQuaternion(left).toArray(t.values,i)}retargeted++}
  }
  tracks.push(t);mapped++}
 return {clip:new THREE.AnimationClip(source.name,source.duration,tracks),mapped,retargeted,total:source.tracks.length}}
