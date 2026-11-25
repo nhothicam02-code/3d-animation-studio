@@ -34,7 +34,7 @@ function retargetClip(sourceClip,sourceRig,target){
   if(rs){const Rs=new THREE.Quaternion().fromArray(rs,0),Ps=new THREE.Quaternion().fromArray(rs,4),Rt=new THREE.Quaternion(),Pt=new THREE.Quaternion();dest.getWorldQuaternion(Rt);if(dest.parent)dest.parent.getWorldQuaternion(Pt);
    const left=Pt.clone().invert().multiply(Ps),right=Rs.clone().invert().multiply(Rt);
    if(p.propertyName==='quaternion'){for(let i=0;i<clone.values.length;i+=4)qa.fromArray(clone.values,i).premultiply(left).multiply(right).normalize().toArray(clone.values,i);corrected++}
-   else if(p.propertyName==='position'){const x0=clone.values[0],z0=clone.values[2];for(let i=0;i<clone.values.length;i+=3)va.set(clone.values[i]-x0,clone.values[i+1],clone.values[i+2]-z0).multiplyScalar(ratio).applyQuaternion(left).toArray(clone.values,i);corrected++}
+   else if(p.propertyName==='position'){const x0=clone.values[0],y0=clone.values[1],z0=clone.values[2];let sy=0;for(let i=1;i<clone.values.length;i+=3)sy+=Math.abs(clone.values[i]);const small=sy/(clone.values.length/3)<5,k=small?100:1;for(let i=0;i<clone.values.length;i+=3)va.set((clone.values[i]-x0)*k,small?MIXAMO_HIPS_H+(clone.values[i+1]-y0)*k:clone.values[i+1],(clone.values[i+2]-z0)*k).multiplyScalar(ratio).applyQuaternion(left).toArray(clone.values,i);corrected++}
   }
   if(!used.has(dest)&&['hips','foot','toe'].includes(roleOf(srcName))){criticalMap.push(roleOf(srcName)+': '+srcName+' → '+dest.name);used.add(dest)}
   destSet.add(dest);tracks.push(clone);mapped++;
