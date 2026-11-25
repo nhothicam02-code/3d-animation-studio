@@ -326,6 +326,42 @@ addEventListener('pointerup',e=>{if(!vd)return;const d=vd;vd=null;if(d.m==='bg')
 addEventListener('keydown',e=>{if(e.key==='Delete'&&P&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){if(TLV==='kf'){kfDelSel();return}if(sel)remove()}});
 function remove(){const l=loc();if(!l)return;l.list.splice(l.list.indexOf(l.it),1);if(!l.ch&&!l.tr&&R[l.it.id]){tscene.remove(R[l.it.id].g);delete R[l.it.id]}sel=null;touch();renderAll();renderOv();apply()}
 
+/* ---------- Copy / Cut / Paste (Ctrl+C · Ctrl+X · Ctrl+V): nhân vật, mô hình, đèn, clip, khối trên timeline ---------- */
+const CBK='3dis.clipboard',cbDeep=o=>JSON.parse(JSON.stringify(o)),cbToast=m=>{say(m);setTimeout(()=>{if($('say').textContent===m)say('')},2200)},CBN={char:'nhân vật',prop:'mô hình',light:'đèn',clip:'clip'};
+let CB=null;try{CB=JSON.parse(localStorage.getItem(CBK)||'null')}catch{}
+function cbCopy(cut){const l=loc();if(!l)return false;const ty=stype(),kind=ty==='char'||ty==='prop'||ty==='light'||ty==='clip'?ty:'item';
+ CB={kind,cut:!!cut,n:0,data:cbDeep(l.it),src:{scene:sc().id,ch:l.ch&&l.ch.id,tr:l.tr&&l.tr.id},label:CBN[ty]||('khối '+ty)};
+ try{localStorage.setItem(CBK,JSON.stringify(CB))}catch{}return true}
+function cbPaste(){
+ if(!CB||!CB.data)return cbToast('Chưa có gì để dán — chọn một clip / đối tượng rồi bấm Ctrl+C.');
+ if(busy)return cbToast('Đang tải cảnh, thử lại sau giây lát.');
+ const s=sc(),d=cbDeep(CB.data),k=CB.kind,n=CB.n||0,off=.6*(n+(CB.cut||s.id!==CB.src.scene?0:1));CB.n=n+1;delete d.id;
+ if(k==='clip'){const ch=chOf()||s.chars.find(c=>c.id===CB.src.ch)||(s.chars.length===1?s.chars[0]:null);
+  if(!ch)return cbToast('Chọn nhân vật cần dán clip vào (bấm tên nhân vật trên timeline).');
+  d.id=uid();d.start=snap(t);ch.clips.push(d);sel={id:d.id};if(d.start+d.dur>s.duration)s.duration=Math.ceil(d.start+d.dur);
+  tab='clip';touch();renderAll();renderOv();if(R[ch.id])R[ch.id].cur='~';apply()}
+ else if(k==='char'){d.id=uid();d.x=r2((+d.x||0)+off);(d.clips=d.clips||[]).forEach(c=>c.id=uid());kfReid(d);s.chars.push(d);touch();setSel(d.id,'props');
+  addRt(d,tok).then(()=>{if(!s.cam)autoCam();apply()}).catch(x=>say('Lỗi '+d.file+': '+x.message))}
+ else if(k==='prop'){d.id=uid();d.x=r2((+d.x||0)+off);d.z=r2((+d.z||0)+off);d.fixed=false;kfReid(d);s.props.push(d);touch();setSel(d.id,'props');
+  addProp(d,tok).catch(x=>say('Lỗi mô hình “'+d.name+'”: '+x.message))}
+ else if(k==='light'){d.id=uid();d.x=r2((+d.x||0)+off);kfReid(d);LT(s).push(d);touch();setSel(d.id,'light');apply()}
+ else{const l=loc(),tr0=(l&&l.tr)||s.tracks.find(x=>x.id===CB.src.tr),st=snap(t),dur=+d.dur||0,
+   free=tr0&&!tr0.items.some(x=>x.start<st+dur-1e-6&&st<x.start+x.dur-1e-6);   // trùng thời gian → sang track mới
+  d.start=st;if(V2.includes(d.type)&&off&&!d.kf&&d.x!==undefined){d.x=r2(d.x+off*5);d.y=r2(d.y+off*5)}
+  if(d.type==='face'&&d.ch&&!s.chars.some(c=>c.id===d.ch)){const c=chOf()||(s.chars.length===1&&s.chars[0]);if(c)d.ch=c.id;else cbToast('Biểu cảm này thuộc nhân vật không có trong cảnh.')}
+  kfReid(d);addItem(d.type,d,free?tr0.id:undefined);apply()}
+ cbToast('Đã dán '+CB.label)}
+addEventListener('keydown',e=>{
+ if(!P||EXP||!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey)return;const k=e.key.toLowerCase();if(k!=='c'&&k!=='x'&&k!=='v')return;
+ const g=document.activeElement,tg=g&&g.tagName;
+ if(tg==='TEXTAREA'||tg==='SELECT'||(tg==='INPUT'&&!/^(checkbox|range|button|radio|color)$/.test(g.type))||(g&&g.isContentEditable)||document.querySelector('dialog[open]'))return;   // đang gõ chữ → để trình duyệt tự xử lý
+ if(TLV==='kf'&&KF.sel.size)return;                          // đang chọn keyframe → không đụng tới
+ if(k==='c'&&String(getSelection()).length)return;           // đang bôi đen chữ → copy chữ như thường
+ e.preventDefault();
+ if(k==='v')return cbPaste();
+ if(!sel||!loc())return cbToast('Chọn một clip hoặc đối tượng trước (bấm vào nó trong khung hoặc trên timeline).');
+ if(cbCopy(k==='x')){const lb=CB.label;if(k==='x'){remove()}cbToast((k==='x'?'Đã cắt ':'Đã sao chép ')+lb+' — Ctrl+V để dán tại đường chạy')}});
+
 /* ---------- Timeline (track không giới hạn) ---------- */
 const cname=id=>(manifest.animations.find(x=>x.id===id)||{name:'(chưa chọn)'}).name,onc=id=>sel&&sel.id===id?' on':'';
 function cxName(it){const r=R[it.ch],e=r&&r.exs&&r.exs.find(x=>'c:'+x.id===it.expr);return e?'✦ '+(e.name||e.id):''}
