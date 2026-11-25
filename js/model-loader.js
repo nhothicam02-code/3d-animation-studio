@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {PACK_RE, loadPackFromBuffer} from './character-pack.js';
+import {PACK_RE, loadPackFromBuffer, fixMetalMaterials} from './character-pack.js';
 
 /* ============================================================
    Nạp model 3D dùng chung cho mọi trang.
@@ -52,10 +52,10 @@ export async function parseModel(ext, buf, base = '') {
       const o = g.scene || (g.scenes && g.scenes[0]);
       if (!o) throw Error('File glTF/GLB không có scene nào.');
       o.animations = g.animations || [];
-      return o;
+      return fixMetalMaterials(o);
     }
     case 'json': return loadPackFromBuffer(buf, base);   // gói nhân vật: json xương + các mesh .glb
-    case 'fbx': { const F = await LOADERS.fbx(); return new F().parse(buf, base); }
+    case 'fbx': { const F = await LOADERS.fbx(); return fixMetalMaterials(new F().parse(buf, base)); }
     case 'obj': { const O = await LOADERS.obj(); return new O().parse(dec(buf)); }
     case 'dae': {
       const C = await LOADERS.dae(), c = new C().parse(dec(buf), base), o = c.scene;

@@ -134,11 +134,24 @@ export function buildSkeleton(manifest) {
   return {root, arm, bones, byName};
 }
 
+/** Sửa model bị đen khi chỉ có đèn môi trường / bán cầu: glTF thiếu thông số kim loại → three.js hiểu là metalness = 1.
+ *  Kim loại thật chỉ phản chiếu envMap (không có thì đen), nên đèn Ambient / Hemisphere không chiếu sáng được.
+ *  Không có metalnessMap → ép metalness = 0 để vật liệu nhận ánh sáng bình thường. */
+export function fixMetalMaterials(root) {
+  root.traverse(n => {
+    if (!n.isMesh) return;
+    for (const m of (Array.isArray(n.material) ? n.material : [n.material])) {
+      if (m && m.isMeshStandardMaterial && !m.metalnessMap && m.metalness > 0.05) { m.metalness = 0; m.needsUpdate = true; }
+    }
+  });
+  return root;
+}
+
 /** Nạp 1 file mesh .glb: trả về mọi mesh (mesh nhiều material sẽ thành nhiều primitive) trong file. */
 async function readPart(buf, part) {
   const G = await GL();
   const gltf = await new Promise((res, rej) => new G().parse(buf, '', res, rej));
-  const sc = gltf.scene; sc.updateMatrixWorld(true);
+  const sc = fixMetalMaterials(gltf.scene); sc.updateMatrixWorld(true);
   const out = []; sc.traverse(o => { if (o.isMesh || o.isSkinnedMesh) out.push(o); });
   if (!out.length) throw Error('Không thấy mesh trong ' + part.file);
   return out;
