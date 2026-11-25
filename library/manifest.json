@@ -31,6 +31,22 @@
   },
   "animations": [
     {
+      "id": "tu-the-nghi-mwwcfgcx",
+      "name": "tư thế nghỉ",
+      "category": "Idle",
+      "duration": 8.333333015441895,
+      "loop": true,
+      "speed": 1,
+      "tracks": 29,
+      "keyframes": 5779,
+      "source": "Idle.fbx",
+      "createdAt": "2026-11-25T16:33:58.955Z",
+      "dataPath": "library/animations/tu-the-nghi-mwwcfgcx.json",
+      "thumbnailPath": "library/thumbnails/animations/tu-the-nghi-mwwcfgcx.png",
+      "thumbnail": "./library/thumbnails/animations/tu-the-nghi-mwwcfgcx.png",
+      "rigSignature": []
+    },
+    {
       "id": "mua-dancing-mwrl03b9",
       "name": "Múa dancing",
       "category": "Action",
