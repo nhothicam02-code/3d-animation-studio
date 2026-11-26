@@ -909,16 +909,18 @@ async function envReady(u){if(ENV[u])return ENV[u];const b=await bufOf(u),d=b.ge
  for(let i=1;i<a.length;i++)a[i]=Math.max(a[i],a[i-1]*.6);return ENV[u]=a}
 const envAt=(u,k)=>{const a=ENV[u];if(!a){if(a===undefined){ENV[u]=null;envReady(u).then(()=>apply()).catch(()=>{})}return 0}const i=k/.02,j=Math.floor(i);return k<0||j>=a.length-1?0:a[j]+(a[j+1]-a[j])*(i-j)};
 function faceInit(r){const bs=[];r.mm=[];r.o.traverse(n=>{if(n.isBone)bs.push(n);if(n.isMesh&&n.morphTargetDictionary&&n.morphTargetInfluences)r.mm.push(n)});r.mmo=r.mm.some(m=>FR.LIP_MORPHS.some(n=>m.morphTargetDictionary[n]!==undefined));r.hd=bs.find(b=>norm(b.name)==='head');if(!r.hd)return;r.hq0=r.hd.quaternion.clone();r.g.updateMatrixWorld(true);
- const he=bs.find(b=>/^head(top)?end$/.test(norm(b.name))),L=n=>r.g.worldToLocal(n.getWorldPosition(new THREE.Vector3()));r.hh=he?Math.max(.05,L(he).distanceTo(L(r.hd))):.22;r.qrel0=relQ(r)}
-function drawFace(c,F,C){C=C||{};const g=c.getContext('2d'),eo=Math.max(0,Math.min(1.3,F.eye));g.clearRect(0,0,256,256);g.lineCap='round';
+ const he=bs.find(b=>/^head(top)?end$/.test(norm(b.name))),L=n=>r.g.worldToLocal(n.getWorldPosition(new THREE.Vector3()));r.hh=he?Math.max(.05,L(he).distanceTo(L(r.hd))):.22;r.qrel0=relQ(r);
+ /* căn hình vẽ thay thế theo 2 vùng mắt đã chọn: giữa hai mắt = điểm (128,100) trên canvas, khoảng cách hai mắt = 104px canvas */
+ if(r.doc&&r.doc.faceRegions){try{r.g.updateMatrixWorld(true);const P=FR.regionPoints(r.o,r.doc.faceRegions);if(P&&P.eyeL&&P.eyeR){const a=r.g.worldToLocal(P.eyeL.clone()),b=r.g.worldToLocal(P.eyeR.clone()),hp=r.g.worldToLocal(r.hd.getWorldPosition(new THREE.Vector3())),D=a.distanceTo(b);if(D>1e-4)r.cal={off:a.clone().add(b).multiplyScalar(.5).sub(hp),D}}}catch(e){r.cal=null}}}
+function drawFace(c,F,C){C=C||{};const kc=C&&C._cal?.7:1,g=c.getContext('2d'),eo=Math.max(0,Math.min(1.3,F.eye));g.clearRect(0,0,256,256);g.lineCap='round';
  /* T: vẽ một bộ phận quanh tâm (cx,cy) có dời X/Y (% bề ngang mặt), cỡ, xoay theo cấu hình C[p+'x'|'y'|'s'|'r'] */
  const T=(cx,cy,p,fn)=>{const k=+C[p+'s'];g.save();g.translate(cx+(+C[p+'x']||0)*2.56,cy-(+C[p+'y']||0)*2.56);g.rotate((+C[p+'r']||0)*Math.PI/180);g.scale(k>0?k:1,k>0?k:1);g.translate(-cx,-cy);fn();g.restore()};
  if(!C.ovhE)T(128,100,'ovE',()=>{for(const sx of[-1,1]){if(C[sx>0?'_skEL':'_skER'])continue;const x=128+sx*52,y=100;g.fillStyle='#fff';g.beginPath();g.ellipse(x,y,26,Math.max(2,22*eo),0,0,7);g.fill();if(eo>.15){g.fillStyle='#222';g.beginPath();g.arc(x,y,Math.min(12,22*eo),0,7);g.fill()}}});
- if(!C.ovhB)T(128,60,'ovB',()=>{for(const sx of[-1,1]){if(C[sx>0?'_skBL':'_skBR'])continue;const y=100,by=y-42-F.brow*14,dn=Math.max(0,-F.brow);g.strokeStyle='#2a1a14';g.lineWidth=9;g.beginPath();g.moveTo(128+sx*22,by+dn*18);g.lineTo(128+sx*80,by-dn*4);g.stroke()}});
- if(!C.ovhN&&!C._skN)T(128,150,'ovN',()=>{g.strokeStyle='#7a4a3a';g.lineWidth=7;g.beginPath();g.moveTo(128,128);g.lineTo(120,156);g.quadraticCurveTo(128,166,140,156);g.stroke()});
- const s=F.smile,o=Math.max(0,F.open),w=62,y0=190-s*12;
- if(!C.ovhM&&!C._skM&&!(C.ovMc&&o<=.06))T(128,190,'ovM',()=>{g.lineWidth=8;g.strokeStyle='#5a1c1c';g.beginPath();g.moveTo(128-w,y0);
-  if(o>.06){g.quadraticCurveTo(128,190+s*36-o*4,128+w,y0);g.quadraticCurveTo(128,190+o*70+Math.max(0,s)*14,128-w,y0);g.fillStyle='#7a2a2a';g.fill()}else g.quadraticCurveTo(128,190+s*36,128+w,y0);g.stroke()})}
+ if(!C.ovhB)T(128,60,'ovB',()=>{for(const sx of[-1,1]){if(C[sx>0?'_skBL':'_skBR'])continue;const y=100,by=y-42*kc-F.brow*14,dn=Math.max(0,-F.brow);g.strokeStyle='#2a1a14';g.lineWidth=9;g.beginPath();g.moveTo(128+sx*22,by+dn*18);g.lineTo(128+sx*80,by-dn*4);g.stroke()}});
+ if(!C.ovhN&&!C._skN)T(128,100+50*kc,'ovN',()=>{const ny=100+50*kc;g.strokeStyle='#7a4a3a';g.lineWidth=7;g.beginPath();g.moveTo(128,ny-22);g.lineTo(120,ny+6);g.quadraticCurveTo(128,ny+16,140,ny+6);g.stroke()});
+ const s=F.smile,o=Math.max(0,F.open),w=62*kc,ym=100+90*kc,y0=ym-s*12;
+ if(!C.ovhM&&!C._skM&&!(C.ovMc&&o<=.06))T(128,ym,'ovM',()=>{g.lineWidth=8;g.strokeStyle='#5a1c1c';g.beginPath();g.moveTo(128-w,y0);
+  if(o>.06){g.quadraticCurveTo(128,ym+s*36-o*4,128+w,y0);g.quadraticCurveTo(128,ym+o*70*kc+Math.max(0,s)*14,128-w,y0);g.fillStyle='#7a2a2a';g.fill()}else g.quadraticCurveTo(128,ym+s*36,128+w,y0);g.stroke()})}
 const eachBlink=(r,fn)=>{for(const m of r.mm)for(const n of FR.BLINK_MORPHS){const i=m.morphTargetDictionary[n];if(i!==undefined)fn(m,i,n)}};
 /* Chớp mắt tự nhiên cho mọi nhân vật có shape key mí mắt, kể cả khi không có khối Biểu cảm / Giọng đọc.
    Lấy mức nhắm lớn hơn giữa biểu cảm đang chạy và nhịp chớp. */
@@ -958,9 +960,12 @@ function faceApply(s,tt){const all=s.tracks.flatMap(tr=>tr.items),fall=all.filte
    mv(['mouthSmileLeft','mouthSmileRight','Happy','happy'],F.smile);mv(['mouthFrownLeft','mouthFrownRight','Sad','sad'],-F.smile);mv([FR.LIP_MORPHS.find(n=>r.mm.some(m=>m.morphTargetDictionary[n]!==undefined))],F.open);mv(['browInnerUp','browOuterUpLeft','browOuterUpRight','Surprised'],F.brow);mv(['browDownLeft','browDownRight','Angry'],-F.brow);mv(['eyeBlinkLeft','eyeBlinkRight','Blink','blink'],1-F.eye);mv(['eyeWideLeft','eyeWideRight'],F.eye-1)}
   const oi=mine.find(x=>x.ov!==false)||(cxA?(cxA.ov!==false?cxA:null):mineC.find(x=>x.ov!==false))||(spk.length?{}:null),hv=faceHave(r,cxE),anyMiss=!(hv.eL&&hv.eR&&hv.bL&&hv.bR&&hv.n&&hv.m);
   if(r.hd&&oi&&anyMiss){if(!r.fo){const cv=document.createElement('canvas');cv.width=cv.height=256;r.fc=cv;const tx=new THREE.CanvasTexture(cv);tx.colorSpace=THREE.SRGBColorSpace;r.fo=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:tx,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));r.fo.renderOrder=20;r.g.add(r.fo)}
-   const sp0=spk.find(x=>tt>=x.start&&tt<x.start+x.dur)||spk[0],cfg=Object.assign({},sp0||{},oi.type==='face'?oi:{},{_skEL:hv.eL,_skER:hv.eR,_skBL:hv.bL,_skBR:hv.bR,_skN:hv.n,_skM:hv.m}),sg=[F.smile,F.open,F.brow,F.eye].map(v=>Math.round(v*30)).join()+'|'+OVK.map(k=>cfg[k]??'').join()+'|'+[hv.eL,hv.eR,hv.bL,hv.bR,hv.n,hv.m].map(Number).join('');if(r.fs!==sg){r.fs=sg;drawFace(r.fc,F,cfg);r.fo.material.map.needsUpdate=true}
+   const sp0=spk.find(x=>tt>=x.start&&tt<x.start+x.dur)||spk[0],cfg=Object.assign({},sp0||{},oi.type==='face'?oi:{},{_skEL:hv.eL,_skER:hv.eR,_skBL:hv.bL,_skBR:hv.bR,_skN:hv.n,_skM:hv.m,_cal:!!r.cal}),sg=[F.smile,F.open,F.brow,F.eye].map(v=>Math.round(v*30)).join()+'|'+OVK.map(k=>cfg[k]??'').join()+'|'+[hv.eL,hv.eR,hv.bL,hv.bR,hv.n,hv.m].map(Number).join('')+(r.cal?'c':'');if(r.fs!==sg){r.fs=sg;drawFace(r.fc,F,cfg);r.fo.material.map.needsUpdate=true}
    r.hd.updateWorldMatrix(true,false);const d=relQ(r).multiply(r.qrel0.clone().invert()),hh=r.hh;
-   r.fo.position.copy(r.g.worldToLocal(r.hd.getWorldPosition(new THREE.Vector3()))).add(new THREE.Vector3(0,hh*(+cfg.ovy||.45),hh*(+cfg.ovz||.5)).applyQuaternion(d));r.fo.quaternion.copy(d);r.fo.scale.setScalar(hh*(+cfg.ovs||.9));r.fo.visible=true}
+   const hp=r.g.worldToLocal(r.hd.getWorldPosition(new THREE.Vector3()));
+   if(r.cal){const S=r.cal.D*256/104*((+cfg.ovs||.9)/.9),o=r.cal.off.clone().add(new THREE.Vector3(0,-28/256*S+hh*((+cfg.ovy||.45)-.45),hh*((+cfg.ovz||.5)-.5)));r.fo.position.copy(hp).add(o.applyQuaternion(d));r.fo.quaternion.copy(d);r.fo.scale.setScalar(S)}
+   else{r.fo.position.copy(hp).add(new THREE.Vector3(0,hh*(+cfg.ovy||.45),hh*(+cfg.ovz||.5)).applyQuaternion(d));r.fo.quaternion.copy(d);r.fo.scale.setScalar(hh*(+cfg.ovs||.9))}
+   r.fo.visible=true}
   else if(r.fo)r.fo.visible=false}}
 
 /* ---------- Nhiều nguồn sáng: điểm / rọi / hướng / bán cầu / môi trường (kéo thả, màu, cường độ, bóng đổ) ---------- */
