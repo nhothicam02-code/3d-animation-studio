@@ -139,9 +139,11 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
   <div class="extabs"><button id="tabTex" class="on" data-extab="texture">🖼 Texture</button><button id="tabKey" data-extab="keyshape">🦴 Keyshape</button></div>
   <div id="rgBox" class="hide">
    <div class="rggrid" id="rgGrid"></div>
-   <div id="rgSizeBox" class="hide" style="margin-top:12px">
-    <label for="rgSize" id="rgSizeLabel">Cỡ vùng</label>
-    <input type="range" id="rgSize" min="2" max="60" step="0.5" style="width:100%">
+   <div id="rgSizeBox" style="margin:12px 0 4px">
+    <div class="note" id="rgSizeTitle" style="margin:0 0 6px"></div>
+    <label for="rgSize">Cỡ chung <span id="rgSizeV"></span></label><input type="range" id="rgSize" min="2" max="60" step="0.5" style="width:100%">
+    <label for="rgW">Ngang <span id="rgWV"></span></label><input type="range" id="rgW" min="10" max="300" step="5" style="width:100%">
+    <label for="rgH">Dọc <span id="rgHV"></span></label><input type="range" id="rgH" min="10" max="300" step="5" style="width:100%">
    </div>
    <button id="rgBlink" class="test">Chớp mắt thử</button>
    <button id="rgTalk" class="test">Nói chuyện thử</button>
@@ -1332,22 +1334,32 @@ const rgUnit = () => (S.face && S.face.hh ? S.face.hh : 0.2);                 //
 const rgSet = () => (S.regions ? S.regions.regions : {});
 const rgHas = id => !!rgSet()[id];
 
-/** Thanh cỡ vùng của nút bấm gần nhất. Đơn vị: % chiều cao đầu. */
-const rgSizeText = (id, v) => 'Cỡ vùng ' + RG_GROUPS.find(g => g.id === id).label.toLowerCase() + ': ' + v.toFixed(1) + '%';
+/* 3 thanh chỉnh của vùng đang chọn: cỡ chung (% chiều cao đầu), ngang & dọc (% so với cỡ chung). Luôn hiện; mờ khi chưa có vùng. */
+const RG_SLIDERS = [
+  {id: 'rgSize', out: 'rgSizeV', read: g => g.r * rgScale(RG.group) / rgUnit() * 100, write: (g, v) => { g.r = r5(v / 100 * rgUnit() / rgScale(RG.group)); }, digits: 1},
+  {id: 'rgW', out: 'rgWV', read: g => FRG.shapeOf(g).sx * 100, write: (g, v) => { g.sx = v / 100; }, digits: 0},
+  {id: 'rgH', out: 'rgHV', read: g => FRG.shapeOf(g).sy * 100, write: (g, v) => { g.sy = v / 100; }, digits: 0}
+];
 function rgSizeRender() {
-  const g = RG.group && rgSet()[RG.group], on = !!(g && RG.mesh);
-  $('rgSizeBox').classList.toggle('hide', !on);
-  if (!on) return;
-  const v = g.r * rgScale(RG.group) / rgUnit() * 100;
-  $('rgSize').max = Math.max(60, Math.ceil(v));        // dữ liệu cũ có thể lớn hơn 60%
-  $('rgSize').value = v; $('rgSizeLabel').textContent = rgSizeText(RG.group, v);
+  if (!RG.picking && !(RG.group && rgSet()[RG.group])) RG.group = (RG_GROUPS.find(x => rgSet()[x.id]) || {}).id || null;   // tự chọn vùng đã có
+  const g = RG.group && RG.mesh ? rgSet()[RG.group] : null;
+  $('rgSizeTitle').textContent = g ? 'Đang chỉnh: ' + RG_GROUPS.find(x => x.id === RG.group).label + ' (bấm nút vùng khác để đổi)' : 'Đặt vùng lên mặt để chỉnh kích thước.';
+  for (const c of RG_SLIDERS) {
+    const el = $(c.id); el.disabled = !g;
+    if (!g) { $(c.out).textContent = ''; continue; }
+    const v = c.read(g);
+    el.max = Math.max(c.id === 'rgSize' ? 60 : 300, Math.ceil(v));        // dữ liệu cũ có thể vượt mức thường
+    el.value = v; $(c.out).textContent = v.toFixed(c.digits) + '%';
+  }
 }
 // đang kéo: vòng màu đổi theo ngay; thả tay mới dựng lại chuyển động (nhẹ máy hơn)
-$('rgSize').oninput = e => {
-  const v = parseFloat(e.target.value), g = rgSet()[RG.group]; if (!g || !RG.mesh) return;
-  g.r = Math.round(v / 100 * rgUnit() / rgScale(RG.group) * 1e5) / 1e5; $('rgSizeLabel').textContent = rgSizeText(RG.group, v); dirty();
-};
-$('rgSize').onchange = () => rgBuild();
+for (const c of RG_SLIDERS) {
+  $(c.id).oninput = e => {
+    const v = parseFloat(e.target.value), g = rgSet()[RG.group]; if (!g || !RG.mesh) return;
+    c.write(g, v); $(c.out).textContent = v.toFixed(c.digits) + '%'; dirty();
+  };
+  $(c.id).onchange = () => rgBuild();
+}
 function rgRender() {
   rgSizeRender();
   $('rgGrid').innerHTML = RG_GROUPS.map(g => '<div class="rgrow"><button data-rg="' + g.id + '" class="' + (RG.picking && RG.group === g.id ? 'on' : '') + '" aria-pressed="' + (RG.picking && RG.group === g.id) + '"><i style="background:' + rgOf(g.id).color + '"></i>' + g.label + '<b>' + (RG.stale.has(g.id) ? 'chọn lại' : rgHas(g.id) ? '✓' : '') + '</b></button>' +
