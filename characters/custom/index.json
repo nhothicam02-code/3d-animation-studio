@@ -2,6 +2,16 @@
   "version": 1,
   "characters": [
     {
+      "id": "lylo-mwxq8x27",
+      "name": "LyLo",
+      "base": "Nhanvat1_body.character.json",
+      "items": 0,
+      "expressions": 1,
+      "dataPath": "characters/custom/lylo-mwxq8x27.json",
+      "thumbnail": "./characters/custom/thumbs/lylo-mwxq8x27.png",
+      "updatedAt": "2026-11-26T15:48:34.783Z"
+    },
+    {
       "id": "lyly-custom-mwxnrig0",
       "name": "Lyly_custom",
       "base": "Lyly.character.json",
