@@ -1,0 +1,15 @@
+{
+  "format": "3DiS-Character-1.0",
+  "id": "chon-dat-hh-mwxdorl4",
+  "name": "chon dat hh",
+  "base": "con_chon_dat.character.json",
+  "updatedAt": "2026-11-26T09:56:59.176Z",
+  "items": [],
+  "expressions": [],
+  "face": {
+    "y": 0.45,
+    "z": 0.5,
+    "s": 0.9
+  },
+  "hiddenMeshes": []
+}
