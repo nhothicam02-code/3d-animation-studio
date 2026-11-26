@@ -20,16 +20,6 @@
       "dataPath": "characters/custom/lyly-custom-mwxnrig0.json",
       "thumbnail": "./characters/custom/thumbs/lyly-custom-mwxnrig0.png",
       "updatedAt": "2026-11-26T15:13:48.511Z"
-    },
-    {
-      "id": "mina-mwu7iczd",
-      "name": "mina",
-      "base": "g1test.character.json",
-      "items": 1,
-      "expressions": 1,
-      "dataPath": "characters/custom/mina-mwu7iczd.json",
-      "thumbnail": "./characters/custom/thumbs/mina-mwu7iczd.png",
-      "updatedAt": "2026-11-24T04:40:55.619Z"
     }
   ]
 }
