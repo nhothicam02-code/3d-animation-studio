@@ -45,23 +45,10 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
 .fprow .th{width:36px;height:36px;border-radius:7px;border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:10px;color:var(--muted)}.fprow .th img{width:100%;height:100%;object-fit:contain}
 .fprow.miss select{border-color:var(--gold)}
 .extabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 10px}.extabs button{padding:8px 6px}.extabs button.on{background:var(--accent);border-color:var(--accent);color:#171322}
-.rgbox{margin:0 0 12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.rgbox h2{margin:0 0 6px}
-.rgshape{margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px}.rgshape summary{cursor:pointer;font-size:12px;font-weight:600}.rgshape .sl{margin-top:6px}.rgshape .sl label{display:flex;justify-content:space-between;margin:0;font-size:11px}.rgshape input[type=range]{width:100%}.rgshape .row{margin-top:8px}.rgshape .row>button{flex:1;font-size:11px;padding:6px}.rggrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.rggrid button{display:flex;gap:7px;align-items:center;padding:7px 8px;font-size:12px}.rggrid i{width:10px;height:10px;border-radius:50%;flex:none}.rggrid b{margin-left:auto;color:var(--green)}.rggrid button.on{outline:2px solid var(--accent);outline-offset:1px}
-.center{grid-template-rows:minmax(0,1fr) auto auto}
-.dock{border-top:1px solid var(--line);background:var(--panel);max-height:46vh;overflow:auto;position:relative}
-.dkhead{position:sticky;top:0;z-index:4;background:var(--panel);padding:8px 12px 0;border-bottom:1px solid var(--line)}
-.dkbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.dkbar button{padding:5px 10px}.dkbar input[type=search]{width:150px;padding:6px 8px}.dkbar label{margin:0;display:flex;gap:5px;align-items:center;white-space:nowrap}
-.dkbar .chip{padding:4px 8px;font-size:11px}
-.rulerrow,.trk{display:grid;grid-template-columns:270px minmax(0,1fr);gap:0 10px}
-.rulerrow{margin-top:6px}.rulerrow canvas{height:26px;cursor:ew-resize;touch-action:none}
-#dkList{position:relative;padding:0 12px 8px}
-#dkHead{position:absolute;top:0;bottom:0;left:0;width:2px;margin-left:-1px;background:var(--green);opacity:.85;pointer-events:none;z-index:2}
-.trk{padding:6px 0;border-bottom:1px solid #2a2e3b;align-items:center}
-.th2{min-width:0}.l1{display:flex;gap:5px;align-items:center}.l1 b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#d7dae5}.trk.act .l1 b{color:var(--green)}.l1 b.miss{color:var(--gold);text-decoration:underline dotted}
-.l1 select{width:92px;flex:none;padding:3px 4px;font-size:11px}.l1 button,.l2 button{padding:2px 7px;font-size:12px}
-.l2{display:flex;gap:5px;align-items:center;margin-top:4px}.l2 input[type=range]{flex:1;min-width:0}.l2 input[type=number]{width:60px;flex:none;padding:4px}
-.lane{height:36px;background:#151720;border-radius:6px;touch-action:none;cursor:crosshair}
-@media(max-width:1000px){.rulerrow,.trk{grid-template-columns:minmax(0,1fr);gap:4px}.rulerrow .rsp{display:none}.dock{max-height:none}}
+.rggrid{display:grid;gap:8px}.rgrow{display:flex;gap:6px}
+.rgrow>[data-rg]{flex:1;display:flex;align-items:center;gap:8px;padding:11px 12px;text-align:left}.rgrow>[data-rg].on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.rgrow i{width:12px;height:12px;border-radius:50%;flex:none}.rgrow b{margin-left:auto;font-size:11px;color:var(--green)}
+#rgBox .test{width:100%;margin-top:8px}#rgBox .test.on{background:var(--accent);border-color:var(--accent);color:#171322}
 details.how{margin:8px 0;font-size:11px;color:var(--muted);line-height:1.55}details.how summary{cursor:pointer;color:#c2b5ff}details.how code{background:#151720;padding:1px 5px;border-radius:5px;color:#dfe2ee;font-size:11px}
 details.pc{border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:var(--panel2)}
 details.pc>summary{cursor:pointer;padding:9px 10px;display:flex;gap:8px;align-items:center;list-style:none}
@@ -119,15 +106,6 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
  <div id="stage"><video id="bgVideo" muted loop playsinline></video><div id="viewport"></div><div class="tag" id="stageTag">Đang khởi tạo…</div>
   <div class="spinbar"><label for="spin">Xoay 360°</label><input type="range" id="spin" min="0" max="360" step="0.1" value="0"><input class="num" type="number" id="spinNum" min="0" max="360" step="0.1" value="0"><label><input type="checkbox" id="auto"> Tự xoay</label><label><input type="checkbox" id="showBody" checked> Thân</label><button id="camReset" title="Đưa camera về chính diện">⌖</button></div></div>
  <div class="animbar"><b>Xem trước hoạt ảnh</b><select id="clipSel"><option value="">— T-pose (đứng yên) —</option></select><button id="playBtn" class="primary">▶ Phát</button><button id="pauseBtn">Ⅱ</button><button id="stopBtn">■ Dừng</button><label><input type="checkbox" id="loop" checked> Lặp</label><select class="sp" id="speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><span id="animStatus" class="muted"></span></div>
- <div id="ksDock" class="dock hide">
-  <div class="dkhead">
-   <div class="dkbar"><b>Timeline keyshape</b><button id="dkPlay" class="primary" title="Chạy / dừng">Ⅱ</button><button id="dkRestart" title="Về đầu">⟲</button><span id="dkTime" class="muted">0.00 / 1.50s</span><input type="search" id="dkSearch" placeholder="Tìm keyshape…" autocomplete="off"><label><input type="checkbox" id="dkOnly"> Chỉ keyshape có key</label></div>
-   <div class="dkbar" style="margin-top:6px"><div class="chips" id="dkParts"></div></div>
-   <div class="dkbar" style="margin-top:6px"><input id="dkAddName" list="morphNames" placeholder="Thêm keyshape theo tên…" autocomplete="off" style="max-width:260px"><button id="dkAdd">＋ Thêm</button></div>
-   <div class="rulerrow"><div class="rsp"></div><canvas id="dkRuler"></canvas></div>
-  </div>
-  <div id="dkList"><div id="dkRows"></div><i id="dkHead"></i></div>
- </div>
 </section>
 
 <aside class="right">
@@ -159,51 +137,34 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
  </div>
 <h2>Biểu cảm <small id="exCount"></small> <button id="exReload" class="quiet" style="float:right;padding:3px 8px;font-size:11px;text-transform:none" title="Quét lại thư mục faces/ trên GitHub">↻ Quét ảnh</button></h2>
   <div class="extabs"><button id="tabTex" class="on" data-extab="texture">🖼 Texture</button><button id="tabKey" data-extab="keyshape">🦴 Keyshape</button></div>
-  <div class="field"><div class="row"><select id="exSel"></select><button id="exNew">＋ Mới</button></div></div>
-  <div class="field hide" id="exPresetRow"><select id="exPreset"><option value="">✨ Tạo từ mẫu có sẵn…</option></select></div>
-  <div class="rgbox hide" id="rgBox">
-   <h2>🎯 Tự sinh biểu cảm từ vùng mặt</h2>
-   <div class="note" style="margin-top:-2px">Chọn 6 vùng bằng cách bấm ô rồi chạm lên đúng bộ phận trên mặt nhân vật (tự chuyển sang ô kế). Kéo thanh cỡ cho vòng màu vừa quanh bộ phận. Xong bấm ⚡ để tạo shape key + biểu cảm.</div>
+  <div id="rgBox" class="hide">
    <div class="rggrid" id="rgGrid"></div>
-   <div class="row" style="margin-top:8px"><div><label>Cỡ vùng đang chọn <span id="rgRV"></span></label><input type="range" id="rgR" min="2" max="60" step="0.5" value="20"></div></div>
-   <details class="rgshape" id="rgShapeBox" open><summary>📐 Hình dạng vùng (elip · xoay · cong)</summary>
-    <div id="rgShape"></div>
-    <div class="row"><button id="rgMirror" title="Sao chép hình dạng sang vùng đối diện (lật ngược góc xoay)">↔ Đối xứng sang bên kia</button><button id="rgShapeReset" title="Về hình dạng mặc định của bộ phận này">↺ Hình mặc định</button></div>
-   </details>
-   <label style="display:flex;gap:7px;align-items:center;margin:8px 0 0;font-size:12px;cursor:pointer"><input type="checkbox" id="rgShow" checked style="width:auto;margin:0"> Hiện vòng vùng trên mặt</label>
-   <label style="display:flex;gap:7px;align-items:center;margin:6px 0 0;font-size:12px;cursor:pointer"><input type="checkbox" id="rgPreset" checked style="width:auto;margin:0"> Tạo luôn biểu cảm mẫu (Bình thường, Vui, Buồn, Giận, Ngạc nhiên…)</label>
-   <label style="display:flex;gap:7px;align-items:center;margin:6px 0 8px;font-size:12px;cursor:pointer"><input type="checkbox" id="rgSave" checked style="width:auto;margin:0"> Lưu nhân vật lên GitHub sau khi tạo (để Studio dùng được)</label>
-   <div class="row"><button id="rgMake" class="primary" style="flex:2">⚡ Tạo biểu cảm</button><button id="rgClear" class="danger" style="flex:1">Xóa vùng</button></div>
-   <div class="status" id="rgStatus">Bấm một ô ở trên rồi chạm lên mặt nhân vật. Cần ít nhất: 2 mắt (hoặc 2 mày) và mũi hoặc miệng.</div>
+   <button id="rgBlink" class="test">Chớp mắt thử</button>
+   <button id="rgTalk" class="test">Nói chuyện thử</button>
+   <button id="rgSaveBtn" class="test primary">☁ Lưu dữ liệu biểu cảm</button>
+   <div class="status" id="rgStatus" aria-live="polite">Chọn vùng nào cũng được, không bắt buộc đủ.</div>
   </div>
-  <datalist id="morphNames"></datalist>
+  <div id="texPane">
+  <div class="field"><div class="row"><select id="exSel"></select><button id="exNew">＋ Mới</button></div></div>
   <div class="editor off" id="exEd">
    <div class="field"><label>Tên biểu cảm</label><input id="exName" maxlength="40" placeholder="Ví dụ: Vui, Buồn, Cười ngượng…"></div>
    <canvas id="exCv" class="chk" width="512" height="512"></canvas>
-   <div class="row"><button id="exPlay" title="Chạy / dừng">Ⅱ</button><button id="exRestart" title="Chạy lại từ đầu">⟲</button><label id="exLoopLbl" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exLoop" checked> <span id="exLoopTxt">Lặp chuỗi ảnh</span></label><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exShow" checked> Hiện trên đầu</label></div>
-   <div id="exTime" class="hide">
-    <div class="row" style="margin-top:10px"><div><label>Thời lượng (giây)</label><input type="number" id="ksDur" min="0.1" step="0.1" value="1.5"></div><div><label>Nội suy giữa keyframe</label><select id="ksEase"><option value="linear">Tuyến tính</option><option value="smooth">Mượt</option><option value="step">Bậc thang</option></select></div></div>
-   </div>
+   <div class="row"><button id="exPlay" title="Chạy / dừng">Ⅱ</button><button id="exRestart" title="Chạy lại từ đầu">⟲</button><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="exShow" checked> Hiện trên đầu</label></div>
    <div id="exTex"><h2 style="margin-top:14px">7 danh mục</h2><div class="note" style="margin-top:-2px">Mỗi danh mục tự chọn nguồn (tệp máy / video / thư mục GitHub), FPS, vị trí X·Y·Z, xoay X·Y·Z và lặp. Nền da nằm dưới cùng, rồi tới mày, mắt, mũi, miệng.</div><div id="exParts"></div></div>
-   <div id="exKey" class="hide">
-    <h2 style="margin-top:14px">Mặt nạ nền <small>(chuỗi texture, nằm dưới cùng)</small></h2><div id="ksMask"></div>
-    <div class="note" id="ksNote"></div>
-   </div>
    <div class="row" style="margin-top:10px"><button id="exSave" class="primary" style="flex:2">☁ Lưu biểu cảm</button><button id="exDup" style="flex:1">Nhân bản</button><button id="exDel" class="danger" style="flex:1">Xóa</button></div>
   </div>
   <h2>Vị trí mặt trên đầu</h2>
   <div class="grid3"><div><div class="axis">Cao</div><input type="number" id="fitY" step="0.01" value="0.45"></div><div><div class="axis">Ra trước</div><input type="number" id="fitZ" step="0.01" value="0.5"></div><div><div class="axis">Cỡ</div><input type="number" id="fitS" step="0.02" min="0.05" value="0.9"></div></div>
-  <div class="note">Tính theo chiều cao đầu; áp dụng cho mọi biểu cảm của nhân vật này và được lưu cùng nhân vật. Với biểu cảm Keyshape, tấm mặt nạ nền cũng dùng vị trí này và bị che bởi các bộ phận 3D nằm phía trước nó — chỉnh “Ra trước” sao cho nó sát mặt.</div>
+  <div class="note">Tính theo chiều cao đầu; áp dụng cho mọi biểu cảm của nhân vật này và được lưu cùng nhân vật.</div>
   <details class="how"><summary>Cách dùng tab Texture</summary>
    Mở một danh mục (Nền da, Lông mày trái/phải, Mắt trái/phải, Mũi, Miệng) rồi chọn nguồn:<br>
    • <b>Tệp máy</b>: chọn nhiều ảnh PNG nền trong suốt, hoặc 1 video. Với video: bấm <b>✂ Chọn vùng cắt</b> rồi kéo khung trên ảnh xem thử để chỉ lấy phần cần dùng, đặt <b>FPS tách</b>, chọn cách <b>xóa nền</b> (tự nhận màu 4 góc, hoặc bấm vào ảnh xem thử để nhỏ giọt màu nền) rồi bấm “Tách thành ảnh PNG”. Nên quay trên nền phẳng một màu (xanh lá, trắng, đen…); video webm có sẵn kênh trong suốt thì chọn “Không xóa”.<br>
    • <b>GitHub</b>: chọn thư mục có sẵn trong <code>faces/&lt;danh mục&gt;/&lt;tên biểu cảm&gt;/</code> (ảnh <code>01.png</code>, <code>02.png</code>…).<br>
    Sau đó đặt <b>FPS phát</b>, <b>Lặp</b>, <b>vị trí X·Y·Z</b> (đơn vị = cỡ mặt), <b>xoay X·Y·Z</b> (độ) và tỉ lệ, rồi bấm <b>▶ Lưu &amp; chạy</b> để thấy chuỗi ảnh chạy tại vị trí đó trên mặt. Muốn đẩy ảnh lên GitHub ngay thì bấm <b>☁ Lưu khung lên GitHub</b> trong danh mục (ảnh vào <code>faces/&lt;danh mục&gt;/&lt;mã biểu cảm&gt;/</code>). Khi ưng ý bấm <b>☁ Lưu biểu cảm</b>: các ảnh vừa tạo sẽ được tải lên <code>faces/&lt;danh mục&gt;/&lt;mã biểu cảm&gt;/</code> và cấu hình lưu cùng nhân vật.<br>
    Ô vuông xem trước chỉ hiện X, Y, xoay Z và tỉ lệ; xoay X/Y chỉ thấy trên mặt 3D.</details>
-  <details class="how"><summary>Cách dùng tab Keyshape</summary>
-   Dùng khi model 3D có keyshape (shape key / morph target) cho từng bộ phận. Khung <b>Timeline keyshape</b> dưới cảnh 3D liệt kê mọi keyshape của model, mỗi keyshape một hàng: thanh trượt cường độ 0→1 (số thập phân) và một timeline riêng. Cách làm giống Blender: bấm thước hoặc chạm/kéo chỗ trống trên lane để đặt <b>đầu đọc</b>, rồi <b>kéo thanh trượt</b> (hoặc nhập số) để đặt key tại đầu đọc; nút ◆ thêm key giữ nguyên giá trị hiện tại, ◇✕ xóa key tại đầu đọc. Trên lane: <b>chạm đúp chỗ trống</b> = thêm key, <b>kéo ◆</b> = đổi thời điểm, <b>chạm đúp vào ◆</b> = xóa. Nhiều giai đoạn (đóng mắt → mở → hé nửa) = nhiều key, ví dụ 1 → 0 → 0.5. Dùng ô tìm, nhóm bộ phận và “Chỉ keyshape có key” để lọc danh sách dài. Mặt nạ nền vẫn chọn từ chuỗi texture.</details>
   <div class="status" id="exStatus">Biểu cảm được lưu cùng nhân vật (characters/custom/…json) để dùng lại về sau.</div>
   <div class="pbar hide" id="exProg"><i></i><span></span></div>
+  </div>
   </aside>
 </main>
 
@@ -214,8 +175,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {mapClip} from './js/retarget.js';
 import * as K from './js/character-kit.js';
 import * as F from './js/face-kit.js';
-import {KS_PRESETS, buildPreset} from './js/face-presets.js';
-import * as FRG from './js/face-regions.js';   // sinh shape key biểu cảm từ 6 vùng mặt
+import * as FRG from './js/face-regions.js';   // sinh shape key biểu cảm từ các vùng mặt
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -258,7 +218,7 @@ function setupScene() {
     const r = renderer.domElement.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    if (RG.picking && !$('rgBox').classList.contains('hide')) { rgPick(ray); return; }
+    if (RG.picking) { rgPick(ray); return; }
     const meshes = [];
     for (const g of S.groups) for (const p of g.pieces) if (p._rt && p._rt.holder.visible) p._rt.content.traverse(o => { if (o.isMesh) meshes.push(o); });
     const hit = ray.intersectObjects(meshes, false)[0];
@@ -328,7 +288,7 @@ async function loadBase(name) {
   TF = mountTexFace(rig); if (TF) TF.setFit(S.fit);
   RG.mesh = null;
   if (S.regions) { try { const r = FRG.applyRegions(obj, S.regions, null); RG.mesh = r ? r.mesh : null; } catch (err) { console.warn('Vùng mặt:', err); } }
-  onMorphs(SH.setModel(obj));
+  SH.setModel(obj); rgStop(); rgRender();
   renderParts(); setBodyVisible($('showBody').checked);
   tag(name + ' · ' + rig.bones.length + ' xương' + (rig.missing.length ? ' · thiếu: ' + rig.missing.map(k => K.BONE_LABELS[k]).join(', ') : ''));
   renderOutfit(); fillEditor(); updateSelBox();
@@ -605,6 +565,7 @@ $('speed').onchange = () => { if (S.action) S.action.timeScale = parseFloat($('s
 const INDEX = 'characters/custom/index.json';
 function buildDoc() {
   const name = $('charName').value.trim();
+  syncFaceData();
   return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups), expressions: JSON.parse(JSON.stringify(S.expr)), face: {...S.fit}, hiddenMeshes: [...S.hiddenMeshes], faceRegions: S.regions ? JSON.parse(JSON.stringify(S.regions)) : undefined};
 }
 function thumbData() {
@@ -712,12 +673,9 @@ $('newBtn').onclick = () => {
 $('baseSel').onchange = () => { S.regions = null; loadBase($('baseSel').value).catch(e => tag('Lỗi tải nhân vật: ' + e.message, true)); };
 $('charName').oninput = dirty;
 
-/* ---------------- Biểu cảm: 2 tab — Texture (chuỗi ảnh PNG) và Keyshape (timeline kiểu Blender) ---------------- */
+/* ---------------- Biểu cảm: tab Texture (chuỗi ảnh PNG) và tab Keyshape (chọn vùng mặt) ---------------- */
 // Biểu cảm thuộc về nhân vật: lưu trong characters/custom/<id>.json → "expressions", dùng lại được về sau.
-//  • Texture : {mode:'texture',  parts:{mask, browL, … : {set, fps}}}            (mặt nạ vẽ dưới cùng)
-//  • Keyshape: {mode:'keyshape', duration, ease, loop, parts:{mask}, tracks:{<tên keyshape>:{part?, keys:[{t,v}…]}}}
-const EX = {lib: F.emptyLib(), src: '', cur: null, isNew: false, edited: false, t: 0, paused: false, sig: null, mode: 'texture', morphs: [],
-  rows: [], dkPart: 'all', dkQ: '', dkOnly: false, dirtyLanes: true, drawnT: -1, lx: 0, lw: 0, lwc: -1};
+const EX = {lib: F.emptyLib(), src: '', cur: null, isNew: false, edited: false, t: 0, paused: false, sig: null, mode: 'texture'};
 const exSay = (m, t) => say($('exStatus'), m, t);
 const exEdited = () => { EX.edited = true; dirty(); };
 function setProg(f, label) { const b = $('exProg'); b.classList.remove('hide'); const pc = Math.round(Math.min(1, Math.max(0, f)) * 100); b.firstElementChild.style.width = pc + '%'; b.lastElementChild.textContent = (label ? label + ' · ' : '') + pc + '%'; }
@@ -732,278 +690,39 @@ function exNameSet(v, src) {
 const exClone = e => JSON.parse(JSON.stringify(e));
 const exNewId = name => K.slug(name || 'bieu-cam') + '-' + Date.now().toString(36);
 const exGuard = () => !EX.cur || !EX.edited || confirm('Bỏ thay đổi chưa lưu của biểu cảm đang sửa?');
-const r2 = v => Math.round(v * 100) / 100;
-const r3 = v => Math.round(v * 1000) / 1000;
-const c01 = v => Math.min(1, Math.max(0, v));
-const syncPlayBtn = () => { $('exPlay').textContent = EX.paused ? '▶' : 'Ⅱ'; $('dkPlay').textContent = EX.paused ? '▶' : 'Ⅱ'; };
-const togglePlay = () => { EX.paused = !EX.paused; EX.dirtyLanes = true; syncPlayBtn(); };
-
-/** Model vừa nạp xong: cập nhật danh sách keyshape (gợi ý tên + danh sách track) rồi vẽ lại. */
-function onMorphs(names) {
-  EX.morphs = names || [];
-  $('morphNames').innerHTML = EX.morphs.map(n => '<option value="' + esc(n) + '"></option>').join('');
-  exRender();
-}
-function partRow(p, e) {
-  const cfg = (e.parts && e.parts[p.id]) || {}, sets = EX.lib[p.id] || {}, names = Object.keys(sets), frames = cfg.set ? (sets[cfg.set] || []) : [], miss = cfg.set && !sets[cfg.set];
-  return '<div class="fprow' + (miss ? ' miss' : '') + '"><span>' + p.label + '</span><div class="mid"><select data-part="' + p.id + '"><option value="">— không —</option>' +
-    names.map(n => '<option value="' + esc(n) + '"' + (n === cfg.set ? ' selected' : '') + '>' + esc(n) + ' (' + sets[n].length + ')</option>').join('') +
-    (miss ? '<option value="' + esc(cfg.set) + '" selected>' + esc(cfg.set) + ' — không thấy trên git</option>' : '') + '</select>' +
-    (frames.length > 1 ? '<input type="number" data-fps="' + p.id + '" min="1" max="60" step="1" value="' + (cfg.fps || F.DEFAULT_FPS) + '" title="Khung hình / giây">' : '') +
-    '</div><div class="th chk">' + (frames.length ? '<img data-path="' + esc(frames[0]) + '" alt="">' : '') + '</div></div>';
-}
-function ksSync() { const c = EX.cur; if (c) $('ksDur').value = r2(c.duration || F.exprDuration(c)); }
+const syncPlayBtn = () => { $('exPlay').textContent = EX.paused ? '▶' : 'Ⅱ'; };
+const togglePlay = () => { EX.paused = !EX.paused; syncPlayBtn(); };
 
 function exRender() {
   const e = EX.cur, ks = EX.mode === 'keyshape';
-  $('exPresetRow').classList.toggle('hide', !ks); $('rgBox').classList.toggle('hide', !ks); if (!ks) RG.picking = false;
-  const list = S.expr.filter(x => modeOf(x) === EX.mode);
+  $('rgBox').classList.toggle('hide', !ks); $('texPane').classList.toggle('hide', ks);
+  $('exCount').classList.toggle('hide', ks); $('exReload').classList.toggle('hide', ks);
   $('tabTex').classList.toggle('on', !ks); $('tabKey').classList.toggle('on', ks);
+  if (ks) return;
+  const list = S.expr.filter(x => modeOf(x) === 'texture');
   $('exCount').textContent = '(' + list.length + ')';
   $('exSel').innerHTML = '<option value="">— chọn biểu cảm —</option>' + list.map(x => '<option value="' + esc(x.id) + '"' + (e && e.id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') +
     (e && EX.isNew ? '<option value="' + esc(e.id) + '" selected>' + esc(e.name || 'Biểu cảm mới') + ' (chưa lưu)</option>' : '');
   $('exEd').classList.toggle('off', !e);
-  $('exTex').classList.toggle('hide', ks); $('exKey').classList.toggle('hide', !ks); $('exTime').classList.toggle('hide', !ks);
-  $('exLoopTxt').textContent = 'Lặp biểu cảm'; $('exLoopLbl').classList.toggle('hide', !ks);
   EX.sig = null;
-  if (!e) {
-    $('exParts').innerHTML = ''; $('ksMask').innerHTML = '';
-    $('exCv').getContext('2d').clearRect(0, 0, 512, 512); renderDock(); return;
-  }
-  $('exName').value = e.name; $('exLoop').checked = e.loop !== false;
-  const noImg = !F.libCount(EX.lib) ? '<div class="note">Chưa thấy ảnh nào trong thư mục <b>faces/</b> trên GitHub — xem “Cách thêm ảnh biểu cảm” bên dưới, rồi bấm “↻ Quét ảnh”.</div>' : '';
-  if (!ks) {
-    prepTex(e);
-    $('exParts').innerHTML = PARTS.map(p => partCard(p, e)).join('');
-    $('ksMask').innerHTML = '';
-  } else {
-    $('exParts').innerHTML = '';
-    $('ksMask').innerHTML = noImg + partRow(F.FACE_PARTS.find(p => p.id === 'mask'), e);
-    $('ksNote').textContent = (EX.morphs.length ? 'Model đang dùng có ' + EX.morphs.length + ' keyshape.' : 'Model hiện tại chưa có keyshape nào — vẫn thêm keyshape theo tên để dựng keyframe trước được.') +
-      ' Timeline từng keyshape nằm ở khung bên dưới cảnh 3D.';
-    $('ksEase').value = e.ease || 'smooth';
-    ksSync();
-  }
+  if (!e) { $('exParts').innerHTML = ''; $('exCv').getContext('2d').clearRect(0, 0, 512, 512); return; }
+  $('exName').value = e.name;
+  prepTex(e);
+  $('exParts').innerHTML = PARTS.map(p => partCard(p, e)).join('');
   $('exEd').querySelectorAll('img[data-path]').forEach(im => K.setSrc(im, im.dataset.path));
-  if (!ks) Object.keys(EX.vid).forEach(vidPreview);
-  renderDock();
+  Object.keys(EX.vid).forEach(vidPreview);
 }
 
-/* ----- Keyshape: dữ liệu track ----- */
-const KP = 9, EPS = 0.015;
-const trk = (name, make) => { const c = EX.cur; if (!c) return null; if (!c.tracks) c.tracks = {}; return c.tracks[name] || (make ? (c.tracks[name] = {keys: []}) : null); };
-const trackKeys = name => { const t = EX.cur && EX.cur.tracks && EX.cur.tracks[name]; return t ? t.keys : []; };
-const partOf = name => { const t = EX.cur && EX.cur.tracks && EX.cur.tracks[name]; return (t && t.part) || F.guessPart(name); };
-const sortKeys = name => { const t = trk(name); if (t) t.keys.sort((a, b) => a.t - b.t); };
-const maxKeyT = c => { let m = 0; if (c.tracks) for (const t of Object.values(c.tracks)) for (const k of (t.keys || [])) m = Math.max(m, +k.t || 0); return m; };
-const natCmp = (a, b) => a.localeCompare(b, 'en', {numeric: true, sensitivity: 'base'});
-function trackNames() {
-  const s = new Set(EX.morphs);
-  if (EX.cur && EX.cur.tracks) Object.keys(EX.cur.tracks).forEach(n => s.add(n));
-  return [...s].sort(natCmp);
-}
-function growDur() { const c = EX.cur; if (!c) return; c.duration = F.exprDuration(c); ksSync(); }
-function keysChanged() { EX.dirtyLanes = true; growDur(); exEdited(); }
-/** Sau khi xóa key: nếu track hết key và không thuộc model thì bỏ luôn; vẽ lại danh sách khi bộ lọc “chỉ có key” bật. */
-function afterDelete(name) {
-  keysChanged();
-  if (!trackKeys(name).length) {
-    if (!EX.morphs.includes(name) && EX.cur.tracks) { delete EX.cur.tracks[name]; renderDock(); }
-    else if (EX.dkOnly) renderDock();
-  }
-}
-/** Đặt giá trị của keyshape tại đầu đọc: có key ở đó thì sửa, chưa có thì thêm (như tự động chèn key của Blender). */
-function setKeyAtPlayhead(name, v) {
-  const t = r2(F.localTime(EX.cur, EX.t)), tr = trk(name, true), k = tr.keys.find(x => Math.abs(x.t - t) < EPS);
-  v = r3(c01(v));
-  if (k) k.v = v; else { tr.keys.push({t, v}); sortKeys(name); }
-  keysChanged();
-}
-const valueAtPlayhead = name => { const v = F.evalKeys(trackKeys(name), F.localTime(EX.cur, EX.t), EX.cur.ease); return v == null ? 0 : v; };
-
-/* ----- Keyshape: khung timeline (dock) ----- */
-const partOpts = '<option value="">— chưa gán —</option>' + F.SHAPE_PARTS.map(p => '<option value="' + p.id + '">' + p.label + '</option>').join('');
-function renderDock() {
-  const show = EX.mode === 'keyshape' && !!EX.cur;
-  $('ksDock').classList.toggle('hide', !show);
-  EX.rows = [];
-  if (!show) { $('dkRows').innerHTML = ''; return; }
-  $('dkParts').innerHTML = [['all', 'Tất cả'], ...F.SHAPE_PARTS.map(p => [p.id, p.label]), ['none', 'Chưa gán']]
-    .map(([id, l]) => '<button class="chip' + (EX.dkPart === id ? ' active' : '') + '" data-dkp="' + id + '">' + esc(l) + '</button>').join('');
-  const q = fold(EX.dkQ).trim();
-  const all = trackNames();
-  const names = all.filter(n => {
-    if (q && !fold(n).includes(q)) return false;
-    if (EX.dkOnly && !trackKeys(n).length) return false;
-    const p = partOf(n);
-    return EX.dkPart === 'all' || (EX.dkPart === 'none' ? !p : p === EX.dkPart);
-  });
-  $('dkRows').innerHTML = names.length ? names.map(n => {
-    const ok = !EX.morphs.length || EX.morphs.includes(n);
-    return '<div class="trk"><div class="th2"><div class="l1"><b class="' + (ok ? '' : 'miss') + '" title="' + esc(n) + (ok ? '' : ' — không có trên model') + '">' + esc(n) + '</b><select data-tpart title="Bộ phận (để nhóm/lọc)">' + partOpts + '</select><button class="danger" data-tdel title="Xóa hết key của keyshape này">✕</button></div>' +
-      '<div class="l2"><input type="range" data-tr min="0" max="1" step="0.01" value="0" title="Cường độ 0–1 (kéo = đặt key tại đầu đọc)"><input type="number" data-tn min="0" max="1" step="0.01" value="0"><button data-tkey title="Thêm / cập nhật key tại đầu đọc">◆</button><button data-tkdel title="Xóa key tại đầu đọc">◇✕</button></div></div><canvas class="lane"></canvas></div>';
-  }).join('') : '<div class="empty" style="margin:10px 0">' + (all.length ? 'Không có keyshape nào khớp bộ lọc.' : 'Model hiện tại chưa có keyshape nào. Nhập tên ở ô “Thêm keyshape theo tên” để dựng keyframe trước.') + '</div>';
-  $('dkRows').querySelectorAll('.trk').forEach((el, i) => {
-    const r = {name: names[i], el, sl: el.querySelector('[data-tr]'), num: el.querySelector('[data-tn]'), cv: el.querySelector('canvas.lane'), ps: el.querySelector('[data-tpart]'), last: ''};
-    r.ps.value = partOf(r.name); r.cv._row = r; el._row = r; EX.rows.push(r);
-  });
-  dkMeasure();
-}
-function dkMeasure() {
-  const rc = $('dkRuler').getBoundingClientRect(), lc = $('dkList').getBoundingClientRect();
-  EX.lx = rc.left - lc.left; EX.lw = rc.width; EX.lwc = $('dkRuler').clientWidth; EX.dirtyLanes = true;
-}
-const kx = (cv, t, D) => KP + t / D * (cv.clientWidth - 2 * KP);
-const tOf = (cv, x, D) => r2(Math.min(D, Math.max(0, (x - KP) / Math.max(1, cv.clientWidth - 2 * KP) * D)));
-const gridStep = D => [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60].find(s => D / s <= 12) || 60;
-function fitCanvas(cv) {
-  const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return null;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return {g, w, h};
-}
-function drawRuler(lt, D) {
-  const cv = $('dkRuler'), f = fitCanvas(cv); if (!f) return;
-  const {g, w, h} = f, step = gridStep(D), dec = step < 0.1 ? 2 : step < 1 ? 1 : 0;
-  g.clearRect(0, 0, w, h); g.fillStyle = '#9da3b4'; g.font = '10px system-ui,sans-serif'; g.strokeStyle = '#4a5066'; g.lineWidth = 1; g.beginPath();
-  for (let i = 0; i * step <= D + 1e-6; i++) { const x = Math.round(kx(cv, i * step, D)) + 0.5; g.moveTo(x, h - 7); g.lineTo(x, h); g.fillText((i * step).toFixed(dec) + 's', x + 3, h - 10); }
-  g.stroke();
-  const x = kx(cv, lt, D);
-  g.fillStyle = '#66d6a3'; g.beginPath(); g.moveTo(x - 5, 0); g.lineTo(x + 5, 0); g.lineTo(x, 8); g.closePath(); g.fill(); g.fillRect(x - 0.75, 0, 1.5, h);
-}
-function drawLane(r, lt) {
-  const f = fitCanvas(r.cv); if (!f) return;
-  const {g, w, h} = f, e = EX.cur, D = F.exprDuration(e), keys = trackKeys(r.name), step = gridStep(D);
-  g.clearRect(0, 0, w, h);
-  g.strokeStyle = '#242836'; g.lineWidth = 1; g.beginPath();
-  for (let i = 0; i * step <= D + 1e-6; i++) { const x = Math.round(kx(r.cv, i * step, D)) + 0.5; g.moveTo(x, 0); g.lineTo(x, h); }
-  g.stroke();
-  if (!keys.length) return;
-  g.strokeStyle = 'rgba(154,131,255,.6)'; g.lineWidth = 1.5; g.beginPath();
-  const N = Math.max(2, Math.floor((w - 2 * KP) / 3));
-  for (let i = 0; i <= N; i++) { const t = D * i / N, X = kx(r.cv, t, D), Y = h - 4 - F.evalKeys(keys, t, e.ease) * (h - 8); if (i) g.lineTo(X, Y); else g.moveTo(X, Y); }
-  g.stroke();
-  for (const k of keys) {
-    const X = kx(r.cv, k.t, D), Y = h / 2;
-    g.fillStyle = EX.paused && Math.abs(k.t - lt) < EPS ? '#ffffff' : '#ffd166';
-    g.beginPath(); g.moveTo(X, Y - 6); g.lineTo(X + 6, Y); g.lineTo(X, Y + 6); g.lineTo(X - 6, Y); g.closePath(); g.fill();
-  }
-}
-/** Mỗi khung hình: cập nhật thanh trượt/số, thước thời gian, đầu đọc và (khi cần) các lane. */
-function dkTick(vals) {
-  const e = EX.cur, D = F.exprDuration(e), lt = F.localTime(e, EX.t);
-  const tx = lt.toFixed(2) + ' / ' + D.toFixed(2) + 's';
-  if ($('dkTime').textContent !== tx) $('dkTime').textContent = tx;
-  if ($('dkRuler').clientWidth !== EX.lwc) dkMeasure();
-  for (const r of EX.rows) {
-    const v = vals[r.name] == null ? 0 : vals[r.name], vs = v.toFixed(2);
-    if (r.last === vs) continue;
-    r.last = vs;
-    if (document.activeElement !== r.sl) r.sl.value = v;
-    if (document.activeElement !== r.num) r.num.value = vs;
-    r.el.classList.toggle('act', v > 0.001);
-  }
-  drawRuler(lt, D);
-  $('dkHead').style.transform = 'translateX(' + (EX.lx + kx($('dkRuler'), lt, D)) + 'px)';
-  if (EX.dirtyLanes || (EX.paused && EX.drawnT !== lt)) { for (const r of EX.rows) drawLane(r, lt); EX.dirtyLanes = false; EX.drawnT = lt; }
-}
-/** Chạy mỗi khung hình của vòng lặp 3D: vẽ bản xem trước + cập nhật mặt trên đầu + đẩy keyshape vào model. */
+/** Chạy mỗi khung hình của vòng lặp 3D: vẽ bản xem trước + cập nhật mặt trên đầu + chạy thử chớp mắt / nói. */
 function faceTick(dt) {
   rgMarkers();
+  rgTestTick(dt);
   if (!EX.paused) EX.t += dt;
-  const e = EX.cur, v2 = !!e && e.v === 2, ks = !!e && !v2 && F.exprMode(e) === 'keyshape', on = !!e && $('exShow').checked;
+  const e = EX.cur, v2 = !!e && e.v === 2, on = !!e && $('exShow').checked;
   if (v2) drawTexPreview(e); else if (e) EX.sig = F.renderFace($('exCv'), e, EX.lib, EX.t, EX.sig);
   if (S.face) S.face.update(on && !v2 ? e : null, EX.lib, EX.t);
   if (TF) TF.update(on && v2 ? e : null, EX.t);
-  const vals = ks ? F.shapeValues(e, EX.t) : null;
-  if (ks && on) SH.apply(vals); else SH.release();
-  if (ks) dkTick(vals);
 }
-
-/* ----- Keyshape: thao tác trên danh sách ----- */
-$('dkRows').addEventListener('input', e => {
-  const t = e.target, r = t.closest && t.closest('.trk') && t.closest('.trk')._row; if (!r || !EX.cur) return;
-  if (!t.hasAttribute('data-tr') && !t.hasAttribute('data-tn')) return;
-  const v = parseFloat(t.value); if (!Number.isFinite(v)) return;
-  if (!EX.paused) { EX.paused = true; syncPlayBtn(); }
-  const cv = c01(v);
-  if (t.hasAttribute('data-tr')) r.num.value = r2(cv); else r.sl.value = cv;
-  r.last = cv.toFixed(2);
-  setKeyAtPlayhead(r.name, cv);
-});
-$('dkRows').addEventListener('change', e => {
-  const t = e.target, r = t.closest && t.closest('.trk') && t.closest('.trk')._row; if (!r || !EX.cur) return;
-  if (t.hasAttribute('data-tpart')) {
-    const tr = trk(r.name, true);
-    if (t.value) tr.part = t.value; else delete tr.part;
-    exEdited(); if (EX.dkPart !== 'all') renderDock();
-  } else if (t.hasAttribute('data-tn')) r.num.value = r2(c01(parseFloat(t.value) || 0));
-});
-$('dkRows').addEventListener('click', e => {
-  const b = e.target.closest && e.target.closest('button'), r = b && b.closest('.trk') && b.closest('.trk')._row; if (!r || !EX.cur) return;
-  if (b.hasAttribute('data-tkey')) { if (!EX.paused) { EX.paused = true; syncPlayBtn(); } setKeyAtPlayhead(r.name, valueAtPlayhead(r.name)); }
-  else if (b.hasAttribute('data-tkdel')) {
-    const tr = trk(r.name), t = F.localTime(EX.cur, EX.t), i = tr ? tr.keys.findIndex(k => Math.abs(k.t - t) < EPS) : -1;
-    if (i >= 0) { tr.keys.splice(i, 1); afterDelete(r.name); }
-  } else if (b.hasAttribute('data-tdel')) {
-    const n = trackKeys(r.name).length;
-    if (n > 1 && !confirm('Xóa hết ' + n + ' key của “' + r.name + '”?')) return;
-    if (EX.cur.tracks) delete EX.cur.tracks[r.name];
-    keysChanged(); renderDock();
-  }
-});
-$('dkParts').addEventListener('click', e => { const b = e.target.closest('[data-dkp]'); if (b) { EX.dkPart = b.dataset.dkp; renderDock(); } });
-$('dkSearch').oninput = e => { EX.dkQ = e.target.value; renderDock(); };
-$('dkOnly').onchange = e => { EX.dkOnly = e.target.checked; renderDock(); };
-function addTrackByName() {
-  const n = $('dkAddName').value.trim(); if (!n || !EX.cur) return;
-  trk(n, true); EX.dkOnly = false; $('dkOnly').checked = false; EX.dkPart = 'all'; EX.dkQ = ''; $('dkSearch').value = '';
-  $('dkAddName').value = ''; exEdited(); renderDock();
-}
-$('dkAdd').onclick = addTrackByName;
-$('dkAddName').onkeydown = e => { if (e.key === 'Enter') addTrackByName(); };
-
-/* ----- Keyshape: chạm/kéo trên lane và thước ----- */
-let KD = null, KTAP = null, RS = false;
-const kpos = (cv, ev) => { const r = cv.getBoundingClientRect(); return {x: ev.clientX - r.left, y: ev.clientY - r.top}; };
-function scrubTo(cv, x, D) { EX.paused = true; syncPlayBtn(); EX.t = Math.min(D - 0.001, tOf(cv, x, D)); }
-$('dkRows').addEventListener('pointerdown', ev => {
-  const cv = ev.target.closest && ev.target.closest('canvas.lane'), r = cv && cv._row; if (!r || !EX.cur) return;
-  ev.preventDefault();
-  const D = F.exprDuration(EX.cur), {x} = kpos(cv, ev), keys = trackKeys(r.name);
-  let hit = null, best = 10;
-  for (const k of keys) { const d = Math.abs(kx(cv, k.t, D) - x); if (d < best) { best = d; hit = k; } }
-  const now = performance.now(), dbl = !!KTAP && now - KTAP.at < 350 && KTAP.name === r.name && Math.abs(KTAP.x - x) < 14;
-  KTAP = dbl ? null : {at: now, x, name: r.name};
-  if (dbl) {                       // chạm đúp: xóa key đang trỏ vào, hoặc thêm key mới tại vị trí đó
-    const tr = trk(r.name, true);
-    if (hit) { tr.keys = tr.keys.filter(k => k !== hit); afterDelete(r.name); }
-    else {
-      const t = tOf(cv, x, D), cur = F.evalKeys(tr.keys, t, EX.cur.ease);
-      tr.keys.push({t, v: r3(cur == null ? 0 : cur)}); sortKeys(r.name); EX.paused = true; syncPlayBtn(); EX.t = Math.min(D - 0.001, t); keysChanged();
-    }
-    return;
-  }
-  try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* bỏ qua */ }
-  KD = {cv, r, key: hit, D, moved: false};
-  if (hit) { EX.paused = true; syncPlayBtn(); EX.t = Math.min(D - 0.001, hit.t); EX.dirtyLanes = true; } else scrubTo(cv, x, D);
-});
-$('dkRows').addEventListener('pointermove', ev => {
-  if (!KD) return;
-  const {cv, key, D} = KD, {x} = kpos(cv, ev);
-  if (key) { key.t = tOf(cv, x, D); KD.moved = true; EX.t = Math.min(D - 0.001, key.t); EX.dirtyLanes = true; } else scrubTo(cv, x, D);
-});
-const kEnd = () => {
-  if (!KD) return;
-  if (KD.key && KD.moved) { sortKeys(KD.r.name); keysChanged(); }
-  KD = null;
-};
-$('dkRows').addEventListener('pointerup', kEnd); $('dkRows').addEventListener('pointercancel', kEnd);
-const rulerSeek = ev => { const cv = $('dkRuler'); if (EX.cur) scrubTo(cv, kpos(cv, ev).x, F.exprDuration(EX.cur)); };
-$('dkRuler').addEventListener('pointerdown', ev => { ev.preventDefault(); try { $('dkRuler').setPointerCapture(ev.pointerId); } catch (err) { /* bỏ qua */ } RS = true; rulerSeek(ev); });
-$('dkRuler').addEventListener('pointermove', ev => { if (RS) rulerSeek(ev); });
-$('dkRuler').addEventListener('pointerup', () => { RS = false; }); $('dkRuler').addEventListener('pointercancel', () => { RS = false; });
 
 /* ================= Texture v2: 7 danh mục — mỗi danh mục có nguồn, FPS, vị trí & xoay riêng ================= */
 // Biểu cảm texture (v:2): {v:2, mode:'texture', loop, parts:{}, layers:{ skin|browL|browR|eyeL|eyeR|nose|mouth :
@@ -1021,6 +740,8 @@ const PARTS = [
 const PART = Object.fromEntries(PARTS.map(p => [p.id, p]));
 Object.assign(EX, {local: {}, t0: {}, vid: {}, open: new Set(['skin']), srcTab: {}});
 const FPS0 = F.DEFAULT_FPS || 12;
+const r2 = v => Math.round(v * 100) / 100;
+const natCmp = (a, b) => a.localeCompare(b, 'en', {numeric: true, sensitivity: 'base'});
 const modeOf = e => (e && e.v === 2) ? 'texture' : F.exprMode(e);
 const upExpr = x => (x && x.v === 2) ? x : F.upgradeExpr(x);
 const mkLayer = (id, o = {}) => ({src: '', set: '', frames: [], fps: FPS0, loop: true, show: true, scale: 1, pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0}, ...o});
@@ -1568,7 +1289,7 @@ function fitUI() { $('fitY').value = S.fit.y; $('fitZ').value = S.fit.z; $('fitS
 document.querySelector('.extabs').onclick = e => {
   const b = e.target.closest('[data-extab]'); if (!b || b.dataset.extab === EX.mode) return;
   if (!exGuard()) return;
-  EX.mode = b.dataset.extab; EX.cur = null; exReset(); EX.isNew = false; EX.edited = false; exRender();
+  EX.mode = b.dataset.extab; EX.cur = null; exReset(); EX.isNew = false; EX.edited = false; rgStop(); rgRender(); exRender();
 };
 $('exSel').onchange = e => {
   const id = e.target.value;
@@ -1577,89 +1298,81 @@ $('exSel').onchange = e => {
   const f = S.expr.find(x => x.id === id);
   exReset();
   EX.cur = f ? prepTex(upExpr(exClone(f))) : null; EX.isNew = false; EX.edited = false;
-  if (EX.cur && modeOf(EX.cur) === 'keyshape') EX.cur.duration = F.exprDuration(EX.cur);
   exRender();
 };
 $('exNew').onclick = () => {
   if (!exGuard()) return;
-  EX.cur = EX.mode === 'keyshape'
-    ? {id: exNewId(), name: '', mode: 'keyshape', loop: true, duration: F.DEFAULT_DURATION, ease: 'smooth', parts: {}, tracks: {}}
-    : {id: exNewId(), name: '', mode: 'texture', v: 2, loop: true, parts: {}, layers: {}};
+  EX.cur = {id: exNewId(), name: '', mode: 'texture', v: 2, loop: true, parts: {}, layers: {}};
   exReset(); EX.isNew = true; EX.edited = false; exRender(); $('exName').focus();
 };
-$('exPreset').innerHTML += KS_PRESETS.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('');
-$('exPreset').onchange = e => {
-  const p = KS_PRESETS.find(x => x.id === e.target.value); e.target.value = '';
-  if (!p || !exGuard()) return;
-  const r = buildPreset(p, EX.morphs, exNewId(p.name));
-  EX.cur = r.expr; exReset(); EX.isNew = true; EX.edited = true; exRender();
-  exSay('Đã tạo “' + p.name + '” từ mẫu (' + Object.keys(r.expr.tracks).length + ' keyshape).' + (r.missing.length ? ' Model chưa có: ' + r.missing.join(', ') + ' — đã bỏ qua.' : '') + ' Chỉnh tiếp nếu muốn rồi bấm Lưu biểu cảm.', r.missing.length ? '' : 'good');
-};
 $('exName').oninput = e => exNameSet(e.target.value, e.target);
-$('exLoop').onchange = e => { if (EX.cur) { EX.cur.loop = e.target.checked; EX.t = 0; exEdited(); } };
-$('exPlay').onclick = togglePlay; $('dkPlay').onclick = togglePlay;
-$('exRestart').onclick = () => { EX.t = 0; EX.t0 = {}; }; $('dkRestart').onclick = () => { EX.t = 0; };
-function onPartChange(e) {
-  const c = EX.cur; if (!c) return;
-  const part = e.target.dataset.part, fp = e.target.dataset.fps;
-  if (!c.parts) c.parts = {};
-  if (part) {
-    const prev = c.parts[part];
-    if (e.target.value) c.parts[part] = {set: e.target.value, fps: (prev && prev.fps) || F.DEFAULT_FPS}; else delete c.parts[part];
-    EX.t = 0; exEdited(); exRender();
-  } else if (fp && c.parts[fp]) { c.parts[fp].fps = Math.min(60, Math.max(1, +e.target.value || F.DEFAULT_FPS)); exEdited(); }
-}
-$('ksMask').onchange = onPartChange;
-$('ksDur').onchange = e => {
-  const c = EX.cur; if (!c) return;
-  const v = parseFloat(e.target.value);
-  c.duration = r2(Math.max(0.1, Number.isFinite(v) ? v : F.DEFAULT_DURATION, maxKeyT(c)));
-  ksSync(); EX.dirtyLanes = true; exEdited();
-};
-$('ksEase').onchange = e => { if (EX.cur) { EX.cur.ease = e.target.value; EX.dirtyLanes = true; exEdited(); } };
-window.addEventListener('resize', () => { if (EX.cur) dkMeasure(); });
+$('exPlay').onclick = togglePlay;
+$('exRestart').onclick = () => { EX.t = 0; EX.t0 = {}; };
 
-/* ---------------- Tự sinh biểu cảm từ 6 vùng mặt (js/face-regions.js) ---------------- */
-// Người dùng chạm lên mặt để đặt 6 vùng (mày trái/phải, mắt trái/phải, mũi, miệng). Chỉ lưu tâm + bán kính + pháp tuyến (~1 KB, S.regions →
-// characters/custom/<id>.json → "faceRegions"). Shape key được dựng lại lúc nạp; biểu cảm sinh ra là loại Keyshape (chỉ vài track số) nên
-// khi render/xuất video chỉ còn ghi morphTargetInfluences, không vẽ lại ảnh hay upload texture theo từng khung hình.
-const RG = {active: 'eyeL', picking: false, mesh: null, mk: {}};
+/* ---------------- Keyshape: chọn vùng mày / mắt / mũi / miệng (js/face-regions.js) ---------------- */
+// Mỗi vùng độc lập: chọn hay bỏ đều không ảnh hưởng vùng khác (hướng mặt lấy từ hướng đứng của nhân vật, lưu ở faceRegions.axes).
+// Chỉ lưu tâm + bán kính + pháp tuyến (~1 KB) → characters/custom/<id>.json → "faceRegions". Shape key được dựng lại lúc nạp.
+const RG_GROUPS = [
+  {id: 'brow', label: 'Mày', parts: ['browL', 'browR']},
+  {id: 'eye', label: 'Mắt', parts: ['eyeL', 'eyeR']},
+  {id: 'nose', label: 'Mũi', parts: ['nose']},
+  {id: 'mouth', label: 'Miệng', parts: ['mouth']}
+];
+const FACE_DATA_ID = 'du-lieu-vung-mat';
+const TALK = [[0, 0.1], [0.12, 0.55], [0.26, 0.2], [0.4, 0.7], [0.55, 0.15], [0.7, 0.5], [0.85, 0.1], [1, 0.1]].map(([t, v]) => ({t, v}));
+const BLINK = [[0, 0], [0.12, 1], [0.24, 0], [1.2, 0]].map(([t, v]) => ({t, v}));                          // chạy thử: chớp liên tục
+const BLINK_SAVE = [[0, 0], [2.6, 0], [2.72, 1], [2.84, 0], [3, 0]].map(([t, v]) => ({t, v}));              // dữ liệu lưu: 3 giây chớp một lần
+const RG = {group: null, picking: false, done: new Set(), mesh: null, mk: {}, blink: null, talk: null};   // blink / talk: thời gian đang chạy thử (null = tắt)
 const rgSay = (m, t) => say($('rgStatus'), m, t);
 const rgOf = id => FRG.REGIONS.find(r => r.id === id);
 const rgScale = () => (RG.mesh ? RG.mesh.matrixWorld.getMaxScaleOnAxis() || 1 : 1);
-const rgUnit = () => (S.face && S.face.hh ? S.face.hh : 0.2);                 // chiều cao đầu (mét, đã chuẩn hóa) — đơn vị của thanh “cỡ vùng”
+const rgUnit = () => (S.face && S.face.hh ? S.face.hh : 0.2);                 // chiều cao đầu (mét, đã chuẩn hóa)
 const rgSet = () => (S.regions ? S.regions.regions : {});
-// Thanh chỉnh hình dạng: [khoá, nhãn, min, max, bước, định dạng hiển thị]
-const RG_SHAPE_FMT = {sx: v => '×' + v.toFixed(2), sy: v => '×' + v.toFixed(2), sz: v => '×' + v.toFixed(2), rot: v => v.toFixed(0) + '°', bend: v => (v > 0 ? '∩ ' : v < 0 ? '∪ ' : '') + Math.abs(v).toFixed(2), soft: v => Math.round(v * 100) + '%', amp: v => '×' + v.toFixed(2)};
-const RG_SHAPE_UI = [['sx', 'Rộng (ngang)', 0.05], ['sy', 'Cao (dọc)', 0.05], ['sz', 'Sâu (trước–sau)', 0.05], ['rot', 'Xoay (+ = ngược chiều kim đồng hồ)', 1], ['bend', 'Cong (+ vòm ∩ · − vòm ∪)', 0.05], ['soft', 'Độ mềm viền', 0.05], ['amp', 'Lực chuyển động', 0.05]];
-const RG_PAIR = {browL: 'browR', browR: 'browL', eyeL: 'eyeR', eyeR: 'eyeL'};
-$('rgShape').innerHTML = RG_SHAPE_UI.map(([k, label, step]) => '<div class="sl"><label>' + label + ' <span id="rgSV_' + k + '"></span></label><input type="range" id="rgS_' + k + '" min="' + FRG.SHAPE_LIMITS[k][0] + '" max="' + FRG.SHAPE_LIMITS[k][1] + '" step="' + step + '" value="' + FRG.SHAPE_DEF[k] + '"></div>').join('');
-for (const k of FRG.SHAPE_KEYS) $('rgS_' + k).oninput = e => {
-  const g = rgSet()[RG.active], v = parseFloat(e.target.value); $('rgSV_' + k).textContent = RG_SHAPE_FMT[k](v);
-  if (g && Number.isFinite(v)) { g[k] = v; dirty(); }
-};
-$('rgMirror').onclick = () => {
-  const g = rgSet()[RG.active], o = RG_PAIR[RG.active], t = o && rgSet()[o];
-  if (!g) return;
-  if (!t) { rgSay('Bên kia (' + rgOf(o).label + ') chưa được đặt — hãy chạm đặt tâm trước, rồi bấm lại.', 'bad'); return; }
-  const sh = FRG.shapeOf(g); t.r = g.r; for (const k of FRG.SHAPE_KEYS) t[k] = k === 'rot' ? -sh.rot : sh[k];
-  dirty(); rgSay('✓ Đã sao chép hình dạng sang “' + rgOf(o).label + '” (góc xoay lật ngược). Tâm vùng giữ nguyên.', 'good');
-};
-$('rgShapeReset').onclick = () => {
-  const g = rgSet()[RG.active]; if (!g) return;
-  const d = rgOf(RG.active).shape || {}; for (const k of FRG.SHAPE_KEYS) g[k] = d[k] !== undefined ? d[k] : FRG.SHAPE_DEF[k];
-  dirty(); rgRender(); rgSay('Đã đặt lại hình dạng mặc định cho “' + rgOf(RG.active).label + '”.');
-};
+const rgHas = g => g.parts.some(id => rgSet()[id]);
+const rgPartsText = g => g.parts.length < 2 ? (rgSet()[g.parts[0]] ? '✓' : '') : (n => n ? '✓ ' + n + '/2' : '')(g.parts.filter(id => rgSet()[id]).length);
+
 function rgRender() {
-  const set = rgSet();
-  $('rgGrid').innerHTML = FRG.REGIONS.map(R => '<button data-rg="' + R.id + '" class="' + (RG.picking && RG.active === R.id ? 'on' : '') + '"><i style="background:' + R.color + '"></i>' + R.label + '<b>' + (set[R.id] ? '✓' : '') + '</b></button>').join('');
-  const g = set[RG.active], v = g ? g.r * rgScale() / rgUnit() * 100 : rgOf(RG.active).k * 100;
-  $('rgR').value = v; $('rgRV').textContent = '· ' + v.toFixed(1) + '% chiều cao đầu';
-  const sh = FRG.shapeOf(g);
-  for (const k of FRG.SHAPE_KEYS) { const el = $('rgS_' + k); el.value = sh[k]; el.disabled = !g; $('rgSV_' + k).textContent = RG_SHAPE_FMT[k](sh[k]); }
-  $('rgMirror').disabled = !g || !RG_PAIR[RG.active]; $('rgShapeReset').disabled = !g;
+  $('rgGrid').innerHTML = RG_GROUPS.map(g => '<div class="rgrow"><button data-rg="' + g.id + '" class="' + (RG.picking && RG.group === g.id ? 'on' : '') + '" aria-pressed="' + (RG.picking && RG.group === g.id) + '"><i style="background:' + rgOf(g.parts[0]).color + '"></i>' + g.label + '<b>' + rgPartsText(g) + '</b></button>' +
+    (rgHas(g) ? '<button data-rgdel="' + g.id + '" title="Bỏ vùng ' + g.label.toLowerCase() + '" aria-label="Bỏ vùng ' + g.label.toLowerCase() + '">✕</button>' : '') + '</div>').join('');
+  for (const [id, key, part, label] of [['rgBlink', 'blink', 'eye', 'Chớp mắt thử'], ['rgTalk', 'talk', 'mouth', 'Nói chuyện thử']]) {
+    const b = $(id), on = RG[key] != null;
+    b.disabled = !rgHas(RG_GROUPS.find(g => g.id === part)); b.classList.toggle('on', on); b.textContent = on ? '■ Dừng thử' : label;
+  }
 }
-/** Cập nhật lưới khung dây của một vùng theo hình dạng: cầu đơn vị → kéo giãn (sx, sy, sz) → uốn cong (bend). Toạ độ theo hệ trục của vùng, đã nhân bán kính. */
+/** Tắt chế độ chọn và các nút chạy thử. */
+function rgStop() { RG.picking = false; RG.blink = RG.talk = null; SH.release(); }
+
+/** Dựng lại shape key từ S.regions trên model hiện tại. */
+function rgBuild() {
+  SH.release();
+  if (RG.mesh) FRG.clearShapes(RG.mesh);
+  RG.mesh = S.model && S.regions ? FRG.findMesh(S.model, S.regions) : null;
+  if (RG.mesh) { try { FRG.clearShapes(RG.mesh); FRG.buildShapes(RG.mesh, S.regions); } catch (err) { console.warn('Vùng mặt:', err); rgSay('Không dựng được chuyển động: ' + err.message, 'bad'); } }
+  if (S.model) SH.setModel(S.model);
+}
+/** Nạp / tạo mới nhân vật trên cùng model gốc. */
+function rgRebuildModel() { rgStop(); rgBuild(); rgRender(); }
+
+function rgTestTick(dt) {
+  if (RG.blink == null && RG.talk == null) return;
+  const vals = {};
+  if (RG.blink != null) { RG.blink += dt; vals.eyeBlinkLeft = vals.eyeBlinkRight = F.evalKeys(BLINK, RG.blink % 1.2, 'smooth'); }
+  if (RG.talk != null) { RG.talk += dt; vals.jawOpen = F.evalKeys(TALK, RG.talk % 1, 'smooth'); }
+  // chỉ chạy thử trên vùng đã chọn: bỏ qua bên chưa chọn (kể cả khi model có sẵn keyshape cùng tên)
+  if (!rgSet().eyeL) delete vals.eyeBlinkLeft;
+  if (!rgSet().eyeR) delete vals.eyeBlinkRight;
+  SH.apply(vals);
+}
+function rgToggleTest(key) {
+  if (RG[key] != null) RG[key] = null;
+  else { RG.picking = false; RG[key] = 0; }
+  if (RG.blink == null && RG.talk == null) SH.release();
+  rgRender();
+}
+$('rgBlink').onclick = () => rgToggleTest('blink');
+$('rgTalk').onclick = () => rgToggleTest('talk');
+
+/** Vòng màu quanh từng vùng đã chọn (khung dây). Chỉ hiện ở tab Keyshape, ẩn khi đang chạy thử. */
 function rgShapeGeo(geo, sh, r) {
   const base = geo.userData.base, pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
@@ -1669,16 +1382,15 @@ function rgShapeGeo(geo, sh, r) {
   pos.needsUpdate = true; geo.computeBoundingSphere();
 }
 const _rgBasis = new THREE.Matrix4(), _vA = new THREE.Vector3(), _vB = new THREE.Vector3(), _vF = new THREE.Vector3();
-/** Vòng màu quanh từng vùng (khung dây) — vẽ đúng hình elip / xoay / cong đã chỉnh. Chỉ cập nhật khi khung đang mở. */
 function rgMarkers() {
-  const on = RG.mesh && S.regions && !$('rgBox').classList.contains('hide') && $('rgShow').checked, set = rgSet();
-  const fr = on ? FRG.faceFrame(set) : null, frame = fr && !fr.error ? fr : null;      // chưa đủ điểm → chưa biết hướng mặt → vẽ cầu
+  const on = EX.mode === 'keyshape' && RG.mesh && S.regions && RG.blink == null && RG.talk == null, set = rgSet();
+  const fr = on ? FRG.faceFrame(set, S.regions.axes) : null, frame = fr && !fr.error ? fr : null;
   for (const R of FRG.REGIONS) {
     let m = RG.mk[R.id];
     if (!m) {
-      if (!on) continue;
+      if (!on || !set[R.id]) continue;
       const geo = new THREE.SphereGeometry(1, 20, 14); geo.userData.base = Float32Array.from(geo.attributes.position.array);
-      m = RG.mk[R.id] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: R.color, wireframe: true, transparent: true, depthTest: false}));
+      m = RG.mk[R.id] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: R.color, wireframe: true, transparent: true, opacity: 0.55, depthTest: false}));
       m.renderOrder = 999; m.frustumCulled = false; m.matrixAutoUpdate = false; scene.add(m);
     }
     const g = on && set[R.id]; m.visible = !!g;
@@ -1688,99 +1400,79 @@ function rgMarkers() {
     const ax = frame ? FRG.regionAxes(frame, sh) : {A: [1, 0, 0], B: [0, 1, 0], F: [0, 0, 1]};
     _rgBasis.makeBasis(_vA.fromArray(ax.A), _vB.fromArray(ax.B), _vF.fromArray(ax.F)).setPosition(g.c[0], g.c[1], g.c[2]);
     m.matrix.multiplyMatrices(RG.mesh.matrixWorld, _rgBasis); m.matrixWorldNeedsUpdate = true;
-    m.material.opacity = RG.picking && RG.active === R.id ? 0.95 : 0.55;
   }
 }
-/** Chạm lên mô hình: đặt tâm vùng đang chọn tại điểm chạm (toạ độ cục bộ của mesh, đang ở T-pose). */
+
+const r5 = v => Math.round(v * 1e5) / 1e5;
+/** Hướng “lên” và “ra trước” của nhân vật (trước mặt = +Z), đổi sang không gian cục bộ của mesh. */
+function rgAxes(mesh) {
+  const inv = mesh.matrixWorld.clone().invert(), q = spinG.getWorldQuaternion(new THREE.Quaternion());
+  const loc = v => v.applyQuaternion(q).transformDirection(inv).toArray().map(r5);
+  return {up: loc(new THREE.Vector3(0, 1, 0)), fwd: loc(new THREE.Vector3(0, 0, 1))};
+}
+/** Chạm lên mô hình. Mày / mắt: tự nhận bên trái – phải theo vị trí chạm so với đường giữa đầu. */
 function rgPick(ray) {
+  const group = RG_GROUPS.find(g => g.id === RG.group); if (!group) return;
   const bodies = []; if (S.model) S.model.traverse(o => { if (o.isMesh && o.visible && isBodyMesh(o)) bodies.push(o); });
   if (!bodies.length) { rgSay('Không có phần thân nào đang hiện để chạm. Hãy bật “Thân”.', 'bad'); return; }
+  S.model.updateMatrixWorld(true);
   for (const m of bodies) if (m.isSkinnedMesh) { m.skeleton.update(); m.boundingSphere = null; m.boundingBox = null; }
   const hit = ray.intersectObjects(bodies, false)[0];
-  if (!hit) { rgSay('Chạm trượt: không trúng mô hình. Thử chạm lại vào “' + rgOf(RG.active).label + '”.', 'bad'); return; }
-  const m = hit.object, n = m.geometry.attributes.position.count;
-  if (RG.mesh && RG.mesh !== m && Object.keys(rgSet()).length) rgSay('Đã chuyển sang mesh “' + (m.name || '?') + '” — các vùng cũ ở mesh khác bị bỏ.');
-  if (!S.regions || RG.mesh !== m) { S.regions = {v: 1, mesh: m.name || '', verts: n, regions: {}}; }
+  if (!hit) { rgSay('Chạm trượt, hãy chạm đúng lên mặt nhân vật.', 'bad'); return; }
+  const m = hit.object, others = Object.keys(rgSet()).length;
+  if (others && RG.mesh !== m) { rgSay('Điểm này thuộc phần mesh khác với vùng đã chọn. Mọi vùng phải nằm trên cùng một mesh. Hãy chạm lại, hoặc bấm ✕ bỏ các vùng cũ.', 'bad'); return; }
+  let part = group.parts[0];
+  if (group.parts.length > 1) {
+    const head = S.rig && S.rig.pos('head'), x = spinG.worldToLocal(hit.point.clone()).x;
+    part = group.parts[x >= (head ? head.x : 0) ? 0 : 1];                    // [0] = bên trái của nhân vật (+X)
+  }
+  if (!others) { S.regions = {v: 1, mesh: m.name || '', verts: m.geometry.attributes.position.count, regions: {}}; if (RG.mesh && RG.mesh !== m) FRG.clearShapes(RG.mesh); }
   RG.mesh = m;
-  const prev = S.regions.regions[RG.active], r = prev ? prev.r : rgOf(RG.active).k * rgUnit() / rgScale();
+  S.regions.axes = rgAxes(m);
+  const R = rgOf(part), prev = S.regions.regions[part], r = prev ? prev.r : R.k * rgUnit() / rgScale();
   const c = m.worldToLocal(hit.point.clone()), nn = hit.face ? hit.face.normal : {x: 0, y: 0, z: 1};
-  const shp = {}; for (const k of FRG.SHAPE_KEYS) { const v = prev && prev[k] !== undefined ? prev[k] : (!prev && rgOf(RG.active).shape ? rgOf(RG.active).shape[k] : undefined); if (v !== undefined) shp[k] = v; }   // chạm lại = dời tâm, giữ nguyên hình đã chỉnh
-  S.regions.regions[RG.active] = {c: [c.x, c.y, c.z].map(v => Math.round(v * 1e5) / 1e5), r, n: [nn.x, nn.y, nn.z].map(v => Math.round(v * 1e5) / 1e5), ...shp};
-  dirty();
-  const left = FRG.REGIONS.filter(R => !S.regions.regions[R.id]), next = left.find(R => FRG.REGIONS.indexOf(R) > FRG.REGIONS.findIndex(x => x.id === RG.active)) || left[0];
-  rgSay('✓ Đã đặt “' + rgOf(RG.active).label + '”.' + (next ? ' Tiếp theo: chạm “' + next.label + '”.' : ' Đủ 6 vùng — chỉnh cỡ nếu cần rồi bấm ⚡ Tạo biểu cảm.'), 'good');
-  if (next) RG.active = next.id;
+  const shp = {}, src = prev || R.shape || {}; for (const k of FRG.SHAPE_KEYS) if (src[k] !== undefined) shp[k] = src[k];
+  S.regions.regions[part] = {c: [c.x, c.y, c.z].map(r5), r: r5(r), n: [nn.x, nn.y, nn.z].map(r5), ...shp};
+  dirty(); rgBuild();
+  RG.done.add(part);
+  const side = group.parts.length > 1 ? (part.endsWith('L') ? ' trái' : ' phải') + ' của nhân vật' : '';
+  if (RG.done.size >= group.parts.length) { RG.picking = false; rgSay('✓ Đã chọn ' + group.label.toLowerCase() + side + '.', 'good'); }
+  else rgSay('✓ Đã chọn ' + group.label.toLowerCase() + side + '. Chạm tiếp bên còn lại, hoặc bấm “' + group.label + '” để dừng nếu chỉ cần một bên.', 'good');
   rgRender();
 }
 $('rgGrid').onclick = e => {
-  const b = e.target.closest('[data-rg]'); if (!b) return;
-  if (RG.picking && RG.active === b.dataset.rg) RG.picking = false;     // bấm lại ô đang chọn = dừng chọn
-  else {
-    RG.active = b.dataset.rg; RG.picking = true; stopClip(true);        // chọn vùng cần nhân vật ở T-pose
-    rgSay('Chạm lên “' + rgOf(RG.active).label + '” trên mặt nhân vật. Kéo chỗ trống để xoay camera, cuộn để zoom.');
-  }
+  const del = e.target.closest('[data-rgdel]'), btn = e.target.closest('[data-rg]');
+  if (del) {
+    const g = RG_GROUPS.find(x => x.id === del.dataset.rgdel);
+    rgStop(); for (const id of g.parts) delete rgSet()[id];
+    if (!Object.keys(rgSet()).length) S.regions = null;
+    dirty(); rgBuild(); rgSay('Đã bỏ vùng ' + g.label.toLowerCase() + '. Bấm Lưu để cập nhật dữ liệu.');
+  } else if (btn) {
+    const g = RG_GROUPS.find(x => x.id === btn.dataset.rg), same = RG.picking && RG.group === g.id;
+    rgStop();
+    if (!same) {
+      RG.group = g.id; RG.picking = true; RG.done = new Set(); stopClip(true);      // chọn vùng cần nhân vật ở T-pose
+      rgSay(g.parts.length > 1 ? 'Chạm lên từng bên ' + g.label.toLowerCase() + ' trên mặt (thứ tự nào cũng được).' : 'Chạm lên ' + g.label.toLowerCase() + ' trên mặt nhân vật.');
+    } else rgSay('Đã dừng chọn.');
+  } else return;
   rgRender();
 };
-$('rgR').oninput = e => {
-  const v = parseFloat(e.target.value), g = rgSet()[RG.active]; $('rgRV').textContent = '· ' + v.toFixed(1) + '% chiều cao đầu';
-  if (!g || !RG.mesh) return;
-  g.r = Math.round(v / 100 * rgUnit() / rgScale() * 1e5) / 1e5; dirty();
-};
-/** Dựng lại shape key từ S.regions trên model hiện tại (sau khi nạp nhân vật cùng mô hình gốc / tạo mới). */
-function rgRebuildModel() {
-  if (!S.model) return;
-  if (RG.mesh) FRG.clearShapes(RG.mesh);
-  RG.mesh = null;
-  if (S.regions) { try { const r = FRG.applyRegions(S.model, S.regions, null); RG.mesh = r ? r.mesh : null; } catch (err) { console.warn('Vùng mặt:', err); } }
-  onMorphs(SH.setModel(S.model)); rgRender();
+/**
+ * Đồng bộ một mục dữ liệu trong S.expr theo các vùng đã chọn. Studio chỉ dựng những shape key mà biểu cảm có nhắc tới,
+ * nên mục này liệt kê mọi shape key của các vùng đã chọn (đứng yên ở 0, riêng mắt tự chớp).
+ */
+function syncFaceData() {
+  const i = S.expr.findIndex(x => x.id === FACE_DATA_ID), names = S.regions ? FRG.shapesAvailable(S.regions) : [];
+  if (!names.length) { if (i >= 0) S.expr.splice(i, 1); return; }
+  const tracks = Object.fromEntries(names.map(n => [n, {keys: n.startsWith('eyeBlink') ? BLINK_SAVE.map(k => ({...k})) : [{t: 0, v: 0}]}]));
+  const entry = {id: FACE_DATA_ID, name: 'Mặt tự nhiên', mode: 'keyshape', loop: true, duration: 3, ease: 'smooth', parts: {}, tracks};
+  if (i >= 0) S.expr[i] = entry; else S.expr.push(entry);
 }
-/** Thêm các biểu cảm mẫu dựng từ shape key vừa sinh. Cùng mẫu đã sinh trước đó thì ghi đè (giữ nguyên id để cảnh Studio không mất liên kết). */
-function rgAddPresets() {
-  const made = [], skipped = [];
-  for (const p of KS_PRESETS) {
-    const old = S.expr.find(x => x.auto === 'regions' && x.presetId === p.id);
-    const clash = S.expr.find(x => x !== old && (x.name || '').trim().toLowerCase() === p.name.toLowerCase());
-    if (clash) { skipped.push(p.name); continue; }
-    const r = buildPreset(p, EX.morphs, old ? old.id : exNewId(p.name));
-    if (!Object.keys(r.expr.tracks).length) continue;                    // mẫu cần keyshape mà vùng mặt không tạo ra (vd. nhép a-e-i-o-u)
-    r.expr.auto = 'regions'; r.expr.presetId = p.id;
-    const i = S.expr.findIndex(x => x === old); if (i >= 0) S.expr[i] = r.expr; else S.expr.push(r.expr);
-    made.push(r.expr);
-  }
-  return {made, skipped};
-}
-$('rgMake').onclick = async () => {
-  const d = FRG.cleanData(S.regions);
-  if (!d || !RG.mesh) { rgSay('Chưa chọn vùng nào. Bấm một ô rồi chạm lên mặt nhân vật.', 'bad'); return; }
-  const fr = FRG.faceFrame(d.regions); if (fr.error) { rgSay(fr.error, 'bad'); return; }
-  if (!exGuard()) return;
-  $('rgMake').disabled = true;
-  try {
-    stopClip(true);
-    FRG.clearShapes(RG.mesh);                                            // dựng lại từ đầu để vùng vừa chỉnh có hiệu lực
-    const res = FRG.buildShapes(RG.mesh, d);
-    S.regions = d; onMorphs(SH.setModel(S.model));
-    let msg = '✓ Đã tạo ' + res.added.length + ' shape key trên mesh “' + (RG.mesh.name || '?') + '”.';
-    if ($('rgPreset').checked) {
-      const {made, skipped} = rgAddPresets();
-      msg += ' Biểu cảm mẫu: ' + made.length + (skipped.length ? ' (bỏ qua vì trùng tên: ' + skipped.join(', ') + ')' : '') + '.';
-      EX.cur = null; exReset(); EX.isNew = false; EX.edited = false; exRender();
-      const pick = made.find(x => x.presetId === 'vui') || made[0];
-      if (pick) { $('exSel').value = pick.id; $('exSel').dispatchEvent(new Event('change')); }
-    }
-    dirty();
-    if ($('rgSave').checked) {
-      if (await saveCharacter($('rgStatus'))) rgSay(msg + ' Đã lưu nhân vật — dùng được trong Studio (item Biểu cảm → “c:…”).', 'good');
-    } else rgSay(msg + ' Chưa lưu: bấm “Lưu nhân vật” để Studio dùng được.', 'good');
-  } catch (err) { console.error(err); rgSay('Không tạo được: ' + err.message, 'bad'); }
-  $('rgMake').disabled = false;
-};
-$('rgClear').onclick = () => {
-  if (!S.regions) { rgSay('Chưa có vùng nào để xóa.'); return; }
-  if (!confirm('Xóa 6 vùng và các shape key đã sinh từ chúng? (Biểu cảm đã tạo vẫn còn nhưng sẽ không có shape key để chạy.)')) return;
-  if (RG.mesh) FRG.clearShapes(RG.mesh);
-  S.regions = null; RG.mesh = null; RG.picking = false; dirty();
-  onMorphs(SH.setModel(S.model)); rgRender(); rgSay('Đã xóa vùng và shape key sinh ra.');
+$('rgSaveBtn').onclick = async () => {
+  rgStop(); rgRender(); dirty();
+  $('rgSaveBtn').disabled = true;
+  if (await saveCharacter($('rgStatus'))) rgSay(S.regions ? '✓ Đã lưu dữ liệu biểu cảm.' : '✓ Đã lưu. Nhân vật hiện không có vùng mặt nào.', 'good');
+  $('rgSaveBtn').disabled = false;
 };
 rgRender();
 
@@ -1803,14 +1495,6 @@ $('exSave').onclick = async () => {
       if (!framesOf(p.id, L).length) delete c.layers[p.id];
     }
     if (!Object.keys(c.layers).length) { exSay('Hãy chọn ít nhất một danh mục có ảnh hoặc video cho biểu cảm.', 'bad'); return; }
-  } else if (F.exprMode(c) === 'keyshape') {
-    c.mode = 'keyshape'; if (!c.tracks) c.tracks = {}; delete c.shapes;
-    for (const [n, tr] of Object.entries(c.tracks)) {
-      tr.keys = (tr.keys || []).map(k => ({t: r2(Math.max(0, +k.t || 0)), v: r3(c01(+k.v || 0))})).sort((a, b) => a.t - b.t);
-      if (!tr.keys.length) delete c.tracks[n];
-    }
-    c.duration = r2(F.exprDuration(c));
-    if (!Object.keys(c.tracks).length && !c.parts.mask) { exSay('Hãy dựng ít nhất một keyframe hoặc chọn mặt nạ nền.', 'bad'); return; }
   } else {
     c.mode = 'texture';
     if (!Object.keys(c.parts).length) { exSay('Hãy chọn ít nhất một bộ phận cho biểu cảm.', 'bad'); return; }
