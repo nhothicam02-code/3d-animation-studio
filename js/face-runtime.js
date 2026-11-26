@@ -192,6 +192,8 @@ export function createFaceRuntime({model, wrap, rig, doc}) {
   return {
     list,
     has: id => byId.has(id),
+    /** Giá trị keyshape {tên: 0..1} của biểu cảm keyshape tại t (null nếu là biểu cảm texture) — Studio dùng để vẽ mày/mắt/miệng thay thế khớp biểu cảm. */
+    values: (e, t = 0) => (isKs(e) ? F.shapeValues(e, t) : null),
     get: id => byId.get(id) || null,
     setFit(f) { Object.assign(fit, f); if (planes) planes.setFit(fit); if (overlay) overlay.setFit(fit); },
     /** e = biểu cảm (hoặc null để tắt) · t = giây kể từ lúc biểu cảm bắt đầu · alpha 0..1 (vào/ra mượt, độ đậm)
