@@ -240,6 +240,57 @@ function nameTargets(mesh) {
   const list = mesh.geometry.morphAttributes.position, dict = mesh.morphTargetDictionary;
   if (list && dict) for (const [name, i] of Object.entries(dict)) if (list[i]) list[i].name = name;
 }
+/** Nhân điểm (w=1) hoặc hướng (w=0) với ma trận affine. */
+const applyM = (m, p, w = 1) => { const e = m.elements; return [0, 1, 2].map(i => e[i] * p[0] + e[i + 4] * p[1] + e[i + 8] * p[2] + e[i + 12] * w); };
+const unit3 = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return a.map(v => v / l); };
+
+/**
+ * Tự sửa vùng lưu theo bản cũ: toạ độ khi đó tính theo mesh.matrixWorld (chưa tính xương) nên lệch khỏi lưới gốc.
+ * Đổi: điểm cũ → thế giới → lưới gốc (qua ma trận đã tính xương). Gọi khi model đang ở tư thế nghỉ.
+ * Chỉ đụng vào vùng không bắt được đỉnh nào, và chỉ nhận kết quả nếu sau khi đổi vùng nằm đúng trên lưới.
+ * Trả {data, fixed:[id vùng đã sửa]}.
+ */
+export function repairData(mesh, data) {
+  const d = cleanData(data), fixed = [];
+  if (!d || !mesh) return {data: d, fixed};
+  const W = mesh.matrixWorld, regions = {};
+  let toGeo = null;                       // ma trận đổi toạ độ cũ → lưới gốc (dùng lại cho trục mặt)
+  for (const [id, g] of Object.entries(d.regions)) {
+    regions[id] = g;
+    if (probeRegion(mesh, g).hit) continue;
+    const world = applyM(W, g.c);
+    let anchor = 0, A, c, probe;
+    for (let k = 0; k < 4; k++) {         // ma trận phụ thuộc đỉnh → tìm dần đỉnh nằm đúng chỗ
+      A = skinMatrix(mesh, anchor);
+      c = applyM(A.clone().invert(), world);
+      probe = probeRegion(mesh, {...g, c});
+      if (probe.index === anchor) break;
+      anchor = probe.index;
+    }
+    A = skinMatrix(mesh, probe.index);
+    c = applyM(A.clone().invert(), world);
+    const T = A.clone().invert().multiply(W), k = (W.getMaxScaleOnAxis() || 1) / (A.getMaxScaleOnAxis() || 1);
+    const moved = {...g, c: c.map(r5), r: r5(g.r * k), n: unit3(applyM(T, g.n, 0)).map(r5)};
+    if (!probeRegion(mesh, moved).hit) continue;
+    regions[id] = moved; fixed.push(id); toGeo = toGeo || T;
+  }
+  if (!fixed.length) return {data: d, fixed};
+  const out = {...d, regions};
+  // trục mặt: đổi trục đã lưu; dữ liệu cũ hơn chưa có trục thì suy ra từ các điểm cũ
+  let axes = d.axes;
+  if (!axes) { const f = faceFrame(d.regions); if (!f.error) axes = {up: f.up, fwd: f.fwd}; }
+  if (axes) {
+    out.axes = {up: unit3(applyM(toGeo, axes.up, 0)).map(r5), fwd: unit3(applyM(toGeo, axes.fwd, 0)).map(r5)};
+    // đảm bảo mã L/R đúng bên của nhân vật (bản cũ cho phép đặt ngược)
+    const side = faceFrame(regions, out.axes).side;
+    for (const base of ['eye', 'brow']) {
+      const L = regions[base + 'L'], R = regions[base + 'R'];
+      if (L && R && [0, 1, 2].reduce((t, i) => t + (L.c[i] - R.c[i]) * side[i], 0) < 0) { regions[base + 'L'] = R; regions[base + 'R'] = L; }
+    }
+  }
+  return {data: out, fixed};
+}
+
 // shape key gốc của model bị vùng tạm thay thế → giữ lại để trả về khi bỏ vùng
 const ORIG = new WeakMap();
 const KEY = 'faceRegionShapes';           // geometry.userData[KEY] = danh sách tên shape key do module này tạo
@@ -369,7 +420,9 @@ export function neededNames(expressions) {
 export function applyRegions(model, data, expressions) {
   const d = cleanData(data); if (!d) return null;
   const mesh = findMesh(model, d); if (!mesh) return null;
+  model.updateMatrixWorld(true);
+  const fixedData = repairData(mesh, d).data;
   const names = expressions == null ? null : neededNames(expressions);
   if (names && !names.length) return {mesh, added: [], skipped: []};
-  return {mesh, ...buildShapes(mesh, d, names)};
+  return {mesh, ...buildShapes(mesh, fixedData, names)};
 }
