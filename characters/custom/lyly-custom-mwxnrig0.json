@@ -3,14 +3,14 @@
   "id": "lyly-custom-mwxnrig0",
   "name": "Lyly_custom",
   "base": "Lyly.character.json",
-  "updatedAt": "2026-11-26T15:11:50.132Z",
+  "updatedAt": "2026-11-26T15:13:48.511Z",
   "items": [
     {
       "id": "gvog441e",
       "slot": "hair",
       "preset": "import",
       "name": "toc xanh 1",
-      "color": "#00aaff",
+      "color": "#ffffff",
       "color2": "#ffffff",
       "blend": 0.92,
       "blendMode": "mix",
@@ -44,7 +44,7 @@
       "phys": {
         "on": true,
         "stiff": 0.43,
-        "weight": 0.65,
+        "weight": 0.5,
         "drag": 0.38,
         "reach": 1,
         "collide": true,
