@@ -40,7 +40,7 @@ export const REGION_IDS = REGIONS.map(r => r.id);
  */
 export const SHAPE_DEF = {sx: 1, sy: 1, sz: 1, rot: 0, bend: 0, soft: 0.5, amp: 1};
 export const SHAPE_KEYS = Object.keys(SHAPE_DEF);
-export const SHAPE_LIMITS = {sx: [0.2, 4], sy: [0.2, 4], sz: [0.2, 3], rot: [-90, 90], bend: [-1.5, 1.5], soft: [0.1, 1], amp: [0.2, 3]};
+export const SHAPE_LIMITS = {sx: [0.001, 1000], sy: [0.001, 1000], sz: [0.001, 1000], rot: [-360, 360], bend: [-50, 50], soft: [0.02, 1], amp: [0.001, 1000]};   // gần như không giới hạn (chỉ chặn số âm/0/NaN để khỏi chia cho 0)
 const clampTo = (v, [lo, hi]) => (v < lo ? lo : v > hi ? hi : v);
 /** Hình dạng đầy đủ (đã kẹp giới hạn, điền mặc định) của một vùng. */
 export function shapeOf(g) {
@@ -145,6 +145,7 @@ export function computeDeltas(positions, V, regions, names) {
   const fr = faceFrame(regions);
   if (fr.error) throw new Error(fr.error);
   const out = {};
+  const stats = {};
   const near = {};                       // id vùng → các đỉnh nằm trong vùng + toạ độ chuẩn hoá (a, b, c) của chúng
   const need = new Set(names.map(n => SHAPE.get(n) && SHAPE.get(n).region).filter(Boolean));
   for (const id of need) {
@@ -165,6 +166,7 @@ export function computeDeltas(positions, V, regions, names) {
       idx.push(i); w.push(1 - t * t * (3 - 2 * t)); s.push(a); h.push(b); f.push(c);
     }
     near[id] = {idx, s, h, f, w, A, B, F, Rx, Ry, Rz, amp: sh.amp};
+    stats[id] = idx.length;     // số đỉnh vùng này thực sự bắt được (0–vài đỉnh = biểu cảm gần như không thấy gì)
   }
   const v = {s: 0, h: 0, o: 0, w: 0, sg: 1, f: 0};
   for (const name of names) {
@@ -182,6 +184,7 @@ export function computeDeltas(positions, V, regions, names) {
     }
     out[name] = arr;
   }
+  out.stats = stats;
   return out;
 }
 
@@ -253,7 +256,7 @@ export function buildShapes(mesh, data, names) {
   const have = new Set(Object.keys(mesh.morphTargetDictionary || {}));
   const want = (names && names.length ? names : shapesAvailable(d)).filter(n => SHAPE.has(n) && d.regions[SHAPE.get(n).region]);
   const todo = want.filter(n => !have.has(n)), skipped = want.filter(n => have.has(n));
-  if (!todo.length) return {added: [], skipped};
+  if (!todo.length) return {added: [], skipped, stats: {}};
   const flat = pos.isInterleavedBufferAttribute || !(pos.array instanceof Float32Array) ? (() => { const a = new Float32Array(V * 3); for (let i = 0; i < V; i++) { a[i * 3] = pos.getX(i); a[i * 3 + 1] = pos.getY(i); a[i * 3 + 2] = pos.getZ(i); } return a; })() : pos.array;
   const deltas = computeDeltas(flat, V, d.regions, todo);
   const old = (mesh.morphTargetInfluences || []).slice();
@@ -269,7 +272,7 @@ export function buildShapes(mesh, data, names) {
   mesh.updateMorphTargets();
   old.forEach((v, j) => { if (j < mesh.morphTargetInfluences.length) mesh.morphTargetInfluences[j] = v; });
   g.dispose(); refreshMats(mesh);
-  return {added: todo, skipped};
+  return {added: todo, skipped, stats: deltas.stats || {}};
 }
 
 /* ---------------- Dùng khi chạy (Studio / xuất video) ---------------- */
