@@ -141,10 +141,29 @@ function mountPlanes(head, wrap, fit) {
   return o;
 }
 
+/* ---------------- Chớp mắt tự nhiên ----------------
+   Nhịp không đều (khoảng 1–7 giây một lần, thỉnh thoảng chớp đúp), mỗi nhân vật một nhịp riêng.
+   Chỉ phụ thuộc thời điểm trên timeline + seed, không dùng Math.random → xem trước và xuất video giống hệt nhau. */
+const BLINK_SLOT = 4, BLINK_LEN = 0.23;
+export const BLINK_MORPHS = ['eyeBlinkLeft', 'eyeBlinkRight', 'eyeBlink', 'Blink', 'blink'];
+const rand = (a, b) => { let h = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x7f4a7c15, 0xc2b2ae35); h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d); h = Math.imul(h ^ (h >>> 13), 0x297a2d39); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+const ease = x => x * x * (3 - 2 * x);
+/** Một lần chớp: nhắm nhanh (0.07 s), giữ rất ngắn (0.03 s), mở chậm hơn (0.13 s). */
+const pulse = x => (x <= 0 || x >= BLINK_LEN) ? 0 : x < 0.07 ? ease(x / 0.07) : x < 0.1 ? 1 : ease((BLINK_LEN - x) / 0.13);
+/** Mức nhắm mắt 0..1 tại giây t. seed = chuỗi riêng của nhân vật. */
+export function autoBlink(t, seed = '') {
+  let n = 5381; for (const ch of String(seed)) n = ((n << 5) + n + ch.charCodeAt(0)) | 0;
+  const k = Math.floor(t / BLINK_SLOT), start = k * BLINK_SLOT + 0.3 + rand(n, k) * 2.9, x = t - start;
+  return Math.max(pulse(x), rand(n ^ 0x51ed, k) < 0.15 ? pulse(x - 0.32) : 0);
+}
+/** Dữ liệu “Mặt tự nhiên” của trang Custom có sẵn nhịp chớp cố định 3 giây → bỏ, dùng chớp tự nhiên để không chớp chồng hai nhịp. */
+const dropFixedBlink = e => (e.id !== 'du-lieu-vung-mat' || !e.tracks) ? e
+  : {...e, tracks: Object.fromEntries(Object.entries(e.tracks).map(([n, tr]) => [n, n.startsWith('eyeBlink') ? {...tr, keys: [{t: 0, v: 0}]} : tr]))};
+
 /* ---------------- Bộ chạy biểu cảm của một nhân vật ---------------- */
 export function createFaceRuntime({model, wrap, rig, doc}) {
   const list = (Array.isArray(doc && doc.expressions) ? doc.expressions : [])
-    .filter(Boolean).map(x => (x.v === 2 ? x : F.upgradeExpr(x))).filter(x => x && x.id);
+    .filter(Boolean).map(x => (x.v === 2 ? x : F.upgradeExpr(x))).filter(x => x && x.id).map(dropFixedBlink);
   if (!list.length) return null;
   const fit = {...F.FACE_FIT, ...((doc && doc.face) || {})}, byId = new Map(list.map(e => [e.id, e]));
   const isV2 = e => !!e && e.v === 2, isKs = e => !!e && !isV2(e) && F.exprMode(e) === 'keyshape';
