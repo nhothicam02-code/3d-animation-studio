@@ -45,6 +45,8 @@ h2{font-size:13px;margin:16px 0 9px;letter-spacing:.3px;text-transform:uppercase
 .fprow .th{width:36px;height:36px;border-radius:7px;border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:10px;color:var(--muted)}.fprow .th img{width:100%;height:100%;object-fit:contain}
 .fprow.miss select{border-color:var(--gold)}
 .extabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 10px}.extabs button{padding:8px 6px}.extabs button.on{background:var(--accent);border-color:var(--accent);color:#171322}
+.rgbox{margin:0 0 12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.rgbox h2{margin:0 0 6px}
+.rgshape{margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px}.rgshape summary{cursor:pointer;font-size:12px;font-weight:600}.rgshape .sl{margin-top:6px}.rgshape .sl label{display:flex;justify-content:space-between;margin:0;font-size:11px}.rgshape input[type=range]{width:100%}.rgshape .row{margin-top:8px}.rgshape .row>button{flex:1;font-size:11px;padding:6px}.rggrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.rggrid button{display:flex;gap:7px;align-items:center;padding:7px 8px;font-size:12px}.rggrid i{width:10px;height:10px;border-radius:50%;flex:none}.rggrid b{margin-left:auto;color:var(--green)}.rggrid button.on{outline:2px solid var(--accent);outline-offset:1px}
 .center{grid-template-rows:minmax(0,1fr) auto auto}
 .dock{border-top:1px solid var(--line);background:var(--panel);max-height:46vh;overflow:auto;position:relative}
 .dkhead{position:sticky;top:0;z-index:4;background:var(--panel);padding:8px 12px 0;border-bottom:1px solid var(--line)}
@@ -159,6 +161,21 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
   <div class="extabs"><button id="tabTex" class="on" data-extab="texture">🖼 Texture</button><button id="tabKey" data-extab="keyshape">🦴 Keyshape</button></div>
   <div class="field"><div class="row"><select id="exSel"></select><button id="exNew">＋ Mới</button></div></div>
   <div class="field hide" id="exPresetRow"><select id="exPreset"><option value="">✨ Tạo từ mẫu có sẵn…</option></select></div>
+  <div class="rgbox hide" id="rgBox">
+   <h2>🎯 Tự sinh biểu cảm từ vùng mặt</h2>
+   <div class="note" style="margin-top:-2px">Chọn 6 vùng bằng cách bấm ô rồi chạm lên đúng bộ phận trên mặt nhân vật (tự chuyển sang ô kế). Kéo thanh cỡ cho vòng màu vừa quanh bộ phận. Xong bấm ⚡ để tạo shape key + biểu cảm.</div>
+   <div class="rggrid" id="rgGrid"></div>
+   <div class="row" style="margin-top:8px"><div><label>Cỡ vùng đang chọn <span id="rgRV"></span></label><input type="range" id="rgR" min="2" max="60" step="0.5" value="20"></div></div>
+   <details class="rgshape" id="rgShapeBox" open><summary>📐 Hình dạng vùng (elip · xoay · cong)</summary>
+    <div id="rgShape"></div>
+    <div class="row"><button id="rgMirror" title="Sao chép hình dạng sang vùng đối diện (lật ngược góc xoay)">↔ Đối xứng sang bên kia</button><button id="rgShapeReset" title="Về hình dạng mặc định của bộ phận này">↺ Hình mặc định</button></div>
+   </details>
+   <label style="display:flex;gap:7px;align-items:center;margin:8px 0 0;font-size:12px;cursor:pointer"><input type="checkbox" id="rgShow" checked style="width:auto;margin:0"> Hiện vòng vùng trên mặt</label>
+   <label style="display:flex;gap:7px;align-items:center;margin:6px 0 0;font-size:12px;cursor:pointer"><input type="checkbox" id="rgPreset" checked style="width:auto;margin:0"> Tạo luôn biểu cảm mẫu (Bình thường, Vui, Buồn, Giận, Ngạc nhiên…)</label>
+   <label style="display:flex;gap:7px;align-items:center;margin:6px 0 8px;font-size:12px;cursor:pointer"><input type="checkbox" id="rgSave" checked style="width:auto;margin:0"> Lưu nhân vật lên GitHub sau khi tạo (để Studio dùng được)</label>
+   <div class="row"><button id="rgMake" class="primary" style="flex:2">⚡ Tạo biểu cảm</button><button id="rgClear" class="danger" style="flex:1">Xóa vùng</button></div>
+   <div class="status" id="rgStatus">Bấm một ô ở trên rồi chạm lên mặt nhân vật. Cần ít nhất: 2 mắt (hoặc 2 mày) và mũi hoặc miệng.</div>
+  </div>
   <datalist id="morphNames"></datalist>
   <div class="editor off" id="exEd">
    <div class="field"><label>Tên biểu cảm</label><input id="exName" maxlength="40" placeholder="Ví dụ: Vui, Buồn, Cười ngượng…"></div>
@@ -198,6 +215,7 @@ import {mapClip} from './js/retarget.js';
 import * as K from './js/character-kit.js';
 import * as F from './js/face-kit.js';
 import {KS_PRESETS, buildPreset} from './js/face-presets.js';
+import * as FRG from './js/face-regions.js';   // sinh shape key biểu cảm từ 6 vùng mặt
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -206,7 +224,7 @@ const tag = (msg, bad) => { const t = $('stageTag'); t.textContent = msg; t.styl
 const D2R = Math.PI / 180;
 const DEFAULT_BONE = K.DEFAULT_BONE; // đồng bộ với danh mục ở Kho tài nguyên
 
-const S = {hiddenMeshes: new Set(), base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false, lib: [], libQ: '', libPage: 0, expr: [], fit: {...F.FACE_FIT}, face: null};
+const S = {hiddenMeshes: new Set(), base: '', charId: '', groups: [], sel: null, slot: 'hat', model: null, wrap: null, rig: null, mixer: null, action: null, playing: false, restSnap: [], clips: [], saved: [], spin: 0, dirty: false, lib: [], libQ: '', libPage: 0, expr: [], fit: {...F.FACE_FIT}, face: null, regions: null};
 const SH = F.createShapeDriver();   // điều khiển keyshape (morph target) của model
 let renderer, scene, camera, controls, spinG, selBox, loadSeq = 0;
 const clock = new THREE.Clock();
@@ -240,6 +258,7 @@ function setupScene() {
     const r = renderer.domElement.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
+    if (RG.picking && !$('rgBox').classList.contains('hide')) { rgPick(ray); return; }
     const meshes = [];
     for (const g of S.groups) for (const p of g.pieces) if (p._rt && p._rt.holder.visible) p._rt.content.traverse(o => { if (o.isMesh) meshes.push(o); });
     const hit = ray.intersectObjects(meshes, false)[0];
@@ -307,6 +326,8 @@ async function loadBase(name) {
   for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, rig);
   S.face = F.mountFaceOverlay(rig, S.fit);
   TF = mountTexFace(rig); if (TF) TF.setFit(S.fit);
+  RG.mesh = null;
+  if (S.regions) { try { const r = FRG.applyRegions(obj, S.regions, null); RG.mesh = r ? r.mesh : null; } catch (err) { console.warn('Vùng mặt:', err); } }
   onMorphs(SH.setModel(obj));
   renderParts(); setBodyVisible($('showBody').checked);
   tag(name + ' · ' + rig.bones.length + ' xương' + (rig.missing.length ? ' · thiếu: ' + rig.missing.map(k => K.BONE_LABELS[k]).join(', ') : ''));
@@ -584,7 +605,7 @@ $('speed').onchange = () => { if (S.action) S.action.timeScale = parseFloat($('s
 const INDEX = 'characters/custom/index.json';
 function buildDoc() {
   const name = $('charName').value.trim();
-  return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups), expressions: JSON.parse(JSON.stringify(S.expr)), face: {...S.fit}, hiddenMeshes: [...S.hiddenMeshes]};
+  return {format: '3DiS-Character-1.0', id: S.charId, name, base: S.base, updatedAt: new Date().toISOString(), items: K.serializeOutfit(S.groups), expressions: JSON.parse(JSON.stringify(S.expr)), face: {...S.fit}, hiddenMeshes: [...S.hiddenMeshes], faceRegions: S.regions ? JSON.parse(JSON.stringify(S.regions)) : undefined};
 }
 function thumbData() {
   const wasSel = selBox.visible; selBox.visible = false;
@@ -648,7 +669,7 @@ async function loadSaved(id) {
   // dọn đồ cũ
   S.groups.forEach(g => g.pieces.forEach(K.unmountPiece));
   S.groups = doc.items; S.sel = null; S.charId = doc.id || id; S.hiddenMeshes = new Set(Array.isArray(doc.hiddenMeshes) ? doc.hiddenMeshes : []);
-  S.expr = Array.isArray(doc.expressions) ? doc.expressions.map(upExpr) : []; S.fit = {...F.FACE_FIT, ...(doc.face || {})};
+  S.expr = Array.isArray(doc.expressions) ? doc.expressions.map(upExpr) : []; S.fit = {...F.FACE_FIT, ...(doc.face || {})}; S.regions = FRG.cleanData(doc.faceRegions);
   EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
   const pairObj = new Map();   // đồ cặp (giày/tất tách trái-phải): hai piece cùng file → chỉ tải + parse một lần
   const loadObj = async p => {
@@ -667,7 +688,7 @@ async function loadSaved(id) {
   }
   $('charName').value = doc.name || entry.name;
   if (doc.base !== S.base) await loadBase(doc.base);
-  else { for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, S.rig); renderParts(); setBodyVisible($('showBody').checked); renderOutfit(); fillEditor(); updateSelBox(); }
+  else { for (const g of S.groups) for (const p of g.pieces) K.mountPiece(g, p, S.rig); renderParts(); setBodyVisible($('showBody').checked); renderOutfit(); fillEditor(); updateSelBox(); rgRebuildModel(); }
   S.dirty = false;
   say($('saveStatus'), 'Đã tải “' + (doc.name || entry.name) + '”.', 'good');
 }
@@ -685,10 +706,10 @@ $('delSaved').onclick = async () => {
 $('newBtn').onclick = () => {
   if (S.dirty && !confirm('Bỏ các thay đổi chưa lưu?')) return;
   S.groups.forEach(g => g.pieces.forEach(K.unmountPiece)); S.groups = []; S.sel = null; S.charId = ''; S.dirty = false; S.hiddenMeshes = new Set(); renderParts(); setBodyVisible($('showBody').checked);
-  S.expr = []; S.fit = {...F.FACE_FIT}; EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
+  S.expr = []; S.fit = {...F.FACE_FIT}; S.regions = null; rgRebuildModel(); EX.cur = null; exReset(); fitUI(); if (S.face) S.face.setFit(S.fit); if (TF) TF.setFit(S.fit); exRender();
   $('charName').value = ''; $('savedSel').value = ''; renderOutfit(); fillEditor(); updateSelBox(); say($('saveStatus'), 'Đã tạo mới.');
 };
-$('baseSel').onchange = () => loadBase($('baseSel').value).catch(e => tag('Lỗi tải nhân vật: ' + e.message, true));
+$('baseSel').onchange = () => { S.regions = null; loadBase($('baseSel').value).catch(e => tag('Lỗi tải nhân vật: ' + e.message, true)); };
 $('charName').oninput = dirty;
 
 /* ---------------- Biểu cảm: 2 tab — Texture (chuỗi ảnh PNG) và Keyshape (timeline kiểu Blender) ---------------- */
@@ -735,7 +756,7 @@ function ksSync() { const c = EX.cur; if (c) $('ksDur').value = r2(c.duration ||
 
 function exRender() {
   const e = EX.cur, ks = EX.mode === 'keyshape';
-  $('exPresetRow').classList.toggle('hide', !ks);
+  $('exPresetRow').classList.toggle('hide', !ks); $('rgBox').classList.toggle('hide', !ks); if (!ks) RG.picking = false;
   const list = S.expr.filter(x => modeOf(x) === EX.mode);
   $('tabTex').classList.toggle('on', !ks); $('tabKey').classList.toggle('on', ks);
   $('exCount').textContent = '(' + list.length + ')';
@@ -889,6 +910,7 @@ function dkTick(vals) {
 }
 /** Chạy mỗi khung hình của vòng lặp 3D: vẽ bản xem trước + cập nhật mặt trên đầu + đẩy keyshape vào model. */
 function faceTick(dt) {
+  rgMarkers();
   if (!EX.paused) EX.t += dt;
   const e = EX.cur, v2 = !!e && e.v === 2, ks = !!e && !v2 && F.exprMode(e) === 'keyshape', on = !!e && $('exShow').checked;
   if (v2) drawTexPreview(e); else if (e) EX.sig = F.renderFace($('exCv'), e, EX.lib, EX.t, EX.sig);
@@ -1596,6 +1618,171 @@ $('ksDur').onchange = e => {
 };
 $('ksEase').onchange = e => { if (EX.cur) { EX.cur.ease = e.target.value; EX.dirtyLanes = true; exEdited(); } };
 window.addEventListener('resize', () => { if (EX.cur) dkMeasure(); });
+
+/* ---------------- Tự sinh biểu cảm từ 6 vùng mặt (js/face-regions.js) ---------------- */
+// Người dùng chạm lên mặt để đặt 6 vùng (mày trái/phải, mắt trái/phải, mũi, miệng). Chỉ lưu tâm + bán kính + pháp tuyến (~1 KB, S.regions →
+// characters/custom/<id>.json → "faceRegions"). Shape key được dựng lại lúc nạp; biểu cảm sinh ra là loại Keyshape (chỉ vài track số) nên
+// khi render/xuất video chỉ còn ghi morphTargetInfluences, không vẽ lại ảnh hay upload texture theo từng khung hình.
+const RG = {active: 'eyeL', picking: false, mesh: null, mk: {}};
+const rgSay = (m, t) => say($('rgStatus'), m, t);
+const rgOf = id => FRG.REGIONS.find(r => r.id === id);
+const rgScale = () => (RG.mesh ? RG.mesh.matrixWorld.getMaxScaleOnAxis() || 1 : 1);
+const rgUnit = () => (S.face && S.face.hh ? S.face.hh : 0.2);                 // chiều cao đầu (mét, đã chuẩn hóa) — đơn vị của thanh “cỡ vùng”
+const rgSet = () => (S.regions ? S.regions.regions : {});
+// Thanh chỉnh hình dạng: [khoá, nhãn, min, max, bước, định dạng hiển thị]
+const RG_SHAPE_FMT = {sx: v => '×' + v.toFixed(2), sy: v => '×' + v.toFixed(2), sz: v => '×' + v.toFixed(2), rot: v => v.toFixed(0) + '°', bend: v => (v > 0 ? '∩ ' : v < 0 ? '∪ ' : '') + Math.abs(v).toFixed(2), soft: v => Math.round(v * 100) + '%', amp: v => '×' + v.toFixed(2)};
+const RG_SHAPE_UI = [['sx', 'Rộng (ngang)', 0.05], ['sy', 'Cao (dọc)', 0.05], ['sz', 'Sâu (trước–sau)', 0.05], ['rot', 'Xoay (+ = ngược chiều kim đồng hồ)', 1], ['bend', 'Cong (+ vòm ∩ · − vòm ∪)', 0.05], ['soft', 'Độ mềm viền', 0.05], ['amp', 'Lực chuyển động', 0.05]];
+const RG_PAIR = {browL: 'browR', browR: 'browL', eyeL: 'eyeR', eyeR: 'eyeL'};
+$('rgShape').innerHTML = RG_SHAPE_UI.map(([k, label, step]) => '<div class="sl"><label>' + label + ' <span id="rgSV_' + k + '"></span></label><input type="range" id="rgS_' + k + '" min="' + FRG.SHAPE_LIMITS[k][0] + '" max="' + FRG.SHAPE_LIMITS[k][1] + '" step="' + step + '" value="' + FRG.SHAPE_DEF[k] + '"></div>').join('');
+for (const k of FRG.SHAPE_KEYS) $('rgS_' + k).oninput = e => {
+  const g = rgSet()[RG.active], v = parseFloat(e.target.value); $('rgSV_' + k).textContent = RG_SHAPE_FMT[k](v);
+  if (g && Number.isFinite(v)) { g[k] = v; dirty(); }
+};
+$('rgMirror').onclick = () => {
+  const g = rgSet()[RG.active], o = RG_PAIR[RG.active], t = o && rgSet()[o];
+  if (!g) return;
+  if (!t) { rgSay('Bên kia (' + rgOf(o).label + ') chưa được đặt — hãy chạm đặt tâm trước, rồi bấm lại.', 'bad'); return; }
+  const sh = FRG.shapeOf(g); t.r = g.r; for (const k of FRG.SHAPE_KEYS) t[k] = k === 'rot' ? -sh.rot : sh[k];
+  dirty(); rgSay('✓ Đã sao chép hình dạng sang “' + rgOf(o).label + '” (góc xoay lật ngược). Tâm vùng giữ nguyên.', 'good');
+};
+$('rgShapeReset').onclick = () => {
+  const g = rgSet()[RG.active]; if (!g) return;
+  const d = rgOf(RG.active).shape || {}; for (const k of FRG.SHAPE_KEYS) g[k] = d[k] !== undefined ? d[k] : FRG.SHAPE_DEF[k];
+  dirty(); rgRender(); rgSay('Đã đặt lại hình dạng mặc định cho “' + rgOf(RG.active).label + '”.');
+};
+function rgRender() {
+  const set = rgSet();
+  $('rgGrid').innerHTML = FRG.REGIONS.map(R => '<button data-rg="' + R.id + '" class="' + (RG.picking && RG.active === R.id ? 'on' : '') + '"><i style="background:' + R.color + '"></i>' + R.label + '<b>' + (set[R.id] ? '✓' : '') + '</b></button>').join('');
+  const g = set[RG.active], v = g ? g.r * rgScale() / rgUnit() * 100 : rgOf(RG.active).k * 100;
+  $('rgR').value = v; $('rgRV').textContent = '· ' + v.toFixed(1) + '% chiều cao đầu';
+  const sh = FRG.shapeOf(g);
+  for (const k of FRG.SHAPE_KEYS) { const el = $('rgS_' + k); el.value = sh[k]; el.disabled = !g; $('rgSV_' + k).textContent = RG_SHAPE_FMT[k](sh[k]); }
+  $('rgMirror').disabled = !g || !RG_PAIR[RG.active]; $('rgShapeReset').disabled = !g;
+}
+/** Cập nhật lưới khung dây của một vùng theo hình dạng: cầu đơn vị → kéo giãn (sx, sy, sz) → uốn cong (bend). Toạ độ theo hệ trục của vùng, đã nhân bán kính. */
+function rgShapeGeo(geo, sh, r) {
+  const base = geo.userData.base, pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const a = base[i * 3], b = base[i * 3 + 1], c = base[i * 3 + 2];
+    pos.setXYZ(i, a * sh.sx * r, (b - sh.bend * a * a) * sh.sy * r, c * sh.sz * r);
+  }
+  pos.needsUpdate = true; geo.computeBoundingSphere();
+}
+const _rgBasis = new THREE.Matrix4(), _vA = new THREE.Vector3(), _vB = new THREE.Vector3(), _vF = new THREE.Vector3();
+/** Vòng màu quanh từng vùng (khung dây) — vẽ đúng hình elip / xoay / cong đã chỉnh. Chỉ cập nhật khi khung đang mở. */
+function rgMarkers() {
+  const on = RG.mesh && S.regions && !$('rgBox').classList.contains('hide') && $('rgShow').checked, set = rgSet();
+  const fr = on ? FRG.faceFrame(set) : null, frame = fr && !fr.error ? fr : null;      // chưa đủ điểm → chưa biết hướng mặt → vẽ cầu
+  for (const R of FRG.REGIONS) {
+    let m = RG.mk[R.id];
+    if (!m) {
+      if (!on) continue;
+      const geo = new THREE.SphereGeometry(1, 20, 14); geo.userData.base = Float32Array.from(geo.attributes.position.array);
+      m = RG.mk[R.id] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: R.color, wireframe: true, transparent: true, depthTest: false}));
+      m.renderOrder = 999; m.frustumCulled = false; m.matrixAutoUpdate = false; scene.add(m);
+    }
+    const g = on && set[R.id]; m.visible = !!g;
+    if (!g) continue;
+    const sh = frame ? FRG.shapeOf(g) : {...FRG.SHAPE_DEF}, key = g.r + '|' + FRG.SHAPE_KEYS.map(k => sh[k]).join(',');
+    if (m.userData.key !== key) { rgShapeGeo(m.geometry, sh, g.r); m.userData.key = key; }
+    const ax = frame ? FRG.regionAxes(frame, sh) : {A: [1, 0, 0], B: [0, 1, 0], F: [0, 0, 1]};
+    _rgBasis.makeBasis(_vA.fromArray(ax.A), _vB.fromArray(ax.B), _vF.fromArray(ax.F)).setPosition(g.c[0], g.c[1], g.c[2]);
+    m.matrix.multiplyMatrices(RG.mesh.matrixWorld, _rgBasis); m.matrixWorldNeedsUpdate = true;
+    m.material.opacity = RG.picking && RG.active === R.id ? 0.95 : 0.55;
+  }
+}
+/** Chạm lên mô hình: đặt tâm vùng đang chọn tại điểm chạm (toạ độ cục bộ của mesh, đang ở T-pose). */
+function rgPick(ray) {
+  const bodies = []; if (S.model) S.model.traverse(o => { if (o.isMesh && o.visible && isBodyMesh(o)) bodies.push(o); });
+  if (!bodies.length) { rgSay('Không có phần thân nào đang hiện để chạm. Hãy bật “Thân”.', 'bad'); return; }
+  for (const m of bodies) if (m.isSkinnedMesh) { m.skeleton.update(); m.boundingSphere = null; m.boundingBox = null; }
+  const hit = ray.intersectObjects(bodies, false)[0];
+  if (!hit) { rgSay('Chạm trượt: không trúng mô hình. Thử chạm lại vào “' + rgOf(RG.active).label + '”.', 'bad'); return; }
+  const m = hit.object, n = m.geometry.attributes.position.count;
+  if (RG.mesh && RG.mesh !== m && Object.keys(rgSet()).length) rgSay('Đã chuyển sang mesh “' + (m.name || '?') + '” — các vùng cũ ở mesh khác bị bỏ.');
+  if (!S.regions || RG.mesh !== m) { S.regions = {v: 1, mesh: m.name || '', verts: n, regions: {}}; }
+  RG.mesh = m;
+  const prev = S.regions.regions[RG.active], r = prev ? prev.r : rgOf(RG.active).k * rgUnit() / rgScale();
+  const c = m.worldToLocal(hit.point.clone()), nn = hit.face ? hit.face.normal : {x: 0, y: 0, z: 1};
+  const shp = {}; for (const k of FRG.SHAPE_KEYS) { const v = prev && prev[k] !== undefined ? prev[k] : (!prev && rgOf(RG.active).shape ? rgOf(RG.active).shape[k] : undefined); if (v !== undefined) shp[k] = v; }   // chạm lại = dời tâm, giữ nguyên hình đã chỉnh
+  S.regions.regions[RG.active] = {c: [c.x, c.y, c.z].map(v => Math.round(v * 1e5) / 1e5), r, n: [nn.x, nn.y, nn.z].map(v => Math.round(v * 1e5) / 1e5), ...shp};
+  dirty();
+  const left = FRG.REGIONS.filter(R => !S.regions.regions[R.id]), next = left.find(R => FRG.REGIONS.indexOf(R) > FRG.REGIONS.findIndex(x => x.id === RG.active)) || left[0];
+  rgSay('✓ Đã đặt “' + rgOf(RG.active).label + '”.' + (next ? ' Tiếp theo: chạm “' + next.label + '”.' : ' Đủ 6 vùng — chỉnh cỡ nếu cần rồi bấm ⚡ Tạo biểu cảm.'), 'good');
+  if (next) RG.active = next.id;
+  rgRender();
+}
+$('rgGrid').onclick = e => {
+  const b = e.target.closest('[data-rg]'); if (!b) return;
+  if (RG.picking && RG.active === b.dataset.rg) RG.picking = false;     // bấm lại ô đang chọn = dừng chọn
+  else {
+    RG.active = b.dataset.rg; RG.picking = true; stopClip(true);        // chọn vùng cần nhân vật ở T-pose
+    rgSay('Chạm lên “' + rgOf(RG.active).label + '” trên mặt nhân vật. Kéo chỗ trống để xoay camera, cuộn để zoom.');
+  }
+  rgRender();
+};
+$('rgR').oninput = e => {
+  const v = parseFloat(e.target.value), g = rgSet()[RG.active]; $('rgRV').textContent = '· ' + v.toFixed(1) + '% chiều cao đầu';
+  if (!g || !RG.mesh) return;
+  g.r = Math.round(v / 100 * rgUnit() / rgScale() * 1e5) / 1e5; dirty();
+};
+/** Dựng lại shape key từ S.regions trên model hiện tại (sau khi nạp nhân vật cùng mô hình gốc / tạo mới). */
+function rgRebuildModel() {
+  if (!S.model) return;
+  if (RG.mesh) FRG.clearShapes(RG.mesh);
+  RG.mesh = null;
+  if (S.regions) { try { const r = FRG.applyRegions(S.model, S.regions, null); RG.mesh = r ? r.mesh : null; } catch (err) { console.warn('Vùng mặt:', err); } }
+  onMorphs(SH.setModel(S.model)); rgRender();
+}
+/** Thêm các biểu cảm mẫu dựng từ shape key vừa sinh. Cùng mẫu đã sinh trước đó thì ghi đè (giữ nguyên id để cảnh Studio không mất liên kết). */
+function rgAddPresets() {
+  const made = [], skipped = [];
+  for (const p of KS_PRESETS) {
+    const old = S.expr.find(x => x.auto === 'regions' && x.presetId === p.id);
+    const clash = S.expr.find(x => x !== old && (x.name || '').trim().toLowerCase() === p.name.toLowerCase());
+    if (clash) { skipped.push(p.name); continue; }
+    const r = buildPreset(p, EX.morphs, old ? old.id : exNewId(p.name));
+    if (!Object.keys(r.expr.tracks).length) continue;                    // mẫu cần keyshape mà vùng mặt không tạo ra (vd. nhép a-e-i-o-u)
+    r.expr.auto = 'regions'; r.expr.presetId = p.id;
+    const i = S.expr.findIndex(x => x === old); if (i >= 0) S.expr[i] = r.expr; else S.expr.push(r.expr);
+    made.push(r.expr);
+  }
+  return {made, skipped};
+}
+$('rgMake').onclick = async () => {
+  const d = FRG.cleanData(S.regions);
+  if (!d || !RG.mesh) { rgSay('Chưa chọn vùng nào. Bấm một ô rồi chạm lên mặt nhân vật.', 'bad'); return; }
+  const fr = FRG.faceFrame(d.regions); if (fr.error) { rgSay(fr.error, 'bad'); return; }
+  if (!exGuard()) return;
+  $('rgMake').disabled = true;
+  try {
+    stopClip(true);
+    FRG.clearShapes(RG.mesh);                                            // dựng lại từ đầu để vùng vừa chỉnh có hiệu lực
+    const res = FRG.buildShapes(RG.mesh, d);
+    S.regions = d; onMorphs(SH.setModel(S.model));
+    let msg = '✓ Đã tạo ' + res.added.length + ' shape key trên mesh “' + (RG.mesh.name || '?') + '”.';
+    if ($('rgPreset').checked) {
+      const {made, skipped} = rgAddPresets();
+      msg += ' Biểu cảm mẫu: ' + made.length + (skipped.length ? ' (bỏ qua vì trùng tên: ' + skipped.join(', ') + ')' : '') + '.';
+      EX.cur = null; exReset(); EX.isNew = false; EX.edited = false; exRender();
+      const pick = made.find(x => x.presetId === 'vui') || made[0];
+      if (pick) { $('exSel').value = pick.id; $('exSel').dispatchEvent(new Event('change')); }
+    }
+    dirty();
+    if ($('rgSave').checked) {
+      if (await saveCharacter($('rgStatus'))) rgSay(msg + ' Đã lưu nhân vật — dùng được trong Studio (item Biểu cảm → “c:…”).', 'good');
+    } else rgSay(msg + ' Chưa lưu: bấm “Lưu nhân vật” để Studio dùng được.', 'good');
+  } catch (err) { console.error(err); rgSay('Không tạo được: ' + err.message, 'bad'); }
+  $('rgMake').disabled = false;
+};
+$('rgClear').onclick = () => {
+  if (!S.regions) { rgSay('Chưa có vùng nào để xóa.'); return; }
+  if (!confirm('Xóa 6 vùng và các shape key đã sinh từ chúng? (Biểu cảm đã tạo vẫn còn nhưng sẽ không có shape key để chạy.)')) return;
+  if (RG.mesh) FRG.clearShapes(RG.mesh);
+  S.regions = null; RG.mesh = null; RG.picking = false; dirty();
+  onMorphs(SH.setModel(S.model)); rgRender(); rgSay('Đã xóa vùng và shape key sinh ra.');
+};
+rgRender();
 
 /* ----- Chỉnh vị trí mặt, lưu, nhân bản, xóa ----- */
 for (const [id, k] of [['fitY', 'y'], ['fitZ', 'z'], ['fitS', 's']]) $(id).oninput = e => {
