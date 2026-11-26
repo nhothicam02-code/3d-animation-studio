@@ -2,6 +2,18 @@
   "version": 1,
   "items": [
     {
+      "id": "nhanvat1toc-mwxq68voj48",
+      "name": "toc ngan",
+      "category": "hair",
+      "kind": "model",
+      "ext": "glb",
+      "size": 29837556,
+      "path": "library/assets/hair/nhanvat1toc-mwxq68voj48.glb",
+      "thumbPath": "library/thumbnails/assets/nhanvat1toc-mwxq68voj48.png",
+      "thumbnail": "./library/thumbnails/assets/nhanvat1toc-mwxq68voj48.png",
+      "createdAt": "2026-11-26T15:46:42.549Z"
+    },
+    {
       "id": "toc-mwxoeztj2o0",
       "name": "toc xanh 1",
       "category": "hair",
