@@ -2,6 +2,18 @@
   "version": 1,
   "items": [
     {
+      "id": "toc-mwxoeztj2o0",
+      "name": "toc xanh 1",
+      "category": "hair",
+      "kind": "model",
+      "ext": "glb",
+      "size": 28463532,
+      "path": "library/assets/hair/toc-mwxoeztj2o0.glb",
+      "thumbPath": "library/thumbnails/assets/toc-mwxoeztj2o0.png",
+      "thumbnail": "./library/thumbnails/assets/toc-mwxoeztj2o0.png",
+      "createdAt": "2026-11-26T14:57:33.871Z"
+    },
+    {
       "id": "vay1-mwtgx2d5xxr",
       "name": "vay1",
       "category": "skirt",
