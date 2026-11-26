@@ -3,8 +3,57 @@
   "id": "lylo-mwxq8x27",
   "name": "LyLo",
   "base": "Nhanvat1_body.character.json",
-  "updatedAt": "2026-11-26T15:48:34.783Z",
-  "items": [],
+  "updatedAt": "2026-11-26T15:55:21.171Z",
+  "items": [
+    {
+      "id": "gd8sc8gf",
+      "slot": "hair",
+      "preset": "import",
+      "name": "toc ngan",
+      "color": "#f5f5f5",
+      "color2": "#ffffff",
+      "blend": 0.63,
+      "blendMode": "mix",
+      "visible": true,
+      "pieces": [
+        {
+          "uid": "p5h9uabl",
+          "part": "file",
+          "label": "toc ngan",
+          "bone": "head",
+          "pos": [
+            -0.015,
+            0.085,
+            -0.05
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ],
+          "scale": 1.88,
+          "visible": true,
+          "file": {
+            "name": "toc ngan.glb",
+            "ext": "glb",
+            "path": "library/assets/hair/nhanvat1toc-mwxq68voj48.glb",
+            "lib": "nhanvat1toc-mwxq68voj48"
+          }
+        }
+      ],
+      "phys": {
+        "on": true,
+        "stiff": 0.86,
+        "weight": 2,
+        "drag": 0.6,
+        "reach": 0.05,
+        "collide": true,
+        "sway": 0.77,
+        "flip": true,
+        "mode": "strand"
+      }
+    }
+  ],
   "expressions": [
     {
       "id": "binh-thuong-chop-mat-mwxq82hz",
