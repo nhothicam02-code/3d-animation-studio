@@ -201,6 +201,47 @@ export function computeDeltas(positions, V, regions, names, axes) {
 }
 
 /* ---------------- Gắn vào mesh three.js ---------------- */
+/**
+ * Ma trận đổi toạ độ LƯỚI GỐC (geometry) của đỉnh i → thế giới, ĐÃ TÍNH XƯƠNG.
+ * Với mesh có skin (nhất là gói .character.json), lưới gốc có thể bị xoay / dời so với hình đang thấy,
+ * nên không được dùng riêng mesh.matrixWorld: vùng sẽ nằm lệch ra ngoài và không bắt được đỉnh nào.
+ */
+export function skinMatrix(mesh, i) {
+  const out = mesh.matrixWorld.clone();
+  const si = mesh.geometry.attributes.skinIndex, sw = mesh.geometry.attributes.skinWeight;
+  if (!mesh.isSkinnedMesh || !si || !sw) return out;
+  const sum = new Array(16).fill(0), m = mesh.matrixWorld.clone();
+  let total = 0;
+  for (let k = 0; k < 4; k++) {
+    const get = a => [a.getX, a.getY, a.getZ, a.getW][k].call(a, i);
+    const w = get(sw); if (!w) continue;
+    const b = get(si);
+    m.multiplyMatrices(mesh.skeleton.bones[b].matrixWorld, mesh.skeleton.boneInverses[b]);
+    for (let e = 0; e < 16; e++) sum[e] += m.elements[e] * w;
+    total += w;
+  }
+  if (!total) return out;
+  m.fromArray(sum.map(v => v / total));
+  return out.multiply(mesh.bindMatrixInverse).multiply(m).multiply(mesh.bindMatrix);
+}
+
+/** Đỉnh gần tâm vùng nhất và vùng đó có bắt được đỉnh nào không (không bắt được = dữ liệu đặt sai chỗ). */
+export function probeRegion(mesh, g) {
+  const p = mesh.geometry.attributes.position, sh = shapeOf(g), reach = g.r * Math.max(sh.sx, sh.sy, sh.sz);
+  let best = Infinity, index = 0;
+  for (let i = 0; i < p.count; i++) {
+    const d = (p.getX(i) - g.c[0]) ** 2 + (p.getY(i) - g.c[1]) ** 2 + (p.getZ(i) - g.c[2]) ** 2;
+    if (d < best) { best = d; index = i; }
+  }
+  return {index, hit: Math.sqrt(best) < reach};
+}
+/** GLTFLoader chỉ giữ tên shape key ở mesh, không ở attribute → ghi tên vào attribute để updateMorphTargets() không đổi thành "0", "1"… */
+function nameTargets(mesh) {
+  const list = mesh.geometry.morphAttributes.position, dict = mesh.morphTargetDictionary;
+  if (list && dict) for (const [name, i] of Object.entries(dict)) if (list[i]) list[i].name = name;
+}
+// shape key gốc của model bị vùng tạm thay thế → giữ lại để trả về khi bỏ vùng
+const ORIG = new WeakMap();
 const KEY = 'faceRegionShapes';           // geometry.userData[KEY] = danh sách tên shape key do module này tạo
 const SIG = 'faceRegionSig';              // geometry.userData[SIG] = chữ ký bộ vùng đã dùng để tạo chúng
 
@@ -237,12 +278,18 @@ const refreshMats = mesh => { for (const m of (Array.isArray(mesh.material) ? me
 export function clearShapes(mesh) {
   const g = mesh && mesh.geometry, mine = g && g.userData[KEY];
   if (!mine || !mine.length) return 0;
-  const set = new Set(mine);
-  for (const k of ['position', 'normal']) {
-    const arr = g.morphAttributes[k]; if (!arr) continue;
-    const keep = arr.filter(a => !set.has(a.name));
-    if (keep.length) g.morphAttributes[k] = keep; else delete g.morphAttributes[k];
-  }
+  const set = new Set(mine), orig = ORIG.get(g) || new Map();
+  nameTargets(mesh);
+  const pos = g.morphAttributes.position || [], nor = g.morphAttributes.normal, keepPos = [], keepNor = [];
+  pos.forEach((a, k) => {
+    const o = orig.get(a.name);
+    if (set.has(a.name) && !o) return;                                   // shape key do vùng thêm mới → bỏ
+    const back = set.has(a.name) ? o : {position: a, normal: nor && nor[k]};   // thay thế tạm → trả bản gốc
+    keepPos.push(back.position); if (nor) keepNor.push(back.normal);
+  });
+  if (keepPos.length) g.morphAttributes.position = keepPos; else delete g.morphAttributes.position;
+  if (nor) { if (keepNor.length) g.morphAttributes.normal = keepNor; else delete g.morphAttributes.normal; }
+  ORIG.delete(g);
   g.userData[KEY] = [];
   if (g.morphAttributes.position && g.morphAttributes.position.length) mesh.updateMorphTargets();
   else { mesh.morphTargetInfluences = undefined; mesh.morphTargetDictionary = undefined; }
@@ -260,24 +307,41 @@ export function buildShapes(mesh, data, names) {
   const sig = signature(d.regions, d.axes);
   // Geometry dùng chung (nhiều bản sao nhân vật cùng một file) đang mang shape key của BỘ VÙNG KHÁC → tách riêng cho mesh này.
   if (g.userData[KEY] && g.userData[KEY].length && g.userData[SIG] !== sig) {
+    nameTargets(mesh);
+    const shared = ORIG.get(g);
     mesh.geometry = g = g.clone();
+    if (shared) ORIG.set(g, shared);
     clearShapes(mesh);
   }
   const pos = g.attributes.position, V = pos.count;
+  nameTargets(mesh);
   if (g.morphAttributes.position) mesh.updateMorphTargets();     // đồng bộ bảng tên với geometry dùng chung
   const have = new Set(Object.keys(mesh.morphTargetDictionary || {}));
   const want = (names && names.length ? names : shapesAvailable(d)).filter(n => SHAPE.has(n) && d.regions[SHAPE.get(n).region]);
-  const todo = want.filter(n => !have.has(n)), skipped = want.filter(n => have.has(n));
+  const ours = new Set(g.userData[KEY] || []);
+  let todo = want.filter(n => !ours.has(n));
+  const skipped = want.filter(n => ours.has(n));
   if (!todo.length) return {added: [], skipped, stats: {}};
   const flat = pos.isInterleavedBufferAttribute || !(pos.array instanceof Float32Array) ? (() => { const a = new Float32Array(V * 3); for (let i = 0; i < V; i++) { a[i * 3] = pos.getX(i); a[i * 3 + 1] = pos.getY(i); a[i * 3 + 2] = pos.getZ(i); } return a; })() : pos.array;
   const deltas = computeDeltas(flat, V, d.regions, todo, d.axes);
+  // model đã có shape key trùng tên: chỉ thay khi vùng thực sự tạo ra chuyển động
+  todo = todo.filter(n => !have.has(n) || deltas[n].some(v => v !== 0));
   const old = (mesh.morphTargetInfluences || []).slice();
   toRelative(g);
   const mine = g.userData[KEY] || (g.userData[KEY] = []);
   for (const name of todo) {
     const a = new Float32BufferAttribute(deltas[name], 3); a.name = name;
-    (g.morphAttributes.position = g.morphAttributes.position || []).push(a);
-    if (g.morphAttributes.normal) g.morphAttributes.normal.push(new Float32BufferAttribute(new Float32Array(V * 3), 3));
+    const list = g.morphAttributes.position = g.morphAttributes.position || [], nor = g.morphAttributes.normal;
+    const at = have.has(name) ? mesh.morphTargetDictionary[name] : undefined;
+    if (at !== undefined && list[at]) {
+      if (!ORIG.has(g)) ORIG.set(g, new Map());
+      ORIG.get(g).set(name, {position: list[at], normal: nor && nor[at]});
+      list[at] = a;
+      if (nor) nor[at] = new Float32BufferAttribute(new Float32Array(V * 3), 3);
+    } else {
+      list.push(a);
+      if (nor) nor.push(new Float32BufferAttribute(new Float32Array(V * 3), 3));
+    }
     mine.push(name);
   }
   g.morphTargetsRelative = true; g.userData[SIG] = sig;
