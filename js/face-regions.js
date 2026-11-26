@@ -17,7 +17,7 @@ import {Float32BufferAttribute} from 'three';
    khi render chỉ còn việc ghi morphTargetInfluences — không có việc nào tính theo từng khung hình.
 
    Tên shape key theo chuẩn ARKit giống HUONG-DAN-NHEP-MIENG-VA-KEYSHAPE.md nên mọi mẫu biểu cảm
-   trong face-presets.js và phần nhép miệng (jawOpen) chạy được ngay.
+   trong Studio và phần nhép miệng (jawOpen) chạy được ngay.
    ============================================================ */
 
 /** 6 vùng. k = cỡ vùng mặc định theo chiều cao đầu. */
@@ -96,11 +96,23 @@ export function cleanData(d) {
       regions[id] = o;
     }
   }
-  return Object.keys(regions).length ? {v: 1, mesh: String(d.mesh || ''), verts: +d.verts || 0, regions} : null;
+  if (!Object.keys(regions).length) return null;
+  const o = {v: 1, mesh: String(d.mesh || ''), verts: +d.verts || 0, regions};
+  if (d.axes && num3(d.axes.up) && num3(d.axes.fwd)) o.axes = {up: d.axes.up.map(r5), fwd: d.axes.fwd.map(r5)};
+  return o;
 }
 
-/** Hệ trục khuôn mặt (trong không gian cục bộ của mesh), suy ra từ các điểm đã chọn. null nếu chưa đủ điểm. */
-export function faceFrame(regions) {
+/**
+ * Hệ trục khuôn mặt (trong không gian cục bộ của mesh).
+ * Có `axes` {up, fwd} (lưu lúc chọn vùng) → dùng ngay, mỗi vùng độc lập. Dữ liệu cũ không có axes → suy ra từ các điểm đã chọn (null/error nếu chưa đủ).
+ */
+export function faceFrame(regions, axes) {
+  if (axes) {
+    const unit = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+    const up = unit(axes.up), fwd = unit(axes.fwd);
+    const side = unit([up[1] * fwd[2] - up[2] * fwd[1], up[2] * fwd[0] - up[0] * fwd[2], up[0] * fwd[1] - up[1] * fwd[0]]);   // sang trái của nhân vật
+    return {side, up, fwd};
+  }
   const R = regions, P = id => R[id] && R[id].c;
   const pair = P('eyeL') && P('eyeR') ? ['eyeL', 'eyeR'] : P('browL') && P('browR') ? ['browL', 'browR'] : null;
   if (!pair) return {error: 'Cần chọn cả 2 mắt (hoặc cả 2 mày) để biết đâu là trái – phải.'};
@@ -132,7 +144,7 @@ export function regionAxes(frame, shape) {
 /** Các shape key dựng được với bộ vùng hiện có. */
 export function shapesAvailable(data) {
   const d = cleanData(data);
-  if (!d || faceFrame(d.regions).error) return [];
+  if (!d || faceFrame(d.regions, d.axes).error) return [];
   return SHAPE_NAMES.filter(n => d.regions[SHAPE.get(n).region]);
 }
 
@@ -141,8 +153,8 @@ export function shapesAvailable(data) {
  * positions: Float32Array|mảng phẳng xyz của mesh · trả {name: Float32Array(V*3)} — độ dời TƯƠNG ĐỐI cho các shape key yêu cầu.
  * Mỗi vùng chỉ quét đúng một lần để lọc các đỉnh nằm trong cầu; mỗi shape key chỉ duyệt các đỉnh đó.
  */
-export function computeDeltas(positions, V, regions, names) {
-  const fr = faceFrame(regions);
+export function computeDeltas(positions, V, regions, names, axes) {
+  const fr = faceFrame(regions, axes);
   if (fr.error) throw new Error(fr.error);
   const out = {};
   const stats = {};
@@ -193,8 +205,8 @@ const KEY = 'faceRegionShapes';           // geometry.userData[KEY] = danh sách
 const SIG = 'faceRegionSig';              // geometry.userData[SIG] = chữ ký bộ vùng đã dùng để tạo chúng
 
 /** Chữ ký ngắn của bộ vùng — để biết geometry dùng chung đang mang shape key của bộ vùng nào. */
-export function signature(regions) {
-  const str = JSON.stringify(REGION_IDS.map(id => { const g = regions[id], sh = g && shapeOf(g); return g ? [g.c, g.r, SHAPE_KEYS.map(k => sh[k])] : 0; }));
+export function signature(regions, axes) {
+  const str = JSON.stringify(REGION_IDS.map(id => { const g = regions[id], sh = g && shapeOf(g); return g ? [g.c, g.r, SHAPE_KEYS.map(k => sh[k])] : 0; }).concat(axes ? [axes.up, axes.fwd] : []));
   let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
@@ -245,7 +257,7 @@ export function clearShapes(mesh) {
 export function buildShapes(mesh, data, names) {
   const d = cleanData(data); if (!d) throw new Error('Dữ liệu vùng mặt không hợp lệ.');
   let g = mesh.geometry;
-  const sig = signature(d.regions);
+  const sig = signature(d.regions, d.axes);
   // Geometry dùng chung (nhiều bản sao nhân vật cùng một file) đang mang shape key của BỘ VÙNG KHÁC → tách riêng cho mesh này.
   if (g.userData[KEY] && g.userData[KEY].length && g.userData[SIG] !== sig) {
     mesh.geometry = g = g.clone();
@@ -258,7 +270,7 @@ export function buildShapes(mesh, data, names) {
   const todo = want.filter(n => !have.has(n)), skipped = want.filter(n => have.has(n));
   if (!todo.length) return {added: [], skipped, stats: {}};
   const flat = pos.isInterleavedBufferAttribute || !(pos.array instanceof Float32Array) ? (() => { const a = new Float32Array(V * 3); for (let i = 0; i < V; i++) { a[i * 3] = pos.getX(i); a[i * 3 + 1] = pos.getY(i); a[i * 3 + 2] = pos.getZ(i); } return a; })() : pos.array;
-  const deltas = computeDeltas(flat, V, d.regions, todo);
+  const deltas = computeDeltas(flat, V, d.regions, todo, d.axes);
   const old = (mesh.morphTargetInfluences || []).slice();
   toRelative(g);
   const mine = g.userData[KEY] || (g.userData[KEY] = []);
