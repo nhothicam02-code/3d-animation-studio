@@ -1,0 +1,251 @@
+{
+ "id": "6dtmv0ysk",
+ "name": "jhjh",
+ "created": 1795704337892,
+ "updated": 1795704764075,
+ "scenes": [
+  {
+   "id": "hdgb5mysk",
+   "name": "Cảnh 1",
+   "duration": 9,
+   "bg": "#171923",
+   "cam": null,
+   "chars": [
+    {
+     "id": "vd705w1g1",
+     "file": "Lyly.character.json",
+     "name": "Lyly_custom",
+     "custom": {
+      "id": "lyly-custom-mwxnrig0",
+      "dataPath": "characters/custom/lyly-custom-mwxnrig0.json",
+      "name": "Lyly_custom"
+     },
+     "x": 0,
+     "z": 0,
+     "rot": 0,
+     "scale": 1,
+     "opacity": 1,
+     "y": 0,
+     "rx": 0,
+     "rz": 0,
+     "sx": 1,
+     "sy": 1,
+     "sz": 1,
+     "lock": true,
+     "fixed": true,
+     "clips": [
+      {
+       "id": "g92l4o4th",
+       "clip": "i-bo-mwrip8n1",
+       "start": 0,
+       "dur": 8.53,
+       "loop": true
+      }
+     ]
+    }
+   ],
+   "props": [],
+   "tracks": [],
+   "lights": [
+    {
+     "id": "qw594d68r",
+     "name": "Bán cầu 1",
+     "lt": "hemi",
+     "on": true,
+     "color": "#ffffff",
+     "helper": true,
+     "shadow": false,
+     "x": -2.4,
+     "z": 2,
+     "rx": 0,
+     "rot": 0,
+     "rz": 0,
+     "distance": 0,
+     "decay": 2,
+     "intensity": 4.2,
+     "color2": "#666070",
+     "y": 3
+    }
+   ],
+   "bgt": "env",
+   "bg2": "#5b3fa8",
+   "bga": 135,
+   "bgfit": "cover",
+   "bgz": 100,
+   "bgx": 0,
+   "bgy": 0,
+   "camk": {
+    "id": "wsqsy6ysr",
+    "name": "Camera",
+    "isCam": true,
+    "cpx": -3.5514,
+    "cpy": 2.6897,
+    "cpz": 0.3221,
+    "ctx": -0.0377,
+    "cty": 1.22,
+    "ctz": -0.0526,
+    "cfov": 35,
+    "kf": {
+     "pos": [
+      {
+       "id": "p8lnigk9x",
+       "t": 0,
+       "v": [
+        0.72416,
+        1.40477,
+        -0.08928
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "idc9nvpgj",
+       "t": 3.16667,
+       "v": [
+        0.16715,
+        1.45198,
+        0.67629
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "iyb8smy9q",
+       "t": 5.43333,
+       "v": [
+        0.33034,
+        1.46415,
+        1.66458
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "3x9owlvoh",
+       "t": 6.26667,
+       "v": [
+        -0.0377,
+        1.22,
+        3.06464
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "3yx6v1arg",
+       "t": 9,
+       "v": [
+        -3.55138,
+        2.68973,
+        0.32208
+       ],
+       "e": "ease"
+      }
+     ],
+     "rot": [
+      {
+       "id": "1cmrqdk9y",
+       "t": 0,
+       "v": [
+        -0.00991,
+        1.49679,
+        -0.04225
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "0tygqkpgj",
+       "t": 3.16667,
+       "v": [
+        -0.0099,
+        1.4968,
+        -0.0422
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "jkw162y9q",
+       "t": 5.43333,
+       "v": [
+        -0.03767,
+        1.21999,
+        -0.05262
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "dmca7cvoh",
+       "t": 6.26667,
+       "v": [
+        -0.0377,
+        1.22,
+        -0.0526
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "18sz38arg",
+       "t": 9,
+       "v": [
+        -0.0377,
+        1.22,
+        -0.0526
+       ],
+       "e": "ease"
+      }
+     ],
+     "scl": [
+      {
+       "id": "99vr34k9y",
+       "t": 0,
+       "v": [
+        35
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "tqjlgppgj",
+       "t": 3.16667,
+       "v": [
+        35
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "q2s6gay9q",
+       "t": 5.43333,
+       "v": [
+        35
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "7wvgc2voh",
+       "t": 6.26667,
+       "v": [
+        35
+       ],
+       "e": "ease"
+      },
+      {
+       "id": "6dboelarh",
+       "t": 9,
+       "v": [
+        35
+       ],
+       "e": "ease"
+      }
+     ]
+    }
+   },
+   "env": {
+    "preset": "sea",
+    "layers": [],
+    "anchor": true
+   }
+  }
+ ],
+ "fmt": {
+  "aspect": "16:9",
+  "res": 1080,
+  "fps": 30,
+  "w": 1920,
+  "h": 1080
+ }
+}
