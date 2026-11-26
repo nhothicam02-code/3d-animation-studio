@@ -27,6 +27,10 @@
     "con_chon_dat.character.json": {
       "thumbnail": "./library/thumbnails/characters/con-chon-dat.png",
       "updatedAt": "2026-11-25T16:10:56.060Z"
+    },
+    "Lyly.character.json": {
+      "thumbnail": "./library/thumbnails/characters/lyly.png",
+      "updatedAt": "2026-11-26T14:37:44.741Z"
     }
   },
   "animations": [
