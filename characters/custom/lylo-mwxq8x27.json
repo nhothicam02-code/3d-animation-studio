@@ -1,0 +1,77 @@
+{
+  "format": "3DiS-Character-1.0",
+  "id": "lylo-mwxq8x27",
+  "name": "LyLo",
+  "base": "Nhanvat1_body.character.json",
+  "updatedAt": "2026-11-26T15:48:34.783Z",
+  "items": [],
+  "expressions": [
+    {
+      "id": "binh-thuong-chop-mat-mwxq82hz",
+      "name": "Bình thường (chớp mắt)",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "face": {
+    "y": 0.45,
+    "z": 0.5,
+    "s": 0.9
+  },
+  "hiddenMeshes": []
+}
