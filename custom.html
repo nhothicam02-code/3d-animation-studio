@@ -292,7 +292,7 @@ async function loadBase(name) {
   TF = mountTexFace(rig); if (TF) TF.setFit(S.fit);
   RG.mesh = null;
   if (S.regions) { try { const r = FRG.applyRegions(obj, S.regions, null); RG.mesh = r ? r.mesh : null; } catch (err) { console.warn('Vùng mặt:', err); } }
-  SH.setModel(obj); rgStop(); rgRender();
+  rgRebuildModel();
   renderParts(); setBodyVisible($('showBody').checked);
   tag(name + ' · ' + rig.bones.length + ' xương' + (rig.missing.length ? ' · thiếu: ' + rig.missing.map(k => K.BONE_LABELS[k]).join(', ') : ''));
   renderOutfit(); fillEditor(); updateSelBox();
@@ -1316,16 +1316,18 @@ $('exRestart').onclick = () => { EX.t = 0; EX.t0 = {}; };
 /* ---------------- Keyshape: chọn 6 vùng mắt trái/phải, lông mày trái/phải, mũi, miệng (js/face-regions.js) ---------------- */
 // Mỗi vùng độc lập: chọn hay bỏ đều không ảnh hưởng vùng khác (hướng mặt lấy từ hướng đứng của nhân vật, lưu ở faceRegions.axes).
 // Chỉ lưu tâm + bán kính + pháp tuyến (~1 KB) → characters/custom/<id>.json → "faceRegions". Shape key được dựng lại lúc nạp.
-const RG_GROUPS = [['eyeL', 'Mắt trái'], ['eyeR', 'Mắt phải'], ['browL', 'Lông mày trái'], ['browR', 'Lông mày phải'], ['nose', 'Mũi'], ['mouth', 'Miệng']]
+// Nút “trái/phải” = bên nhìn thấy trên màn hình khi nhìn chính diện. Mã vùng L/R (chuẩn ARKit) tính theo nhân vật nên đảo lại.
+const RG_GROUPS = [['eyeR', 'Mắt trái'], ['eyeL', 'Mắt phải'], ['browR', 'Lông mày trái'], ['browL', 'Lông mày phải'], ['nose', 'Mũi'], ['mouth', 'Miệng']]
   .map(([id, label]) => ({id, label}));
 const FACE_DATA_ID = 'du-lieu-vung-mat';
 const TALK = [[0, 0.1], [0.12, 0.55], [0.26, 0.2], [0.4, 0.7], [0.55, 0.15], [0.7, 0.5], [0.85, 0.1], [1, 0.1]].map(([t, v]) => ({t, v}));
 const BLINK = [[0, 0], [0.12, 1], [0.24, 0], [1.2, 0]].map(([t, v]) => ({t, v}));                          // chạy thử: chớp liên tục
 const BLINK_SAVE = [[0, 0], [2.6, 0], [2.72, 1], [2.84, 0], [3, 0]].map(([t, v]) => ({t, v}));              // dữ liệu lưu: 3 giây chớp một lần
-const RG = {group: null, picking: false, mesh: null, mk: {}, blink: null, talk: null};   // blink / talk: thời gian đang chạy thử (null = tắt)
+const RG = {group: null, picking: false, anchor: {}, stale: new Set(), mesh: null, mk: {}, blink: null, talk: null};   // blink / talk: thời gian đang chạy thử (null = tắt)
 const rgSay = (m, t) => say($('rgStatus'), m, t);
 const rgOf = id => FRG.REGIONS.find(r => r.id === id);
-const rgScale = () => (RG.mesh ? RG.mesh.matrixWorld.getMaxScaleOnAxis() || 1 : 1);
+const rgMatrix = id => FRG.skinMatrix(RG.mesh, RG.anchor[id] || 0);          // lưới gốc → thế giới (đã tính xương)
+const rgScale = id => (RG.mesh ? rgMatrix(id).getMaxScaleOnAxis() || 1 : 1);
 const rgUnit = () => (S.face && S.face.hh ? S.face.hh : 0.2);                 // chiều cao đầu (mét, đã chuẩn hóa)
 const rgSet = () => (S.regions ? S.regions.regions : {});
 const rgHas = id => !!rgSet()[id];
@@ -1336,19 +1338,19 @@ function rgSizeRender() {
   const g = RG.group && rgSet()[RG.group], on = !!(g && RG.mesh);
   $('rgSizeBox').classList.toggle('hide', !on);
   if (!on) return;
-  const v = g.r * rgScale() / rgUnit() * 100;
+  const v = g.r * rgScale(RG.group) / rgUnit() * 100;
   $('rgSize').max = Math.max(60, Math.ceil(v));        // dữ liệu cũ có thể lớn hơn 60%
   $('rgSize').value = v; $('rgSizeLabel').textContent = rgSizeText(RG.group, v);
 }
 // đang kéo: vòng màu đổi theo ngay; thả tay mới dựng lại chuyển động (nhẹ máy hơn)
 $('rgSize').oninput = e => {
   const v = parseFloat(e.target.value), g = rgSet()[RG.group]; if (!g || !RG.mesh) return;
-  g.r = Math.round(v / 100 * rgUnit() / rgScale() * 1e5) / 1e5; $('rgSizeLabel').textContent = rgSizeText(RG.group, v); dirty();
+  g.r = Math.round(v / 100 * rgUnit() / rgScale(RG.group) * 1e5) / 1e5; $('rgSizeLabel').textContent = rgSizeText(RG.group, v); dirty();
 };
 $('rgSize').onchange = () => rgBuild();
 function rgRender() {
   rgSizeRender();
-  $('rgGrid').innerHTML = RG_GROUPS.map(g => '<div class="rgrow"><button data-rg="' + g.id + '" class="' + (RG.picking && RG.group === g.id ? 'on' : '') + '" aria-pressed="' + (RG.picking && RG.group === g.id) + '"><i style="background:' + rgOf(g.id).color + '"></i>' + g.label + '<b>' + (rgHas(g.id) ? '✓' : '') + '</b></button>' +
+  $('rgGrid').innerHTML = RG_GROUPS.map(g => '<div class="rgrow"><button data-rg="' + g.id + '" class="' + (RG.picking && RG.group === g.id ? 'on' : '') + '" aria-pressed="' + (RG.picking && RG.group === g.id) + '"><i style="background:' + rgOf(g.id).color + '"></i>' + g.label + '<b>' + (RG.stale.has(g.id) ? 'chọn lại' : rgHas(g.id) ? '✓' : '') + '</b></button>' +
     (rgHas(g.id) ? '<button data-rgdel="' + g.id + '" title="Bỏ vùng ' + g.label.toLowerCase() + '" aria-label="Bỏ vùng ' + g.label.toLowerCase() + '">✕</button>' : '') + '</div>').join('');
   for (const [id, key, parts, label] of [['rgBlink', 'blink', ['eyeL', 'eyeR'], 'Chớp mắt thử'], ['rgTalk', 'talk', ['mouth'], 'Nói chuyện thử']]) {
     const b = $(id), on = RG[key] != null;
@@ -1365,9 +1367,15 @@ function rgBuild() {
   RG.mesh = S.model && S.regions ? FRG.findMesh(S.model, S.regions) : null;
   if (RG.mesh) { try { FRG.clearShapes(RG.mesh); FRG.buildShapes(RG.mesh, S.regions); } catch (err) { console.warn('Vùng mặt:', err); rgSay('Không dựng được chuyển động: ' + err.message, 'bad'); } }
   if (S.model) SH.setModel(S.model);
+  RG.anchor = {}; RG.stale = new Set();
+  if (RG.mesh) for (const [id, g] of Object.entries(rgSet())) {
+    const p = FRG.probeRegion(RG.mesh, g); RG.anchor[id] = p.index;
+    if (!p.hit) RG.stale.add(id);
+  }
 }
 /** Nạp / tạo mới nhân vật trên cùng model gốc. */
-function rgRebuildModel() { rgStop(); rgBuild(); rgRender(); }
+function rgRebuildModel() { rgStop(); rgBuild(); rgRender(); rgWarnStale(); }
+function rgWarnStale() { if (RG.stale.size) rgSay('Có vùng cũ bị đặt lệch khỏi lưới (ghi “chọn lại”). Hãy bấm từng nút đó, chạm lại lên mặt rồi lưu.', 'bad'); }
 
 function rgTestTick(dt) {
   if (RG.blink == null && RG.talk == null) return;
@@ -1416,14 +1424,14 @@ function rgMarkers() {
     if (m.userData.key !== key) { rgShapeGeo(m.geometry, sh, g.r); m.userData.key = key; }
     const ax = frame ? FRG.regionAxes(frame, sh) : {A: [1, 0, 0], B: [0, 1, 0], F: [0, 0, 1]};
     _rgBasis.makeBasis(_vA.fromArray(ax.A), _vB.fromArray(ax.B), _vF.fromArray(ax.F)).setPosition(g.c[0], g.c[1], g.c[2]);
-    m.matrix.multiplyMatrices(RG.mesh.matrixWorld, _rgBasis); m.matrixWorldNeedsUpdate = true;
+    m.matrix.multiplyMatrices(rgMatrix(R.id), _rgBasis); m.matrixWorldNeedsUpdate = true;
   }
 }
 
 const r5 = v => Math.round(v * 1e5) / 1e5;
 /** Hướng “lên” và “ra trước” của nhân vật (trước mặt = +Z), đổi sang không gian cục bộ của mesh. */
-function rgAxes(mesh) {
-  const inv = mesh.matrixWorld.clone().invert(), q = spinG.getWorldQuaternion(new THREE.Quaternion());
+function rgAxes(matrix) {
+  const inv = matrix.clone().invert(), q = spinG.getWorldQuaternion(new THREE.Quaternion());
   const loc = v => v.applyQuaternion(q).transformDirection(inv).toArray().map(r5);
   return {up: loc(new THREE.Vector3(0, 1, 0)), fwd: loc(new THREE.Vector3(0, 0, 1))};
 }
@@ -1436,23 +1444,29 @@ function rgPick(ray) {
   for (const m of bodies) if (m.isSkinnedMesh) { m.skeleton.update(); m.boundingSphere = null; m.boundingBox = null; }
   const hit = ray.intersectObjects(bodies, false)[0];
   if (!hit) { rgSay('Chạm trượt, hãy chạm đúng lên mặt nhân vật.', 'bad'); return; }
-  const m = hit.object, others = Object.keys(rgSet()).length;
+  const m = hit.object, part = group.id;
+  for (const id of RG.stale) delete rgSet()[id];          // bỏ vùng cũ đặt lệch để không trộn hai hệ toạ độ
+  const dropped = RG.stale.size; RG.stale = new Set();
+  const others = Object.keys(rgSet()).filter(id => id !== part).length;
   if (others && RG.mesh !== m) { rgSay('Điểm này thuộc phần mesh khác với vùng đã chọn. Mọi vùng phải nằm trên cùng một mesh. Hãy chạm lại, hoặc bấm ✕ bỏ các vùng cũ.', 'bad'); return; }
-  const part = group.id, side = part.endsWith('L') ? 1 : part.endsWith('R') ? -1 : 0;     // L = bên trái của nhân vật (+X)
-  if (side) {
-    const head = S.rig && S.rig.pos('head'), x = spinG.worldToLocal(hit.point.clone()).x - (head ? head.x : 0);
-    if (x * side < 0) { rgSay('“' + group.label + '” là bên ' + (side > 0 ? 'trái' : 'phải') + ' của nhân vật, tức bên ' + (side > 0 ? 'phải' : 'trái') + ' khi nhìn chính diện. Hãy chạm bên đó.', 'bad'); return; }
+  if (!others) {
+    if (RG.mesh) FRG.clearShapes(RG.mesh);
+    S.regions = {v: 1, mesh: m.name || '', verts: m.geometry.attributes.position.count, regions: {}};
   }
-  if (!others) { S.regions = {v: 1, mesh: m.name || '', verts: m.geometry.attributes.position.count, regions: {}}; if (RG.mesh && RG.mesh !== m) FRG.clearShapes(RG.mesh); }
   RG.mesh = m;
-  S.regions.axes = rgAxes(m);
-  const R = rgOf(part), prev = S.regions.regions[part], r = prev ? prev.r : R.k * rgUnit() / rgScale();
-  const c = m.worldToLocal(hit.point.clone()), nn = hit.face ? hit.face.normal : {x: 0, y: 0, z: 1};
+  const anchor = hit.face.a, A = FRG.skinMatrix(m, anchor), scale = A.getMaxScaleOnAxis() || 1;
+  RG.anchor[part] = anchor;
+  S.regions.axes = rgAxes(A);
+  const R = rgOf(part), prev = S.regions.regions[part], r = prev ? prev.r : R.k * rgUnit() / scale;
+  // đưa điểm chạm về toạ độ lưới gốc; pháp tuyến lấy từ chính tam giác trên lưới gốc
+  const c = hit.point.clone().applyMatrix4(A.clone().invert());
+  const at = i => new THREE.Vector3().fromBufferAttribute(m.geometry.attributes.position, i);
+  const nn = new THREE.Triangle(at(hit.face.a), at(hit.face.b), at(hit.face.c)).getNormal(new THREE.Vector3());
   const shp = {}, src = prev || R.shape || {}; for (const k of FRG.SHAPE_KEYS) if (src[k] !== undefined) shp[k] = src[k];
   S.regions.regions[part] = {c: [c.x, c.y, c.z].map(r5), r: r5(r), n: [nn.x, nn.y, nn.z].map(r5), ...shp};
   dirty(); rgBuild();
   RG.picking = false;
-  rgSay('✓ Đã chọn ' + group.label.toLowerCase() + '.', 'good');
+  rgSay('✓ Đã chọn ' + group.label.toLowerCase() + '.' + (dropped ? ' Các vùng cũ bị đặt lệch đã được bỏ, hãy chọn lại nếu cần.' : ''), 'good');
   rgRender();
 }
 $('rgGrid').onclick = e => {
@@ -1467,7 +1481,7 @@ $('rgGrid').onclick = e => {
     rgStop();
     if (!same) {
       RG.group = g.id; RG.picking = true; stopClip(true);      // chọn vùng cần nhân vật ở T-pose
-      rgSay('Chạm lên ' + g.label.toLowerCase() + ' trên mặt nhân vật.' + (g.id.endsWith('L') ? ' (Bên trái của nhân vật = bên phải khi nhìn chính diện.)' : g.id.endsWith('R') ? ' (Bên phải của nhân vật = bên trái khi nhìn chính diện.)' : ''));
+      rgSay('Chạm lên ' + g.label.toLowerCase() + ' trên mặt nhân vật.');
     } else rgSay('Đã dừng chọn.');
   } else return;
   rgRender();
