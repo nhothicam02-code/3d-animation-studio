@@ -139,6 +139,7 @@ details.pc[open]>summary{border-bottom:1px solid var(--line)}
   <div class="extabs"><button id="tabTex" class="on" data-extab="texture">🖼 Texture</button><button id="tabKey" data-extab="keyshape">🦴 Keyshape</button></div>
   <div id="rgBox" class="hide">
    <div class="rggrid" id="rgGrid"></div>
+   <div class="note" id="rgNative" style="margin:8px 0 0"></div>
    <div id="rgSizeBox" style="margin:12px 0 4px">
     <div class="note" id="rgSizeTitle" style="margin:0 0 6px"></div>
     <label for="rgSize">Cỡ chung <span id="rgSizeV"></span></label><input type="range" id="rgSize" min="2" max="60" step="0.5" style="width:100%">
@@ -1325,7 +1326,7 @@ const FACE_DATA_ID = 'du-lieu-vung-mat';
 const TALK = [[0, 0.1], [0.12, 0.55], [0.26, 0.2], [0.4, 0.7], [0.55, 0.15], [0.7, 0.5], [0.85, 0.1], [1, 0.1]].map(([t, v]) => ({t, v}));
 const BLINK = [[0, 0], [0.12, 1], [0.24, 0], [1.2, 0]].map(([t, v]) => ({t, v}));                          // chạy thử: chớp liên tục
 const BLINK_SAVE = [[0, 0], [2.6, 0], [2.72, 1], [2.84, 0], [3, 0]].map(([t, v]) => ({t, v}));              // dữ liệu lưu: 3 giây chớp một lần
-const RG = {group: null, picking: false, anchor: {}, stale: new Set(), mesh: null, mk: {}, blink: null, talk: null};   // blink / talk: thời gian đang chạy thử (null = tắt)
+const RG = {native: new Set(), group: null, picking: false, anchor: {}, stale: new Set(), mesh: null, mk: {}, blink: null, talk: null};   // blink / talk: thời gian đang chạy thử (null = tắt)
 const rgSay = (m, t) => say($('rgStatus'), m, t);
 const rgOf = id => FRG.REGIONS.find(r => r.id === id);
 const rgMatrix = id => FRG.skinMatrix(RG.mesh, RG.anchor[id] || 0);          // lưới gốc → thế giới (đã tính xương)
@@ -1362,11 +1363,16 @@ for (const c of RG_SLIDERS) {
 }
 function rgRender() {
   rgSizeRender();
+  const has = [['Chớp mắt', ['eyeBlinkLeft', 'eyeBlinkRight']], ['Mở miệng', ['jawOpen']]].map(([label, list]) => {
+    const n = list.filter(x => FRG.nativeFor(RG.native, x)).length;
+    return n ? label + (n < list.length ? ' (một bên)' : '') : '';
+  }).filter(Boolean);
+  $('rgNative').textContent = has.length ? 'Model có sẵn, được dùng trước: ' + has.join(', ') + '. Thanh kích thước không đổi các chuyển động này.' : '';
   $('rgGrid').innerHTML = RG_GROUPS.map(g => '<div class="rgrow"><button data-rg="' + g.id + '" class="' + (RG.picking && RG.group === g.id ? 'on' : '') + '" aria-pressed="' + (RG.picking && RG.group === g.id) + '"><i style="background:' + rgOf(g.id).color + '"></i>' + g.label + '<b>' + (RG.stale.has(g.id) ? 'chọn lại' : rgHas(g.id) ? '✓' : '') + '</b></button>' +
     (rgHas(g.id) ? '<button data-rgdel="' + g.id + '" title="Bỏ vùng ' + g.label.toLowerCase() + '" aria-label="Bỏ vùng ' + g.label.toLowerCase() + '">✕</button>' : '') + '</div>').join('');
   for (const [id, key, parts, label] of [['rgBlink', 'blink', ['eyeL', 'eyeR'], 'Chớp mắt thử'], ['rgTalk', 'talk', ['mouth'], 'Nói chuyện thử']]) {
     const b = $(id), on = RG[key] != null;
-    b.disabled = !parts.some(rgHas); b.classList.toggle('on', on); b.textContent = on ? '■ Dừng thử' : label;
+    b.disabled = !parts.some(rgHas) && !(key === 'blink' ? ['eyeBlinkLeft', 'eyeBlinkRight'] : ['jawOpen']).some(n => FRG.nativeFor(RG.native, n)); b.classList.toggle('on', on); b.textContent = on ? '■ Dừng thử' : label;
   }
 }
 /** Tắt chế độ chọn và các nút chạy thử. */
@@ -1377,12 +1383,14 @@ function rgBuild() {
   SH.release();
   if (RG.mesh) FRG.clearShapes(RG.mesh);
   RG.mesh = S.model && S.regions ? FRG.findMesh(S.model, S.regions) : null;
+  if (RG.mesh) FRG.clearShapes(RG.mesh);          // trả model về nguyên gốc trước khi dò shape key có sẵn
+  RG.native = FRG.nativeNames(S.model);
   if (RG.mesh) {          // vùng lưu theo bản cũ bị lệch khỏi lưới → tự đưa về đúng chỗ
     S.model.updateMatrixWorld(true);
     const fix = FRG.repairData(RG.mesh, S.regions);
     if (fix.fixed.length) { S.regions = fix.data; dirty(); rgSay('✓ Đã tự đưa ' + fix.fixed.length + ' vùng cũ về đúng lưới. Kiểm tra lại rồi bấm Lưu dữ liệu biểu cảm.', 'good'); }
   }
-  if (RG.mesh) { try { FRG.clearShapes(RG.mesh); FRG.buildShapes(RG.mesh, S.regions); } catch (err) { console.warn('Vùng mặt:', err); rgSay('Không dựng được chuyển động: ' + err.message, 'bad'); } }
+  if (RG.mesh) { try { FRG.clearShapes(RG.mesh); FRG.buildShapes(RG.mesh, S.regions, null, RG.native); } catch (err) { console.warn('Vùng mặt:', err); rgSay('Không dựng được chuyển động: ' + err.message, 'bad'); } }
   if (S.model) SH.setModel(S.model);
   RG.anchor = {}; RG.stale = new Set();
   if (RG.mesh) for (const [id, g] of Object.entries(rgSet())) {
@@ -1397,11 +1405,10 @@ function rgWarnStale() { if (RG.stale.size) rgSay('Có vùng cũ bị đặt l�
 function rgTestTick(dt) {
   if (RG.blink == null && RG.talk == null) return;
   const vals = {};
-  if (RG.blink != null) { RG.blink += dt; vals.eyeBlinkLeft = vals.eyeBlinkRight = F.evalKeys(BLINK, RG.blink % 1.2, 'smooth'); }
-  if (RG.talk != null) { RG.talk += dt; vals.jawOpen = F.evalKeys(TALK, RG.talk % 1, 'smooth'); }
-  // chỉ chạy thử trên vùng đã chọn: bỏ qua bên chưa chọn (kể cả khi model có sẵn keyshape cùng tên)
-  if (!rgSet().eyeL) delete vals.eyeBlinkLeft;
-  if (!rgSet().eyeR) delete vals.eyeBlinkRight;
+  // dùng shape key của model nếu có; không có thì dùng cái dựng từ vùng đã chọn (bên chưa chọn thì bỏ qua)
+  const put = (name, region, v) => { const n = FRG.nativeFor(RG.native, name) || (rgSet()[region] ? name : null); if (n) vals[n] = v; };
+  if (RG.blink != null) { RG.blink += dt; const v = F.evalKeys(BLINK, RG.blink % 1.2, 'smooth'); put('eyeBlinkLeft', 'eyeL', v); put('eyeBlinkRight', 'eyeR', v); }
+  if (RG.talk != null) { RG.talk += dt; put('jawOpen', 'mouth', F.evalKeys(TALK, RG.talk % 1, 'smooth')); }
   SH.apply(vals);
 }
 function rgToggleTest(key) {
