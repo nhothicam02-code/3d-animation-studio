@@ -926,17 +926,18 @@ const eachBlink=(r,fn)=>{for(const m of r.mm)for(const n of FR.BLINK_MORPHS){con
    Lấy mức nhắm lớn hơn giữa biểu cảm đang chạy và nhịp chớp. */
 function blinkApply(s,tt){for(const ch of s.chars){const r=R[ch.id];if(!r||!r.mm)continue;const b=FR.autoBlink(tt,ch.id);const sided=r.mm.some(m=>m.morphTargetDictionary.eyeBlinkLeft!==undefined&&m.morphTargetDictionary.eyeBlinkRight!==undefined);eachBlink(r,(m,i,n)=>{m.morphTargetInfluences[i]=sided&&!/(Left|Right)$/.test(n)?0:Math.max(m.morphTargetInfluences[i]||0,b)})}}
 /* Hình vẽ thay thế theo TỪNG bộ phận: bộ phận nào đã có (vùng mặt đã chọn ở Custom / shape key của model / lớp biểu cảm texture đang chạy) thì không vẽ,
-   chưa có thì tự vẽ (mày, mắt trái/phải, mũi, miệng). Model gốc không phải Custom giữ quy tắc cũ: có morph → coi như đã có mắt + mày, có jaw/mouthOpen → đã có miệng. */
+   chưa có thì tự vẽ (mày, mắt trái/phải, mũi, miệng). Cả model Custom lẫn model gốc đều xét theo tên shape key thật sự có (mắt: eyeBlink…, mày: brow…, mũi: nose…, miệng: jawOpen/mouthOpen…). */
 const hasMorph=(r,...ns)=>r.mm.some(m=>ns.some(n=>m.morphTargetDictionary[n]!==undefined));
+const anyMorph=(r,re)=>r.mm.some(m=>Object.keys(m.morphTargetDictionary).some(n=>re.test(n)));
 function faceHave(r,e){
- const reg=(r.doc&&r.doc.faceRegions&&r.doc.faceRegions.regions)||{},nat=!r.doc&&r.mm.length>0,lay=e&&e.v===2&&e.layers||null,
+ const reg=(r.doc&&r.doc.faceRegions&&r.doc.faceRegions.regions)||{},nat=false,lay=e&&e.v===2&&e.layers||null,
   ly=id=>!!(lay&&lay[id]&&lay[id].show!==false&&((lay[id].frames&&lay[id].frames.length)||lay[id].set)),mo=(...n)=>hasMorph(r,...n);
  return {
-  eL:!!reg.eyeL||ly('eyeL')||nat||mo('eyeBlinkLeft','eyeWideLeft','eyeSquintLeft','eyeBlink','Blink','blink'),
-  eR:!!reg.eyeR||ly('eyeR')||nat||mo('eyeBlinkRight','eyeWideRight','eyeSquintRight','eyeBlink','Blink','blink'),
-  bL:!!reg.browL||ly('browL')||nat||mo('browDownLeft','browOuterUpLeft','browInnerUpLeft','browInnerUp','browDown'),
-  bR:!!reg.browR||ly('browR')||nat||mo('browDownRight','browOuterUpRight','browInnerUpRight','browInnerUp','browDown'),
-  n:!r.doc||!!reg.nose||ly('nose')||mo('noseSneerLeft','noseSneerRight'),
+  eL:!!reg.eyeL||ly('eyeL')||nat||mo('eyeBlinkLeft','eyeWideLeft','eyeSquintLeft','eyeBlink','Blink','blink')||anyMorph(r,/eye|blink|wink|目|まばたき/i),
+  eR:!!reg.eyeR||ly('eyeR')||nat||mo('eyeBlinkRight','eyeWideRight','eyeSquintRight','eyeBlink','Blink','blink')||anyMorph(r,/eye|blink|wink|目|まばたき/i),
+  bL:!!reg.browL||ly('browL')||nat||mo('browDownLeft','browOuterUpLeft','browInnerUpLeft','browInnerUp','browDown')||anyMorph(r,/brow|brw|眉/i),
+  bR:!!reg.browR||ly('browR')||nat||mo('browDownRight','browOuterUpRight','browInnerUpRight','browInnerUp','browDown')||anyMorph(r,/brow|brw|眉/i),
+  n:!!reg.nose||ly('nose')||mo('noseSneerLeft','noseSneerRight')||anyMorph(r,/nose|鼻/i),
   m:!!r.mmo||ly('mouth')
  }}
 const HV_NAME={eL:'mắt trái',eR:'mắt phải',bL:'mày trái',bR:'mày phải',n:'mũi',m:'miệng'};
