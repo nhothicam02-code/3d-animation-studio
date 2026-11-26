@@ -2,6 +2,16 @@
   "version": 1,
   "characters": [
     {
+      "id": "ggg-mwxbskkh",
+      "name": "ggg",
+      "base": "con_chon_dat.character.json",
+      "items": 0,
+      "expressions": 10,
+      "dataPath": "characters/custom/ggg-mwxbskkh.json",
+      "thumbnail": "./characters/custom/thumbs/ggg-mwxbskkh.png",
+      "updatedAt": "2026-11-26T09:03:57.473Z"
+    },
+    {
       "id": "kkkk-mwxbp1hi",
       "name": "kkkk",
       "base": "con_chon_dat.character.json",
