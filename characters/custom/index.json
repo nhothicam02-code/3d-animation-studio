@@ -2,6 +2,16 @@
   "version": 1,
   "characters": [
     {
+      "id": "kkkk-mwxbp1hi",
+      "name": "kkkk",
+      "base": "con_chon_dat.character.json",
+      "items": 0,
+      "expressions": 10,
+      "dataPath": "characters/custom/kkkk-mwxbp1hi.json",
+      "thumbnail": "./characters/custom/thumbs/kkkk-mwxbp1hi.png",
+      "updatedAt": "2026-11-26T09:01:12.775Z"
+    },
+    {
       "id": "a-mwxasi6u",
       "name": "a",
       "base": "con_cuu.character.json",
