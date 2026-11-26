@@ -2,6 +2,16 @@
   "version": 1,
   "characters": [
     {
+      "id": "a-mwxasi6u",
+      "name": "a",
+      "base": "con_cuu.character.json",
+      "items": 0,
+      "expressions": 10,
+      "dataPath": "characters/custom/a-mwxasi6u.json",
+      "thumbnail": "./characters/custom/thumbs/a-mwxasi6u.png",
+      "updatedAt": "2026-11-26T08:35:54.775Z"
+    },
+    {
       "id": "mina-mwu7iczd",
       "name": "mina",
       "base": "g1test.character.json",
