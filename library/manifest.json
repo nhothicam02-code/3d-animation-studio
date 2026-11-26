@@ -31,6 +31,10 @@
     "Lyly.character.json": {
       "thumbnail": "./library/thumbnails/characters/lyly.png",
       "updatedAt": "2026-11-26T14:37:44.741Z"
+    },
+    "Nhanvat1_body.character.json": {
+      "thumbnail": "./library/thumbnails/characters/nhanvat1-body.png",
+      "updatedAt": "2026-11-26T15:43:59.090Z"
     }
   },
   "animations": [
