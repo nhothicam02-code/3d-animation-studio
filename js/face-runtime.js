@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import * as K from './character-kit.js';
 import * as F from './face-kit.js';
+import * as FRG from './face-regions.js';
 
 /* ============================================================
    Chạy biểu cảm của nhân vật Custom bên ngoài trang Custom (dùng trong Studio / xuất video).
@@ -11,6 +12,7 @@ import * as F from './face-kit.js';
        • texture v1 : {mode:'texture', parts:{mask|browL…:{set, fps}}}
        • keyshape   : {mode:'keyshape', duration, ease, loop, parts:{mask}, tracks:{<tên>:{keys:[{t,v}]}}}
      face        : {y, z, s}  vị trí mặt trên đầu (độ cao / ra trước / cỡ, tính theo chiều cao đầu)
+     faceRegions : 6 vùng mặt (tâm + bán kính) → shape key được dựng lại lúc nạp, chỉ những key mà biểu cảm thực sự dùng (js/face-regions.js)
 
    Dùng: const fx = createFaceRuntime({model, wrap, rig, doc});   // null nếu nhân vật không có biểu cảm
          fx.apply(fx.get(id), tGiâyKểTừLúcBắtĐầu, độĐậm 0..1)    // mỗi khung hình
@@ -162,7 +164,11 @@ export function createFaceRuntime({model, wrap, rig, doc}) {
   let overlay = null;
   if (list.some(e => !isV2(e))) { try { overlay = F.mountFaceOverlay(rig, fit); } catch (err) { overlay = null; } }
   const SH = list.some(isKs) ? F.createShapeDriver() : null;
-  if (SH) SH.setModel(model);
+  if (SH) {
+    // dựng shape key từ vùng mặt TRƯỚC khi quét keyshape của model; chỉ dựng đúng những key các biểu cảm dùng (nhẹ bộ nhớ GPU)
+    if (doc && doc.faceRegions) { try { FRG.applyRegions(model, doc.faceRegions, list); } catch (err) { console.warn('Vùng mặt:', err); } }
+    SH.setModel(model);
+  }
 
   return {
     list,
