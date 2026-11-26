@@ -160,6 +160,17 @@ export function autoBlink(t, seed = '') {
 const dropFixedBlink = e => (e.id !== 'du-lieu-vung-mat' || !e.tracks) ? e
   : {...e, tracks: Object.fromEntries(Object.entries(e.tracks).map(([n, tr]) => [n, n.startsWith('eyeBlink') ? {...tr, keys: [{t: 0, v: 0}]} : tr]))};
 
+
+/** Tâm các vùng mặt đã chọn ở trang Custom, đổi sang toạ độ thế giới (lúc model đang ở tư thế gốc) → Studio dùng để căn hình vẽ thay thế đúng chỗ.
+ *  Trả {eyeL, eyeR, browL, browR, nose, mouth} (vùng nào chưa chọn thì null) hoặc null nếu không tìm được mesh mặt. */
+export function regionPoints(model, data) {
+  const d = FRG.cleanData(data); if (!d) return null;
+  const mesh = FRG.findMesh(model, d); if (!mesh) return null;
+  model.updateMatrixWorld(true); mesh.updateMatrixWorld(true);
+  const pt = id => { const g = d.regions && d.regions[id]; return g && g.c ? new THREE.Vector3(g.c[0], g.c[1], g.c[2]).applyMatrix4(mesh.matrixWorld) : null; };
+  return {eyeL: pt('eyeL'), eyeR: pt('eyeR'), browL: pt('browL'), browR: pt('browR'), nose: pt('nose'), mouth: pt('mouth')};
+}
+
 /* ---------------- Bộ chạy biểu cảm của một nhân vật ---------------- */
 export function createFaceRuntime({model, wrap, rig, doc}) {
   const list = (Array.isArray(doc && doc.expressions) ? doc.expressions : [])
