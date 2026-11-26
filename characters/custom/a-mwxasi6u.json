@@ -1,0 +1,950 @@
+{
+  "format": "3DiS-Character-1.0",
+  "id": "a-mwxasi6u",
+  "name": "a",
+  "base": "con_cuu.character.json",
+  "updatedAt": "2026-11-26T08:35:54.775Z",
+  "items": [],
+  "expressions": [
+    {
+      "id": "binh-thuong-chop-mat-mwxapy6j",
+      "name": "Bình thường (chớp mắt)",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "binh-thuong"
+    },
+    {
+      "id": "vui-mwxapy6k",
+      "name": "Vui",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "mouthSmileLeft": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.8
+            }
+          ]
+        },
+        "mouthSmileRight": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.8
+            }
+          ]
+        },
+        "eyeHappyLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.7
+            }
+          ]
+        },
+        "eyeHappyRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.7
+            }
+          ]
+        },
+        "eyeSquintLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.25
+            }
+          ]
+        },
+        "eyeSquintRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.25
+            }
+          ]
+        },
+        "jawOpen": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.1
+            }
+          ]
+        },
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "vui"
+    },
+    {
+      "id": "cuoi-lon-mwxapy6k",
+      "name": "Cười lớn",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 0.9,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "mouthSmileLeft": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 1
+            }
+          ]
+        },
+        "mouthSmileRight": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 1
+            }
+          ]
+        },
+        "eyeHappyLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 1
+            }
+          ]
+        },
+        "eyeHappyRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 1
+            }
+          ]
+        },
+        "eyeSquintLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.8
+            }
+          ]
+        },
+        "eyeSquintRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.8
+            }
+          ]
+        },
+        "jawOpen": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.35
+            },
+            {
+              "t": 0.15,
+              "v": 0.8
+            },
+            {
+              "t": 0.3,
+              "v": 0.35
+            },
+            {
+              "t": 0.45,
+              "v": 0.8
+            },
+            {
+              "t": 0.6,
+              "v": 0.35
+            },
+            {
+              "t": 0.75,
+              "v": 0.8
+            },
+            {
+              "t": 0.9,
+              "v": 0.35
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "cuoi-lon"
+    },
+    {
+      "id": "cuoi-nguong-mwxapy6k",
+      "name": "Cười ngượng",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "mouthSmileLeft": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.5
+            }
+          ]
+        },
+        "mouthSmileRight": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.5
+            }
+          ]
+        },
+        "eyeSquintLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.35
+            }
+          ]
+        },
+        "eyeSquintRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.35
+            }
+          ]
+        },
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "cuoi-nguong"
+    },
+    {
+      "id": "buon-mwxapy6k",
+      "name": "Buồn",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "mouthFrownLeft": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.75
+            }
+          ]
+        },
+        "mouthFrownRight": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.75
+            }
+          ]
+        },
+        "eyeSadLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.8
+            }
+          ]
+        },
+        "eyeSadRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.8
+            }
+          ]
+        },
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.12
+            },
+            {
+              "t": 2.5,
+              "v": 0.12
+            },
+            {
+              "t": 2.7,
+              "v": 1
+            },
+            {
+              "t": 2.9,
+              "v": 0.12
+            },
+            {
+              "t": 3,
+              "v": 0.12
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.12
+            },
+            {
+              "t": 2.5,
+              "v": 0.12
+            },
+            {
+              "t": 2.7,
+              "v": 1
+            },
+            {
+              "t": 2.9,
+              "v": 0.12
+            },
+            {
+              "t": 3,
+              "v": 0.12
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "buon"
+    },
+    {
+      "id": "gian-mwxapy6k",
+      "name": "Giận",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "eyeSquintLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.5
+            }
+          ]
+        },
+        "eyeSquintRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.5
+            }
+          ]
+        },
+        "mouthFrownLeft": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.5
+            }
+          ]
+        },
+        "mouthFrownRight": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.5
+            }
+          ]
+        },
+        "jawOpen": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.08
+            }
+          ]
+        },
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "gian"
+    },
+    {
+      "id": "ngac-nhien-mwxapy6k",
+      "name": "Ngạc nhiên",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 2,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "eyeWideLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 1
+            }
+          ]
+        },
+        "eyeWideRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 1
+            }
+          ]
+        },
+        "jawOpen": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 0.2,
+              "v": 0.8
+            },
+            {
+              "t": 2,
+              "v": 0.8
+            }
+          ]
+        },
+        "mouthPucker": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.2
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "ngac-nhien"
+    },
+    {
+      "id": "nhay-mat-trai-mwxapy6k",
+      "name": "Nháy mắt (trái)",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 2,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 0.8,
+              "v": 0
+            },
+            {
+              "t": 0.9,
+              "v": 1
+            },
+            {
+              "t": 1.4,
+              "v": 1
+            },
+            {
+              "t": 1.5,
+              "v": 0
+            },
+            {
+              "t": 2,
+              "v": 0
+            }
+          ]
+        },
+        "mouthSmileLeft": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.7
+            }
+          ]
+        },
+        "mouthSmileRight": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.7
+            }
+          ]
+        },
+        "eyeSquintLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.4
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "nhay-mat"
+    },
+    {
+      "id": "chu-moi-hon-mwxapy6k",
+      "name": "Chu môi / hôn",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "mouthPucker": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 1
+            }
+          ]
+        },
+        "eyeSquintLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.3
+            }
+          ]
+        },
+        "eyeSquintRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.3
+            }
+          ]
+        },
+        "eyeBlinkLeft": {
+          "part": "eyeL",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "part": "eyeR",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "chu-moi"
+    },
+    {
+      "id": "dang-noi-nhep-mau-mwxapy6k",
+      "name": "Đang nói (nhép mẫu)",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 1,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "jawOpen": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.1
+            },
+            {
+              "t": 0.12,
+              "v": 0.55
+            },
+            {
+              "t": 0.26,
+              "v": 0.2
+            },
+            {
+              "t": 0.4,
+              "v": 0.7
+            },
+            {
+              "t": 0.55,
+              "v": 0.15
+            },
+            {
+              "t": 0.7,
+              "v": 0.5
+            },
+            {
+              "t": 0.85,
+              "v": 0.1
+            },
+            {
+              "t": 1,
+              "v": 0.1
+            }
+          ]
+        },
+        "mouthSmileLeft": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.1
+            }
+          ]
+        },
+        "mouthSmileRight": {
+          "part": "mouth",
+          "keys": [
+            {
+              "t": 0,
+              "v": 0.1
+            }
+          ]
+        }
+      },
+      "auto": "regions",
+      "presetId": "dang-noi"
+    }
+  ],
+  "face": {
+    "y": 0.45,
+    "z": 0.5,
+    "s": 0.9
+  },
+  "hiddenMeshes": [],
+  "faceRegions": {
+    "v": 1,
+    "mesh": "geometry_0001",
+    "verts": 98540,
+    "regions": {
+      "eyeL": {
+        "c": [
+          -0.07976,
+          0.67205,
+          0.13624
+        ],
+        "r": 0.06669,
+        "n": [
+          -0.21637,
+          -0.08288,
+          0.97279
+        ],
+        "sx": 0.9,
+        "sy": 1.05,
+        "sz": 0.8
+      },
+      "eyeR": {
+        "c": [
+          0.09528,
+          0.66539,
+          0.13848
+        ],
+        "r": 0.06669,
+        "n": [
+          0.18473,
+          -0.10687,
+          0.97696
+        ],
+        "sx": 0.75,
+        "sy": 1.1,
+        "sz": 0.8
+      },
+      "mouth": {
+        "c": [
+          0.0099,
+          0.58474,
+          0.14224
+        ],
+        "r": 0.02223,
+        "n": [
+          0.08277,
+          -0.40601,
+          0.91011
+        ],
+        "sy": 0.8,
+        "sz": 0.8,
+        "amp": 1.2
+      }
+    }
+  }
+}
