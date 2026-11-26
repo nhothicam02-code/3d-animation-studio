@@ -1,0 +1,15 @@
+{
+  "format": "3DiS-Character-1.0",
+  "id": "lyly-custom-mwxnrig0",
+  "name": "Lyly_custom",
+  "base": "Lyly.character.json",
+  "updatedAt": "2026-11-26T14:39:03.456Z",
+  "items": [],
+  "expressions": [],
+  "face": {
+    "y": 0.45,
+    "z": 0.5,
+    "s": 0.9
+  },
+  "hiddenMeshes": []
+}
