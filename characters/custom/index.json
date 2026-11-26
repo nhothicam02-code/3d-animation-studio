@@ -5,11 +5,11 @@
       "id": "lyly-custom-mwxnrig0",
       "name": "Lyly_custom",
       "base": "Lyly.character.json",
-      "items": 0,
+      "items": 1,
       "expressions": 0,
       "dataPath": "characters/custom/lyly-custom-mwxnrig0.json",
       "thumbnail": "./characters/custom/thumbs/lyly-custom-mwxnrig0.png",
-      "updatedAt": "2026-11-26T14:39:03.456Z"
+      "updatedAt": "2026-11-26T15:09:11.182Z"
     },
     {
       "id": "mina-mwu7iczd",
