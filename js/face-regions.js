@@ -296,6 +296,38 @@ const ORIG = new WeakMap();
 const KEY = 'faceRegionShapes';           // geometry.userData[KEY] = danh sách tên shape key do module này tạo
 const SIG = 'faceRegionSig';              // geometry.userData[SIG] = chữ ký bộ vùng đã dùng để tạo chúng
 
+/* ---------------- Ưu tiên shape key của model gốc ---------------- */
+const BLINK_ALT = ['eyeBlink', 'Blink', 'blink'];
+/** Tên khác cùng ý nghĩa: model có một trong số này thì coi như đã có, không dựng thêm từ vùng. */
+export const ALIASES = {
+  jawOpen: ['mouthOpen', 'MouthOpen', 'viseme_aa', 'aa', 'A', 'Fcl_MTH_A', 'mouth_open'],
+  eyeBlinkLeft: BLINK_ALT, eyeBlinkRight: BLINK_ALT,
+  ...Object.fromEntries(['eyeSquint', 'eyeWide', 'browDown', 'browInnerUp', 'browOuterUp', 'noseSneer', 'mouthSmile', 'mouthFrown'].flatMap(n => [[n + 'Left', [n]], [n + 'Right', [n]]]))
+};
+/** Tên trên model (đúng tên hoặc tên tương đương) đang đảm nhận `name`; null nếu không có. */
+export const nativeFor = (native, name) => [name, ...(ALIASES[name] || [])].find(n => native.has(n)) || null;
+/** Shape key có làm đỉnh nào di chuyển không (key rỗng coi như model không có). */
+function isLive(g, a) {
+  if (!a || !a.count) return true;                       // không đọc được dữ liệu → vẫn tôn trọng model
+  const base = g.morphTargetsRelative ? null : g.attributes.position;
+  for (let i = 0; i < a.count; i++) {
+    if (Math.abs(a.getX(i) - (base ? base.getX(i) : 0)) > 1e-6 || Math.abs(a.getY(i) - (base ? base.getY(i) : 0)) > 1e-6 || Math.abs(a.getZ(i) - (base ? base.getZ(i) : 0)) > 1e-6) return true;
+  }
+  return false;
+}
+function addNative(set, mesh) {
+  const g = mesh.geometry, list = g && g.morphAttributes && g.morphAttributes.position, dict = mesh.morphTargetDictionary;
+  if (!list || !dict) return;
+  const ours = new Set(g.userData[KEY] || []);
+  for (const [name, i] of Object.entries(dict)) if (!ours.has(name) && isLive(g, list[i])) set.add(name);
+}
+/** Mọi shape key gốc (có chuyển động) trên toàn model, kể cả mesh mắt / răng tách riêng. */
+export function nativeNames(model) {
+  const set = new Set();
+  if (model) model.traverse(o => { if (o.isMesh) addNative(set, o); });
+  return set;
+}
+
 /** Chữ ký ngắn của bộ vùng — để biết geometry dùng chung đang mang shape key của bộ vùng nào. */
 export function signature(regions, axes) {
   const str = JSON.stringify(REGION_IDS.map(id => { const g = regions[id], sh = g && shapeOf(g); return g ? [g.c, g.r, SHAPE_KEYS.map(k => sh[k])] : 0; }).concat(axes ? [axes.up, axes.fwd] : []));
@@ -352,7 +384,7 @@ export function clearShapes(mesh) {
  * Dựng các shape key `names` (mặc định: tất cả dựng được) lên mesh. Shape key đã có thì bỏ qua → gọi lại nhiều lần vẫn an toàn,
  * kể cả khi nhiều bản sao nhân vật dùng chung một geometry. Trả {added, skipped}.
  */
-export function buildShapes(mesh, data, names) {
+export function buildShapes(mesh, data, names, modelNative) {
   const d = cleanData(data); if (!d) throw new Error('Dữ liệu vùng mặt không hợp lệ.');
   let g = mesh.geometry;
   const sig = signature(d.regions, d.axes);
@@ -370,12 +402,14 @@ export function buildShapes(mesh, data, names) {
   const have = new Set(Object.keys(mesh.morphTargetDictionary || {}));
   const want = (names && names.length ? names : shapesAvailable(d)).filter(n => SHAPE.has(n) && d.regions[SHAPE.get(n).region]);
   const ours = new Set(g.userData[KEY] || []);
-  let todo = want.filter(n => !ours.has(n));
-  const skipped = want.filter(n => ours.has(n));
+  const native = new Set(modelNative || []);
+  addNative(native, mesh);
+  let todo = want.filter(n => !ours.has(n) && !nativeFor(native, n));      // model đã có → dùng của model
+  const skipped = want.filter(n => !todo.includes(n));
   if (!todo.length) return {added: [], skipped, stats: {}};
   const flat = pos.isInterleavedBufferAttribute || !(pos.array instanceof Float32Array) ? (() => { const a = new Float32Array(V * 3); for (let i = 0; i < V; i++) { a[i * 3] = pos.getX(i); a[i * 3 + 1] = pos.getY(i); a[i * 3 + 2] = pos.getZ(i); } return a; })() : pos.array;
   const deltas = computeDeltas(flat, V, d.regions, todo, d.axes);
-  // model đã có shape key trùng tên: chỉ thay khi vùng thực sự tạo ra chuyển động
+  // còn lại: chưa có, hoặc model chỉ có key rỗng trùng tên (chỉ thay khi vùng thực sự tạo ra chuyển động)
   todo = todo.filter(n => !have.has(n) || deltas[n].some(v => v !== 0));
   const old = (mesh.morphTargetInfluences || []).slice();
   toRelative(g);
@@ -424,5 +458,5 @@ export function applyRegions(model, data, expressions) {
   const fixedData = repairData(mesh, d).data;
   const names = expressions == null ? null : neededNames(expressions);
   if (names && !names.length) return {mesh, added: [], skipped: []};
-  return {mesh, ...buildShapes(mesh, fixedData, names)};
+  return {mesh, ...buildShapes(mesh, fixedData, names, nativeNames(model))};
 }
