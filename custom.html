@@ -1365,6 +1365,11 @@ function rgBuild() {
   SH.release();
   if (RG.mesh) FRG.clearShapes(RG.mesh);
   RG.mesh = S.model && S.regions ? FRG.findMesh(S.model, S.regions) : null;
+  if (RG.mesh) {          // vùng lưu theo bản cũ bị lệch khỏi lưới → tự đưa về đúng chỗ
+    S.model.updateMatrixWorld(true);
+    const fix = FRG.repairData(RG.mesh, S.regions);
+    if (fix.fixed.length) { S.regions = fix.data; dirty(); rgSay('✓ Đã tự đưa ' + fix.fixed.length + ' vùng cũ về đúng lưới. Kiểm tra lại rồi bấm Lưu dữ liệu biểu cảm.', 'good'); }
+  }
   if (RG.mesh) { try { FRG.clearShapes(RG.mesh); FRG.buildShapes(RG.mesh, S.regions); } catch (err) { console.warn('Vùng mặt:', err); rgSay('Không dựng được chuyển động: ' + err.message, 'bad'); } }
   if (S.model) SH.setModel(S.model);
   RG.anchor = {}; RG.stale = new Set();
