@@ -3,13 +3,188 @@
   "id": "chon-dat-hh-mwxdorl4",
   "name": "chon dat hh",
   "base": "con_chon_dat.character.json",
-  "updatedAt": "2026-11-26T09:56:59.176Z",
+  "updatedAt": "2026-11-26T10:19:56.001Z",
   "items": [],
-  "expressions": [],
+  "expressions": [
+    {
+      "id": "du-lieu-vung-mat",
+      "name": "Mặt tự nhiên",
+      "mode": "keyshape",
+      "loop": true,
+      "duration": 3,
+      "ease": "smooth",
+      "parts": {},
+      "tracks": {
+        "eyeBlinkLeft": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeBlinkRight": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            },
+            {
+              "t": 2.6,
+              "v": 0
+            },
+            {
+              "t": 2.72,
+              "v": 1
+            },
+            {
+              "t": 2.84,
+              "v": 0
+            },
+            {
+              "t": 3,
+              "v": 0
+            }
+          ]
+        },
+        "eyeSquintLeft": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        },
+        "eyeSquintRight": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        },
+        "eyeWideLeft": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        },
+        "eyeWideRight": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        },
+        "eyeHappyLeft": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        },
+        "eyeHappyRight": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        },
+        "eyeSadLeft": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        },
+        "eyeSadRight": {
+          "keys": [
+            {
+              "t": 0,
+              "v": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
   "face": {
     "y": 0.45,
     "z": 0.5,
     "s": 0.9
   },
-  "hiddenMeshes": []
+  "hiddenMeshes": [],
+  "faceRegions": {
+    "v": 1,
+    "mesh": "geometry_0",
+    "verts": 99222,
+    "regions": {
+      "eyeR": {
+        "c": [
+          -0.123,
+          0.73603,
+          0.19697
+        ],
+        "r": 0.08326,
+        "n": [
+          -0.4475,
+          0.11951,
+          0.88626
+        ],
+        "sx": 1,
+        "sy": 0.6,
+        "sz": 0.8
+      },
+      "eyeL": {
+        "c": [
+          0.11999,
+          0.735,
+          0.19613
+        ],
+        "r": 0.07771,
+        "n": [
+          0.25328,
+          0.02771,
+          0.967
+        ],
+        "sx": 1,
+        "sy": 0.6,
+        "sz": 0.8
+      }
+    },
+    "axes": {
+      "up": [
+        0,
+        1,
+        0
+      ],
+      "fwd": [
+        0.91083,
+        0,
+        0.41279
+      ]
+    }
+  }
 }
