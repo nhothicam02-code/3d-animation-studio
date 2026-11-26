@@ -6,10 +6,10 @@
       "name": "chon dat hh",
       "base": "con_chon_dat.character.json",
       "items": 0,
-      "expressions": 0,
+      "expressions": 1,
       "dataPath": "characters/custom/chon-dat-hh-mwxdorl4.json",
       "thumbnail": "./characters/custom/thumbs/chon-dat-hh-mwxdorl4.png",
-      "updatedAt": "2026-11-26T09:56:59.176Z"
+      "updatedAt": "2026-11-26T10:19:56.001Z"
     },
     {
       "id": "ggg-mwxbskkh",
