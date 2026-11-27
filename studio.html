@@ -492,7 +492,7 @@ const camCur=()=>{const c=cur();return c&&c.type==='cam'?c:null};
 const _cBox=new THREE.Box3(),_cSz=new THREE.Vector3(),_cCt=new THREE.Vector3(),_cHd=new THREE.Vector3(),_cQt=new THREE.Quaternion(),_cFw=new THREE.Vector3();
 /* Số đo đối tượng: tâm, đỉnh, vị trí khuôn mặt, hướng nhìn (mặt trước = +Z của mô hình) */
 function camSubject(id){
- const r=R[id];if(!r||!r.g||r.lt||r.fx)return null;const g=r.g;g.updateMatrixWorld(true);
+ const r=R[id];if(!r||!r.g||r.lt)return null;   /* nhân vật Custom có r.fx (bộ biểu cảm mặt) — vẫn là đối tượng hợp lệ cho camera */const g=r.g;g.updateMatrixWorld(true);
  _cBox.setFromObject(g);if(_cBox.isEmpty())return null;_cBox.getSize(_cSz);_cBox.getCenter(_cCt);
  const k=g.scale.y.toFixed(4);if(!r.cs||r.cs.k!==k)r.cs={k,h:Math.max(.05,_cSz.y),w:Math.max(.05,Math.max(_cSz.x,_cSz.z)),m:Math.max(.05,_cSz.x,_cSz.y,_cSz.z)};
  const S={prop:!!r.prop,cx:_cCt.x,cy:_cCt.y,cz:_cCt.z,h:r.cs.h,w:r.cs.w,m:r.cs.m,hx:_cCt.x,hy:_cCt.y,hz:_cCt.z,fx:0,fz:1};
@@ -536,6 +536,10 @@ function camPrev(){if(tab!=='cam'||!P||busy)return null;const c=camCur();if(c)re
 /* Góc tự do: đang sửa tay → dùng thẳng camera của viewport (xoay / kéo / zoom), tự lưu vào clip */
 const camFreeEdit=()=>{const pv=camPrev();return pv&&pv.shot==='free'&&!playing?pv:null};
 let CAMFB=null,CAMH=0,CAMDRAG=false;
+/* Vừa chỉnh cỡ cảnh / thông số camera → ưu tiên xem trước đúng thứ đang chỉnh (clip đang chọn hoặc clip mới) kể cả khi đường đỏ nằm trong một clip camera khác.
+   Hết ưu tiên khi di chuyển đường đỏ, phát, hoặc đổi clip đang chọn. */
+let CAMED=null;
+const camEdit=()=>{const c=camCur();CAMED={t,id:c?c.id:''}},camEdOn=()=>!!CAMED&&CAMED.t===t&&!playing&&CAMED.id===((camCur()||{}).id||'');
 const camCap=()=>{const o=camCur()||CAMD;o.fp=camera.position.toArray().map(r5);o.fa=controls.target.toArray().map(r5);o.ffov=r5(camera.fov)};
 function camFreeze(o){const ov=_cP[0],b=o.id?o:{...o,start:FXT,dur:3},ok=o.shot!=='free'&&camPose(b,Math.min(Math.max(FXT,b.start),b.start+b.dur),ov);
  if(ok){o.fp=ov.p.toArray().map(r5);o.fa=ov.a.toArray().map(r5);o.ffov=r5(ov.fov)}else if(!o.fp){o.fp=camera.position.toArray().map(r5);o.fa=controls.target.toArray().map(r5);o.ffov=r5(camera.fov)}
@@ -547,6 +551,7 @@ function camFreeTick(){if(!CAMH){CAMH=1;controls.addEventListener('start',()=>{C
  return fe}
 function camState(s,tt,o){
  if(camFreeEdit())return false;
+ if(camEdOn()){const pv=camPrev();if(pv)return camPose(pv,Math.min(Math.max(tt,pv.start),pv.start+pv.dur),o)}
  const all=camAll(s);let c=null,i=-1;all.forEach((x,j)=>{if(tt>=x.start-1e-6&&tt<x.start+x.dur-1e-6){c=x;i=j}});
  if(!c){const pv=camPrev();return !!pv&&camPose(pv,Math.min(Math.max(tt,pv.start),pv.start+pv.dur),o)}   // xem trước: clip đang chọn / cài đặt đang chỉnh
  if(!camPose(c,tt,o))return false;
@@ -597,7 +602,7 @@ function camPanel(s){
  h+='<label>Clip camera trong cảnh ('+all.length+')</label>'+(all.map(x=>'<div class="li'+(c&&c.id===x.id?' on':'')+'" data-camsel="'+x.id+'"><span>🎥 '+esc(camLabel(x))+' · '+r2(x.start)+'–'+r2(x.start+x.dur)+'s</span><button class="del" data-camdel="'+x.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có clip camera nào.</div>');
  return h}
 $('panel').addEventListener('click',e=>{const el=e.target.closest('[data-camt],[data-cams],[data-camadd],[data-camnew],[data-camsel],[data-camdel],[data-camfx],[data-camgo]');if(!el||!P)return;const d=el.dataset,c=camCur(),o=c||CAMD;
- if(d.camt!==undefined||d.cams!==undefined){if(d.camt!==undefined)o.target=d.camt;else if(d.cams==='free'){if(o.shot!=='free')camFreeze(o)}else o.shot=d.cams;if(c){touch();renderTL();camPeek(c)}renderPanel();return}
+ if(d.camt!==undefined||d.cams!==undefined){if(d.camt!==undefined)o.target=d.camt;else if(d.cams==='free'){if(o.shot!=='free')camFreeze(o)}else o.shot=d.cams;camEdit();if(c){touch();renderTL();camPeek(c)}renderPanel();return}
  if(d.camadd!==undefined)return addCam();
  if(d.camnew!==undefined){sel=null;renderTL();renderPanel();renderOv();return}
  if(d.camsel)return setSel(d.camsel,'cam');
@@ -606,7 +611,7 @@ $('panel').addEventListener('click',e=>{const el=e.target.closest('[data-camt],[
  if(d.camfx)camAddFx(d.camfx)});
 $('panel').addEventListener('input',e=>{const el=e.target,k=el.dataset.camk;if(!k||!P)return;if(el.type==='number'&&el.value==='')return;
  const c=camCur(),o=c||CAMD,s=sc(),v=el.type==='number'||el.type==='range'?+el.value:el.value;if(k==='dur'&&v<1/P.fmt.fps)return;
-o[k]=v;if(k==='ffov'&&camFreeEdit()){camera.fov=v;camera.updateProjectionMatrix()}document.querySelectorAll('#panel [data-camv="'+k+'"]').forEach(b=>b.textContent=r2(v));
+o[k]=v;camEdit();if(k==='ffov'&&camFreeEdit()){camera.fov=v;camera.updateProjectionMatrix()}document.querySelectorAll('#panel [data-camv="'+k+'"]').forEach(b=>b.textContent=r2(v));
  if(c){if(c.start+c.dur>s.duration)s.duration=Math.ceil(c.start+c.dur);if(k!=='start'&&k!=='dur')camPeek(c);renderTL();touchSoon()}});
 function fxPanel(s){const its=fxItems(s);
  let h='<div class="hint">Bấm một hiệu ứng để thêm vào timeline tại đường đỏ. Hiệu ứng <b>không gian</b> (mưa, tuyết, lửa, nổ…) có khung vùng + gizmo trong khung hình (kéo, xoay, đổi cỡ; 🔒 để khóa); hiệu ứng <b>camera</b> tác động lên góc quay; hiệu ứng <b>màn hình</b> phủ lên toàn khung. Nhóm <b>Không khí &amp; ánh sáng</b> (sương mù, mờ ảo, biến dạng…) dùng được với mọi loại nền. Chỉnh cường độ, tốc độ, màu, vị trí / xoay / scale X Y Z ở tab “Thuộc tính”. Mọi hiệu ứng tính theo thời gian nên tua và xuất video cho kết quả giống hệt.</div>';
