@@ -345,8 +345,8 @@ function pick(e){ndc(e);let best=null,bd=1e9;for(const ch of sc().chars){const r
 $('frame').addEventListener('pointerdown',e=>{const h=e.target.closest('.rh'),sh=e.target.closest('.sh'),o=e.target.closest('.o2');let hit=false;
  if(sh){const it=cur();if(it){const b=sh.parentElement.getBoundingClientRect(),c=[b.left+b.width/2,b.top+b.height/2];vd={m:'sz',it,w:it.w,s:it.size||40,c,d0:Math.hypot(e.clientX-c[0],e.clientY-c[1])};hit=true}}
  else if(h){const it=cur();if(it){if(h.parentElement.id==='cbox')vd={m:'rc',it,x:e.clientX,r:it.rot||0};else{const b=h.parentElement.getBoundingClientRect();vd={m:'r2',it,c:[b.left+b.width/2,b.top+b.height/2]}}hit=true}}
- else if(o){setSel(o.dataset.id,'props');const it=cur();if(it){vd={m:'m2',it,x:e.clientX,y:e.clientY,ox:it.x,oy:it.y};hit=true}}
- else if(e.target===renderer.domElement){const gh=gizHit(e);if(gh!==null){vd=gizStart(e,gh);hit=true}else{const ch=pick(e);if(ch){setSel(ch.id,'props');if(ch.fixed){vd=null}else{ndc(e);ray.ray.intersectPlane(plane,pt);vd={m:'mc',it:ch,ox:ch.x-pt.x,oz:ch.z-pt.z};hit=true}}else vd={m:'bg',x:e.clientX,y:e.clientY}}}
+ else if(o&&tab!=='cam'){setSel(o.dataset.id,'props');const it=cur();if(it){vd={m:'m2',it,x:e.clientX,y:e.clientY,ox:it.x,oy:it.y};hit=true}}
+ else if(e.target===renderer.domElement&&tab!=='cam'){const gh=gizHit(e);if(gh!==null){vd=gizStart(e,gh);hit=true}else{const ch=pick(e);if(ch){setSel(ch.id,'props');if(ch.fixed){vd=null}else{ndc(e);ray.ray.intersectPlane(plane,pt);vd={m:'mc',it:ch,ox:ch.x-pt.x,oz:ch.z-pt.z};hit=true}}else vd={m:'bg',x:e.clientX,y:e.clientY}}}
  if(hit){e.stopPropagation();e.preventDefault()}},true);
 addEventListener('pointermove',e=>{if(!vd||vd.m==='bg')return;const fr=$('frame').getBoundingClientRect(),it=vd.it;
  if(vd.m==='m2'){it.x=r2(vd.ox+(e.clientX-vd.x)/fr.width*100);it.y=r2(vd.oy+(e.clientY-vd.y)/fr.height*100);renderOv()}
@@ -355,7 +355,7 @@ addEventListener('pointermove',e=>{if(!vd||vd.m==='bg')return;const fr=$('frame'
  else if(vd.m==='g')gizDrag(e,vd);
  else if(vd.m==='sz'){const k=Math.hypot(e.clientX-vd.c[0],e.clientY-vd.c[1])/Math.max(vd.d0,1);if(vd.w!==undefined)it.w=Math.min(400,Math.max(2,r2(vd.w*k)));else it.size=Math.min(400,Math.max(8,Math.round(vd.s*k)));renderOv()}
  else if(vd.m==='rc'){it.rot=Math.round(vd.r+(e.clientX-vd.x)*.8);place(it)}sync()});
-addEventListener('pointerup',e=>{if(!vd)return;const d=vd;vd=null;if(d.m==='bg'){if(Math.hypot(e.clientX-d.x,e.clientY-d.y)<4&&sel)setSel(null);return}autoKey(d.it);touch()});
+addEventListener('pointerup',e=>{if(!vd)return;const d=vd;vd=null;if(d.m==='bg'){if(tab!=='cam'&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<4&&sel)setSel(null);return}autoKey(d.it);touch()});
 addEventListener('keydown',e=>{if(e.key==='Delete'&&P&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){if(TLV==='kf'){kfDelSel();return}if(sel)remove()}});
 function remove(){const l=loc();if(!l)return;l.list.splice(l.list.indexOf(l.it),1);if(!l.ch&&!l.tr&&R[l.it.id]){tscene.remove(R[l.it.id].g);delete R[l.it.id]}sel=null;touch();renderAll();renderOv();apply()}
 
