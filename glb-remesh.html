@@ -90,14 +90,20 @@ async function loadFiles(fl){
       obj=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0xbfbfbf,roughness:.7,metalness:.1,vertexColors:!!g.attributes.color}))
     }
     if(root)S.remove(root);root=obj;S.add(root);meshes=[];
-    const all=[];root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh)all.push(o)});
+    const all=[];root.traverse(o=>{if(o.isMesh)all.push(o)});
+    const st=o=>{
+      if(!o.isSkinnedMesh)return o;
+      const g=o.geometry.clone();g.deleteAttribute('skinIndex');g.deleteAttribute('skinWeight');
+      const c=new THREE.Mesh(g,o.material);c.name=o.name;c.position.copy(o.position);c.quaternion.copy(o.quaternion);c.scale.copy(o.scale);
+      o.parent.add(c);o.parent.remove(o);return c
+    };
     const use=m=>{
       if(!m.geometry.index)m.geometry=THREE.BufferGeometryUtils.mergeVertices(m.geometry);
       m.userData.g0=m.geometry;meshes.push(m);
       [].concat(m.material).forEach(x=>{x.polygonOffset=true;x.polygonOffsetFactor=1;x.polygonOffsetUnits=1})
     };
-    all.forEach(o=>{
-      const ms=[].concat(o.material),gs=o.geometry.groups;
+    all.forEach(o0=>{
+      const o=st(o0),ms=[].concat(o.material),gs=o.geometry.groups;
       if(ms.length>1&&gs.length>1){
         const p=o.parent;
         gs.forEach(gr=>{const c=new THREE.Mesh(sub(o.geometry,gr),ms[gr.materialIndex]);c.name=o.name;c.position.copy(o.position);c.quaternion.copy(o.quaternion);c.scale.copy(o.scale);p.add(c);use(c)});
