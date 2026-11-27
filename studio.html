@@ -57,7 +57,7 @@ import {toCreasedNormals} from 'three/addons/utils/BufferGeometryUtils.js';
 import * as K from './js/character-kit.js';
 import * as FR from './js/face-runtime.js';
 import * as FX from './js/fx-kit.js';
-import * as ENVK from './js/env-kit.js?v=pzoom1';
+import * as ENVK from './js/env-kit.js?v=pzoom3';
 const $=id=>document.getElementById(id),KEY='3dis.projects',LW=130,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').toLowerCase().replace(/^.*:/,'').replace(/^mixamorig/,'').replace(/[^a-z0-9]/g,'');
 const groups={hips:['pelvis','hip'],spine:['spine0','spine01'],spine1:['spine02','chest'],spine2:['spine03','upperchest'],neck:['neck1'],headTop:['headtopend'],lSho:['leftshoulder','leftclavicle','lshoulder','lclavicle'],rSho:['rightshoulder','rightclavicle','rshoulder','rclavicle'],lArm:['leftarm','leftupperarm','lupperarm','larm'],rArm:['rightarm','rightupperarm','rupperarm','rarm'],lFore:['leftforearm','leftlowerarm','lforearm','llowerarm'],rFore:['rightforearm','rightlowerarm','rforearm','rlowerarm'],lHand:['lefthand','lhand'],rHand:['righthand','rhand'],lUp:['leftupleg','leftthigh','leftupperleg','lthigh','lupleg','lupperleg'],rUp:['rightupleg','rightthigh','rightupperleg','rthigh','rupleg','rupperleg'],lLeg:['leftleg','leftlowerleg','leftcalf','leftshin','lcalf','lshin','llowerleg'],rLeg:['rightleg','rightlowerleg','rightcalf','rightshin','rcalf','rshin','rlowerleg'],lFoot:['leftfoot','lfoot'],rFoot:['rightfoot','rfoot']};
