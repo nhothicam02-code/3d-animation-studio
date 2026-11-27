@@ -91,3 +91,22 @@ Biểu cảm làm ở trang Custom (texture ảnh PNG, texture nhiều lớp v2,
 - Nhép miệng theo giọng đọc (TTS) vẫn dùng hệ cũ của Studio, chưa tự chọn bộ miệng của biểu cảm Custom.
 
 File thay đổi: js/face-runtime.js (MỚI), studio.html.
+
+## Tab 🎥 Camera trong Film Studio (clip camera nhắm vào mặt đối tượng)
+
+Camera là một **clip nằm trên track** như chữ, ảnh, hiệu ứng… (track chỉ có clip camera được gắn nhãn “🎥 Camera”).
+
+### Cách dùng
+1. Mở tab **🎥 Camera**, chọn **đối tượng** (nhân vật hoặc mô hình trong cảnh).
+2. Chọn **cỡ cảnh**: Toàn cảnh · Trung cảnh · Cận cảnh · Đặc tả.
+3. Đặt đường chạy ở thời điểm muốn bắt đầu rồi bấm **＋ Thêm clip camera tại đường đỏ**. Kéo / kéo giãn khối trên timeline như mọi clip khác; bấm vào khối để sửa lại trong tab Camera.
+4. Trong lúc clip chạy, camera đặt **thẳng trước mặt** đối tượng (theo hướng mặt của nhân vật, mặt trước = trục +Z của mô hình) và **bám theo đầu** khi nhân vật di chuyển. Ngoài clip, khung hình trở về góc nhìn thường (kéo / zoom như cũ). Khi một clip camera đang chạy, kéo chuột trong khung không xoay camera được.
+
+### Thông số
+- **Góc ngang** (0 = chính diện, + = lệch sang phải khung hình), **độ cao camera**, **ống kính (FOV)**.
+- **Chuyển động**: tiến vào, lùi ra, quay quanh trái / phải, cẩu lên / hạ xuống, trượt ngang, dolly zoom (Vertigo) — kèm thanh “Mức độ”.
+- **Hiệu ứng rung / nhịp**: cầm tay, rung mạnh, đung đưa, nhịp tim, trôi chậm — kèm cường độ. Tất cả tính theo thời gian nên tua và xuất video cho kết quả giống hệt xem trước.
+- **Chuyển mượt vào / ra**: số giây trượt từ góc trước đó (hoặc góc thường) sang clip này; 0 = cắt thẳng. Hai clip nối liền nhau sẽ trượt từ cuối clip trước sang đầu clip sau.
+- **Hiệu ứng ống kính kèm theo**: thêm nhanh viền đen điện ảnh, tối viền, nhiễu hạt, phủ màu vào timeline đúng khoảng thời gian của clip.
+- Các hiệu ứng camera ở tab ✨ Hiệu ứng (rung, lia, orbit, zoom…) vẫn dùng được và **cộng dồn** lên clip camera.
+- Nếu hai clip camera chồng thời gian, clip bắt đầu sau được ưu tiên.

@@ -33,7 +33,7 @@ aside{grid-row:1;grid-column:2;background:var(--panel);border-left:1px solid var
 .kfh{position:sticky;left:0;width:max-content;max-width:90vw;padding:8px 10px}.tlc{position:relative;min-height:100%}.row{display:flex;height:34px;border-bottom:1px solid #262938}.lab{position:sticky;left:0;z-index:3;flex:none;width:var(--LW);background:#1d2029;border-right:1px solid var(--line);display:flex;align-items:center;gap:4px;padding:0 6px;font-size:11px;cursor:pointer}.lab.on{background:#2a2740}.lab span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.lab button{padding:1px 6px}
 .lane{position:relative;flex:none;height:100%}.rul{height:24px}.rul .lane span{position:absolute;top:5px;font-size:10px;color:var(--muted);border-left:1px solid var(--line);padding-left:3px;height:20px}
 .blk{touch-action:none;position:absolute;top:4px;height:26px;border-radius:6px;padding:0 10px 0 6px;line-height:26px;font-size:11px;overflow:hidden;white-space:nowrap;cursor:grab;border:1px solid #fff3;background:#4b63b8}.blk.on{outline:2px solid #fff}.blk i{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:ew-resize;background:#fff3}
-.k-dlg{background:#2f8f6b}.k-txt{background:#b8884b}.k-aud{background:#a64b8f}.k-tts{background:#7d4bb8}.k-img{background:#3b8fb0}.k-vid{background:#b04b5a}.k-bg{background:#555a70}.k-face{background:#c2763f}.k-fx{background:#2f7fa8}#ph{position:absolute;top:0;bottom:0;width:2px;background:#ff5d73;z-index:4;pointer-events:none}
+.k-dlg{background:#2f8f6b}.k-txt{background:#b8884b}.k-aud{background:#a64b8f}.k-tts{background:#7d4bb8}.k-img{background:#3b8fb0}.k-vid{background:#b04b5a}.k-bg{background:#555a70}.k-face{background:#c2763f}.k-fx{background:#2f7fa8}.k-cam{background:#3f8f62}.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}.chips.c2{grid-template-columns:repeat(2,1fr)}.chip{padding:6px 2px;font-size:11px;line-height:1.25}.chip.on{background:var(--ac);color:#171322}#ph{position:absolute;top:0;bottom:0;width:2px;background:#ff5d73;z-index:4;pointer-events:none}
 @media(max-width:850px){#ed{height:auto;grid-template-columns:1fr;grid-template-rows:60vh auto 290px}aside{grid-row:2;grid-column:1;border-left:0;border-top:1px solid var(--line)}#tlw{grid-row:3}}
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;width:min(440px,92vw);padding:16px}dialog::backdrop{background:#000a}dialog h3{margin:0 0 4px}header nav button.on{border-color:#6fd3a0}.chk{display:flex;gap:8px;align-items:center;color:var(--text);font-size:12px}#ghSt{min-height:30px;white-space:pre-wrap}
 #vg{position:absolute;right:8px;top:48px;z-index:5;width:110px}#vgc{width:110px;height:110px;display:block;cursor:pointer}#vgb{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:2px}#vgb button{padding:3px 0;font-size:11px}
@@ -44,7 +44,7 @@ dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);bo
 <section id="vEd" hidden><div id="ed">
 <div id="stage"><div id="gt"><button data-g="move" title="Di chuyển (G)">✥</button><button data-g="rot" title="Xoay (R)">⟳</button><button data-g="scl" title="Scale (S)">⤢</button></div><div id="vg"><canvas id="vgc" width="220" height="220" title="Bấm vào trục để nhìn từ hướng đó"></canvas><div id="vgb"><button data-vv="+z" title="Nhìn từ phía trước (Numpad 1)">Front</button><button data-vv="+x" title="Nhìn từ bên phải (Numpad 3)">Side</button><button data-vv="+y" title="Nhìn từ trên xuống (Numpad 7)">Top</button><button data-vv="reset" title="Về góc camera của cảnh (đã lưu hoặc tự động)">↺ Reset</button></div></div><div id="frame"><div id="bgl"></div><div id="vp"></div><div id="ovl"></div><div id="cbox" hidden><i class="rh"></i></div><div id="flab"></div></div><div id="say"></div></div>
 <aside><div class="r" style="margin-bottom:8px"><a href="#" id="back" style="flex:none">← Dự án</a><b id="pn" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></b></div><div class="tabs" id="tabs"></div><div id="panel"></div></aside>
-<div id="tlw"><div id="tt"><button data-tv="tl" class="on">Timeline</button><button data-tv="kf">Keyframe</button><span id="kfc" hidden><button id="kAuto" class="on" title="Tự động ghi key khi bạn kéo / xoay / đổi cỡ (chỉ với nhóm đã có key)">● Auto Key</button><button data-ki="pos" title="Chèn key Vị trí cho đối tượng đang chọn tại đường xanh">◆ Vị trí</button><button data-ki="rot" title="Chèn key Xoay">◆ Xoay</button><button data-ki="scl" title="Chèn key Scale">◆ Scale</button><button data-ki="all" class="pri" title="Chèn key Vị trí + Xoay + Scale (phím I)">◆ Tất cả (I)</button><select id="kEase" title="Kiểu nội suy của key đã chọn tới key kế tiếp"><option value="ease">Mượt</option><option value="lin">Tuyến tính</option><option value="hold">Giữ nguyên</option></select><button id="kDel" class="del" title="Xóa key đã chọn (Delete)">Xóa key</button><span class="hint" id="kInfo" style="margin:0"></span></span></div><div id="tb"><button id="bPlay" class="pri" title="Phát / tạm dừng (phím Space)">▶ Cảnh</button><button id="bAll" title="Phát toàn bộ phim từ cảnh đầu (bấm lần nữa để tạm dừng)">▶ Phim</button><button id="bExp" title="Xuất MP4 / WebM — dựng offline từng khung hình">⬇ Xuất video</button><button id="bAuto" class="pri" title="Tự tạo giọng cho mọi khối Giọng đọc chưa có file (hoặc đã đổi nội dung / giọng), rồi dời toàn bộ timeline theo độ dài từng thoại">🎙 Tạo giọng &amp; căn lại</button><button id="bUn" title="Hoàn tác (Ctrl+Z)">↶</button><button id="bRe" title="Làm lại (Ctrl+Y)">↷</button><button id="bSplit" title="Chia đôi clip / khối đang chọn tại đường chạy (phím K)">║ Split</button><button id="bCut" title="Cắt (Ctrl+X)">✂ Cắt</button><button id="bCopy" title="Sao chép (Ctrl+C)">⧉ Copy</button><button id="bPaste" title="Dán tại đường chạy (Ctrl+V)">📋 Dán</button><button id="bDel" class="del" title="Xóa clip / đối tượng đang chọn (Delete)">🗑 Xóa</button><span id="tm"></span><div id="sc"></div><input type="range" id="zoom" min="20" max="200" value="60" style="flex:none;width:90px" title="Thu phóng"></div><div id="tl"></div><div id="kf" hidden></div></div>
+<div id="tlw"><div id="tt"><button data-tv="tl" class="on">Timeline</button><button data-tv="kf">Keyframe</button><span id="kfc" hidden><button id="kAuto" class="on" title="Tự động ghi key khi bạn kéo / xoay / đổi cỡ (chỉ với nhóm đã có key)">● Auto Key</button><button data-ki="pos" title="Chèn key Vị trí cho đối tượng đang chọn tại đường xanh">◆ Vị trí</button><button data-ki="rot" title="Chèn key Xoay">◆ Xoay</button><button data-ki="scl" title="Chèn key Scale">◆ Scale</button><button data-ki="all" class="pri" title="Chèn key Vị trí + Xoay + Scale (phím I)">◆ Tất cả (I)</button><select id="kEase" title="Kiểu nội suy của key đã chọn tới key kế tiếp"><option value="ease">Mượt</option><option value="lin">Tuyến tính</option><option value="hold">Giữ nguyên</option></select><button id="kDel" class="del" title="Xóa key đã chọn (Delete)">Xóa key</button><span class="hint" id="kInfo" style="margin:0"></span></span></div><div id="tb"><button id="bPlay" class="pri" title="Phát / tạm dừng (phím Space)">▶ Cảnh</button><button id="bAll" title="Phát toàn bộ phim từ cảnh đầu (bấm lần nữa để tạm dừng)">▶ Phim</button><button id="bExp" title="Xuất MP4 / WebM — dựng offline từng khung hình">⬇ Xuất video</button><button id="bAuto" class="pri" title="Tự tạo giọng cho mọi khối Giọng đọc chưa có file (hoặc đã đổi nội dung / giọng), rồi dời toàn bộ timeline theo độ dài từng thoại">🎙 Tạo giọng &amp; căn lại</button><button id="bUn" title="Hoàn tác (Ctrl+Z)">↶</button><button id="bRe" title="Làm lại (Ctrl+Y)">↷</button><button id="bSplit" title="Chia đôi clip / khối đang chọn tại đường chạy (phím K)">║ Split</button><button id="bCut" title="Cắt (Ctrl+X)">✂ Cắt</button><button id="bCopy" title="Sao chép (Ctrl+C)">⧉ Copy</button><button id="bPaste" title="Dán tại đường chạy (Ctrl+V)">📋 Dán</button><span id="tm"></span><div id="sc"></div><input type="range" id="zoom" min="20" max="200" value="60" style="flex:none;width:90px" title="Thu phóng"></div><div id="tl"></div><div id="kf" hidden></div></div>
 </div></section>
 <input type="file" id="fVoice" accept=".wav,.mp3,audio/wav,audio/mpeg" hidden>
 <dialog id="dExp"><h3>Xuất video</h3><div class="hint">Dựng từng khung hình ngoài thời gian thực → không lag, khựng hay rớt/nhảy frame (có thể lâu hơn thời lượng phim). Lưới, gizmo và khung chọn tự tắt khi xuất.</div><label>Định dạng</label><select id="xf"><option value="mp4">MP4 (H.264 + AAC)</option><option value="webm">WebM (VP9 + Opus)</option></select><progress id="xp" max="1" value="0" style="width:100%;margin-top:12px"></progress><div class="hint" id="xs"></div><div class="r" style="margin-top:10px"><button id="xGo" class="pri">Bắt đầu xuất</button><button id="xX">Đóng / Huỷ</button></div></dialog>
@@ -76,7 +76,7 @@ for(const tr of source.tracks){let p;try{p=THREE.PropertyBinding.parseTrackName(
  tracks.push(t);mapped++}
 return {clip:new THREE.AnimationClip(source.name,source.duration,tracks),mapped,retargeted,total:source.tracks.length}}
 const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3),fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'),r2=v=>Math.round(v*100)/100;
-const FONTS=['Be Vietnam Pro','Roboto','Montserrat','Playfair Display','Pacifico','Lobster','Dancing Script','Oswald','Arial','Georgia','Courier New','Impact'],V2=['txt','dlg','img','vid'],ICON={clip:'🎞',txt:'T',dlg:'💬',img:'🖼',vid:'🎬',aud:'🎵',tts:'🗣',bg:'■',face:'😀',fx:''};
+const FONTS=['Be Vietnam Pro','Roboto','Montserrat','Playfair Display','Pacifico','Lobster','Dancing Script','Oswald','Arial','Georgia','Courier New','Impact'],V2=['txt','dlg','img','vid'],ICON={clip:'🎞',txt:'T',dlg:'💬',img:'🖼',vid:'🎬',aud:'🎵',tts:'🗣',bg:'■',face:'😀',fx:'',cam:'🎥'};
 let projects=[];try{projects=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{}
 let P=null,si=0,sel=null,tab='src',pps=60,t=0,playing=false,allMode=false,busy=false,manifest={characters:{},animations:[]},cq='',media=[];const murl={},spoken={};let envLib=[],lmodels=[],lysel=null;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(projects))}catch(e){say('Không lưu được: '+e.message)}},touch=()=>{P.updated=Date.now();persist();commit()};let tmr;const touchSoon=()=>{P.updated=Date.now();clearTimeout(tmr);tmr=setTimeout(()=>{persist();commit()},300)};
@@ -184,7 +184,8 @@ addEventListener('hashchange',route);$('back').onclick=e=>{e.preventDefault();lo
 /* ---------- Khung + 3D ---------- */
 let DFOV=null,SB,renderer,tscene,camera,controls,GRID,SG,FXE,ENVE,EXPV=null,FXI=[],FXT=0;const R={},AU={},OV={},clock=new THREE.Clock(),fbx={},jc={};let tok=0;
 function initThree(){if(renderer)return;renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;$('vp').appendChild(renderer.domElement);tscene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,16/9,.01,500);const hl=new THREE.HemisphereLight(0xffffff,0x666070,2),l=new THREE.DirectionalLight(0xffffff,2.2);l.position.set(3,6,5);BL.push(hl,l);tscene.add(hl,l);SG=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.ShadowMaterial({opacity:.45}));SG.rotation.x=-Math.PI/2;SG.position.y=.002;SG.receiveShadow=true;SG.visible=false;tscene.add(SG);tscene.add(GRID=new THREE.GridHelper(20,20,0x444a60,0x2a2e3e));SB=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0x9a83ff,depthTest:false,transparent:true}));SB.renderOrder=997;SB.visible=false;tscene.add(SB);controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.addEventListener('end',camAutoKey);FXE=FX.createFxEngine(tscene,camera);ENVE=ENVK.createEnvEngine(tscene,camera,renderer);ENVE.setLights(hl,l);buildGiz();new ResizeObserver(layout).observe($('stage'));tick()}
-function layout(){if(!P||!renderer||EXP)return;const st=$('stage'),W=st.clientWidth-28,H=st.clientHeight-28,f=P.fmt,ar=f.w/f.h;if(W<60||H<60)return;let w=W,h=w/ar;if(h>H){h=H;w=h*ar}const fr=$('frame');fr.style.width=w+'px';fr.style.height=h+'px';fr.style.setProperty('--k',h/f.h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);camera.aspect=ar;camera.updateProjectionMatrix();$('flab').textContent=f.w+'×'+f.h+' · '+f.aspect+' · '+f.fps+'fps'}
+function layout(){if(!P||!renderer||EXP)return;const st=$('stage'),W=st.clientWidth-28,H=st.clientHeight-28,f=P.fmt,ar=f.w/f.h;if(W<60||H<60)return;let w=W,h=w/ar;if(h>H){h=H;w=h*ar}const fr=$('frame');fr.style.width=w+'px';fr.style.height=h+'px';fr.style.setProperty('--k',h/f.h);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);camera.aspect=ar;camera.updateProjectionMatrix();$('flab').textContent=flabTxt()}
+const flabTxt=()=>P?P.fmt.w+'×'+P.fmt.h+' · '+P.fmt.aspect+' · '+P.fmt.fps+'fps'+(CAMON?' · 🎥 Camera clip':''):''
 function autoCam(){const s=sc(),xs=s.chars.map(c=>c.x),a=Math.min(...xs,0),b=Math.max(...xs,0),cx=(a+b)/2,th=Math.tan(camera.fov*Math.PI/360),d=Math.max(1/th,((b-a)/2+.9)/(th*camera.aspect))*1.2;camera.position.set(cx,1.3,d);controls.target.set(cx,.9,0);controls.update()}
 const getF=f=>fbx[f]||(fbx[f]=M.loadModelUrl('./characters/'+encodeURIComponent(f),f).catch(()=>M.loadModelUrl('./'+encodeURIComponent(f),f)));
 function place(ch){if(ch.type==='fx'){fxStep();return}const r=R[ch.id];if(!r)return;const D=Math.PI/180;r.g.scale.set(r.fit*(+(ch.sx??ch.scale)||1),r.fit*(+(ch.sy??ch.scale)||1),r.fit*(+(ch.sz??ch.scale)||1));r.g.position.set(+ch.x||0,+ch.y||0,+ch.z||0);r.g.rotation.order='YXZ';r.g.rotation.set((+ch.rx||0)*D,(+ch.rot||0)*D,(+ch.rz||0)*D);const op=ch.opacity??1;for(const m of r.mats){m.transparent=op<1||!!m.userData.t0;m.opacity=op*(m.userData.o0??1)}}
@@ -287,7 +288,7 @@ function seek(v){t=Math.min(Math.max(0,v),sc().duration);for(const k in AU)AU[k]
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.06);syncPlayBtn();
  if(P&&playing&&!busy){t+=dt;const s=sc();if(t>=s.duration){t=s.duration;if(allMode&&si<P.scenes.length-1){nextScene();return}pause()}apply();renderOv();syncTp();audioSync()}
  K.stepPhysics(P&&playing&&!busy&&!EXP?dt:0);
- if(EXP)return;vgStep(dt);controls.update();const co=fxCamOn();updSel3D();drawVG();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
+ if(EXP)return;vgStep(dt);{const ca=!!(P&&camActive(sc(),FXT));controls.enabled=!ca;if(ca!==CAMON){CAMON=ca;$('flab').textContent=flabTxt()}}controls.update();const co=fxCamOn();updSel3D();drawVG();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
 $('bPlay').onclick=()=>togglePlay();$('bAll').onclick=()=>{if(playing){pause();return}if(si){si=0;renderAll();loadScene().then(()=>play(true))}else play(true)};
 /* Phát / tạm dừng: một nút + phím Space (tiếp tục đúng chế độ Cảnh / Phim đang chạy) */
 function togglePlay(){if(!P)return;if(playing)pause();else play(allMode)}
@@ -394,7 +395,7 @@ addEventListener('keydown',e=>{
 function cbAct(k){if(!P)return;if(k==='v')return cbPaste();
  if(!sel||!loc())return cbToast('Chọn một clip hoặc đối tượng trước (bấm vào nó trong khung hoặc trên timeline).');
  if(cbCopy(k==='x')){const lb=CB.label;if(k==='x')remove();cbToast((k==='x'?'Đã cắt ':'Đã sao chép ')+lb+' — Ctrl+V để dán tại đường chạy')}}
-$('bDel').onclick=()=>{if(!P)return;if(!sel||!loc())return cbToast('Chọn một clip hoặc đối tượng trước (bấm vào nó trong khung hoặc trên timeline).');const ty=CBN[stype()]||'khối';remove();cbToast('Đã xóa '+ty)};$('bCut').onclick=()=>cbAct('x');$('bCopy').onclick=()=>cbAct('c');$('bPaste').onclick=()=>cbAct('v');
+$('bCut').onclick=()=>cbAct('x');$('bCopy').onclick=()=>cbAct('c');$('bPaste').onclick=()=>cbAct('v');
 
 /* ---------- Split: chia đôi clip / khối đang chọn tại đường chạy (nút Split hoặc phím K) ---------- */
 function splitAtPlayhead(){
@@ -416,15 +417,15 @@ addEventListener('keydown',e=>{if(!P||EXP||e.ctrlKey||e.metaKey||e.altKey||e.shi
 /* ---------- Timeline (track không giới hạn) ---------- */
 const cname=id=>(manifest.animations.find(x=>x.id===id)||{name:'(chưa chọn)'}).name,onc=id=>sel&&sel.id===id?' on':'';
 function cxName(it){const r=R[it.ch],e=r&&r.exs&&r.exs.find(x=>'c:'+x.id===it.expr);return e?'✦ '+(e.name||e.id):''}
-function blk(it,isClip){const ty=isClip?'clip':it.type,l=isClip?cname(it.clip):it.type==='bg'?it.color:it.type==='face'?(EXL[it.expr]||cxName(it)||'Biểu cảm'):it.text||it.name||(it.url||'').split('/').pop()||ty;return '<div class="blk k-'+ty+onc(it.id)+'" data-id="'+it.id+'" style="left:'+it.start*pps+'px;width:'+Math.max(it.dur*pps,14)+'px">'+ICON[ty]+' '+esc(l)+'<i class="rs"></i></div>'}
+function blk(it,isClip){const ty=isClip?'clip':it.type,l=isClip?cname(it.clip):it.type==='bg'?it.color:it.type==='cam'?camLabel(it):it.type==='face'?(EXL[it.expr]||cxName(it)||'Biểu cảm'):it.text||it.name||(it.url||'').split('/').pop()||ty;return '<div class="blk k-'+ty+onc(it.id)+'" data-id="'+it.id+'" style="left:'+it.start*pps+'px;width:'+Math.max(it.dur*pps,14)+'px">'+ICON[ty]+' '+esc(l)+'<i class="rs"></i></div>'}
 function renderTL(){if(!P)return;if(TLV==='kf')return renderKF();const s=sc(),W=Math.max(s.duration,1)*pps,st=pps>=100?.5:pps>=40?1:5,ln=(a,x)=>'<div class="lane" data-seek '+a+' style="width:'+W+'px">'+x+'</div>';let tk='';for(let i=0;i<=s.duration;i+=st)tk+='<span style="left:'+i*pps+'px">'+fmt(i)+'</span>';
  let h='<div class="tlc" style="width:'+(W+LW+40)+'px"><div class="row rul"><div class="lab"></div>'+ln('',tk)+'</div>';
  h+=s.chars.map(ch=>'<div class="row"><div class="lab'+onc(ch.id)+'" data-char="'+ch.id+'"><span>🧍 '+esc(ch.name)+'</span></div>'+ln('',ch.clips.map(c=>blk(c,1)).join(''))+'</div>').join('');
- h+=s.tracks.map((tr,i)=>'<div class="row"><div class="lab"><span>Track '+(i+1)+'</span><button class="del" data-rmtr="'+tr.id+'">✕</button></div>'+ln('data-track="'+tr.id+'"',tr.items.map(x=>blk(x)).join(''))+'</div>').join('');
+ h+=s.tracks.map((tr,i)=>'<div class="row"><div class="lab"><span>'+(tr.items.length&&tr.items.every(x=>x.type==='cam')?'🎥 Camera':'Track '+(i+1))+'</span><button class="del" data-rmtr="'+tr.id+'">✕</button></div>'+ln('data-track="'+tr.id+'"',tr.items.map(x=>blk(x)).join(''))+'</div>').join('');
  h+='<div class="row"><div class="lab" data-addtr="1"><span>＋ Track mới</span></div>'+ln('data-newtrack="1"','')+'</div><div id="ph" style="left:'+(LW+t*pps)+'px"></div></div>';$('tl').innerHTML=h;syncTp()}
 let drag=null;
 $('tl').addEventListener('pointerdown',e=>{const b=e.target.closest('.blk');
- if(b){sel={id:b.dataset.id};document.querySelectorAll('#tl .on').forEach(x=>x.classList.remove('on'));b.classList.add('on');const it=cur();drag={b,it,mode:e.target.classList.contains('rs')?'rs':'mv',x:e.clientX,s:it.start,d:it.dur};tab=stype()==='clip'?'clip':'props';renderTabs();renderPanel();renderOv();e.preventDefault();return}
+ if(b){sel={id:b.dataset.id};document.querySelectorAll('#tl .on').forEach(x=>x.classList.remove('on'));b.classList.add('on');const it=cur();drag={b,it,mode:e.target.classList.contains('rs')?'rs':'mv',x:e.clientX,s:it.start,d:it.dur};tab=stype()==='clip'?'clip':stype()==='cam'?'cam':'props';renderTabs();renderPanel();renderOv();e.preventDefault();return}
  const l=e.target.closest('[data-seek]');if(l){drag={seek:l};seekAt(e)}});
 const seekAt=e=>seek((e.clientX-drag.seek.getBoundingClientRect().left)/pps);
 addEventListener('pointermove',e=>{if(!drag)return;if(drag.seek)return seekAt(e);const dx=(e.clientX-drag.x)/pps,{it,b}=drag;if(drag.mode==='mv')it.start=snap(drag.s+dx);else it.dur=Math.max(1/P.fmt.fps,r2(snap(drag.d+dx)));b.style.left=it.start*pps+'px';b.style.width=Math.max(it.dur*pps,14)+'px'});
@@ -453,8 +454,120 @@ DEFS.fx=()=>({dur:3});
 const fxItems=s=>s.tracks.flatMap(tr=>tr.items).filter(x=>x.type==='fx'&&FX.FX[x.fx]),rtOf=id=>R[id]||(FXE&&FXE.rt.get(id))||null;
 function fxStep(s,tt){if(!FXE||!P)return;s=s||sc();if(!s)return;const items=fxItems(s);FXE.sync(items);const f=P.fmt.fps,q=tt??Math.floor(t*f+1e-6)/f,ft=EXP||!playing?q:t;
  FXE.update(items,ft,{view:{w:renderer.domElement.width,h:renderer.domElement.height},exporting:EXP});FXI=items;FXT=ft;envBgStep(s,ft)}
-const fxCamOn=()=>!!(FXE&&FXI.length&&FXE.camBegin(FXI,FXT,controls.target)),fxCamOff=o=>{if(o)FXE.camEnd()};
 function addFx(id,over,st0){const s=sc(),d=FX.FX[id];if(!d)return;const st=snap(st0??t);addItem('fx',{...FX.fxDefaults(id),...over,start:st,dur:FX.defaultDur(id,s.duration,st)});apply()}
+/* ---------- Clip Camera (type:'cam'): camera nhắm thẳng vào mặt một đối tượng; nằm trên track như mọi khối khác ---------- */
+const CAMSH=[['wide','Toàn cảnh','🧍'],['medium','Trung cảnh','🙂'],['close','Cận cảnh','😀'],['xclose','Đặc tả','👁']],
+ CAMMV=[['none','Đứng yên'],['push','Tiến vào (push in)'],['pull','Lùi ra (pull out)'],['orbL','Quay quanh sang trái'],['orbR','Quay quanh sang phải'],['up','Cẩu lên (crane up)'],['down','Hạ xuống (crane down)'],['truckL','Trượt ngang sang trái'],['truckR','Trượt ngang sang phải'],['vertigo','Dolly zoom (Vertigo)']],
+ CAMFX=[['none','Không rung'],['handheld','Cầm tay (nhẹ)'],['shake','Rung mạnh'],['sway','Đung đưa'],['pulse','Nhịp tim (zoom nhấp)'],['drift','Trôi chậm']],
+ CAMLENS=[['letterbox','▬ Viền đen điện ảnh'],['vignette','◉ Tối viền'],['grain','▒ Nhiễu hạt phim'],['tint','🎨 Phủ màu']];
+const camObjs=s=>[...s.chars.map(c=>({id:c.id,name:c.name||c.file||'Nhân vật',ic:'🧍'})),...(s.props||[]).map(c=>({id:c.id,name:c.name||'Mô hình',ic:'📦'}))];
+const camDefTarget=()=>{const o=camObjs(sc());return sel&&o.some(x=>x.id===sel.id)?sel.id:(o[0]||{}).id||''};
+const CAMD={target:'',shot:'close',yaw:0,hgt:0,fov:35,mv:'none',mva:1,fxk:'none',fxi:1,tin:0,tout:0};
+DEFS.cam=()=>({...CAMD,target:camDefTarget(),dur:3});
+const camLabel=it=>{const s=sc(),o=camObjs(s).find(x=>x.id===it.target),sh=CAMSH.find(x=>x[0]===it.shot);return (sh?sh[1]:'Camera')+' · '+(o?o.name:'(mất đối tượng)')};
+const camCur=()=>{const c=cur();return c&&c.type==='cam'?c:null};
+const _cBox=new THREE.Box3(),_cSz=new THREE.Vector3(),_cCt=new THREE.Vector3(),_cHd=new THREE.Vector3(),_cQt=new THREE.Quaternion(),_cFw=new THREE.Vector3();
+/* Số đo đối tượng: tâm, đỉnh, vị trí khuôn mặt, hướng nhìn (mặt trước = +Z của mô hình) */
+function camSubject(id){
+ const r=R[id];if(!r||!r.g||r.lt||r.fx)return null;const g=r.g;g.updateMatrixWorld(true);
+ _cBox.setFromObject(g);if(_cBox.isEmpty())return null;_cBox.getSize(_cSz);_cBox.getCenter(_cCt);
+ const k=g.scale.y.toFixed(4);if(!r.cs||r.cs.k!==k)r.cs={k,h:Math.max(.05,_cSz.y),w:Math.max(.05,Math.max(_cSz.x,_cSz.z)),m:Math.max(.05,_cSz.x,_cSz.y,_cSz.z)};
+ const S={prop:!!r.prop,cx:_cCt.x,cy:_cCt.y,cz:_cCt.z,h:r.cs.h,w:r.cs.w,m:r.cs.m,hx:_cCt.x,hy:_cCt.y,hz:_cCt.z,fx:0,fz:1};
+ if(!S.prop){S.hy=_cBox.max.y-S.h*.07;S.hx=_cCt.x;S.hz=_cCt.z;
+  if(r.hd){r.hd.getWorldPosition(_cHd);S.hx=_cHd.x;S.hz=_cHd.z;S.hy=_cHd.y+(+r.hh||.22)*g.scale.y*.45}}
+ g.getWorldQuaternion(_cQt);_cFw.set(0,0,1).applyQuaternion(_cQt);const L=Math.hypot(_cFw.x,_cFw.z);if(L>1e-3){S.fx=_cFw.x/L;S.fz=_cFw.z/L}
+ return S}
+/* Tư thế camera của một clip tại thời điểm tt → o={p,a,fov,roll} */
+function camPose(c,tt,o){
+ const S=camSubject(c.target);if(!S)return false;
+ const fv=Math.min(120,Math.max(8,FX.nz(c.fov,35))),th=Math.tan(fv*Math.PI/360),asp=camera.aspect||16/9,sh=c.shot,
+  u=Math.min(1,Math.max(0,(tt-c.start)/Math.max(+c.dur||1,1e-3))),e=u*u*(3-2*u),A=Math.max(0,FX.nz(c.mva,1)),I=Math.max(0,FX.nz(c.fxi,1)),D2R=Math.PI/180;
+ let V,ay;
+ if(S.prop){V=S.m*({wide:2.1,medium:1.4,close:.9,xclose:.5}[sh]||1.4);ay=S.cy}
+ else{V=S.h*({wide:1.5,medium:.62,close:.27,xclose:.14}[sh]||.27);ay=sh==='wide'?S.cy:S.hy-V*({medium:.28,close:.06,xclose:0}[sh]||0)}
+ let d=V/2/th;if(sh==='wide'||S.prop)d=Math.max(d,S.w*.65/(th*asp));d=Math.max(d,.12);
+ let dist=d,az=FX.nz(c.yaw,0)*D2R,vy=0,lat=0,fov=fv,roll=0,jx=0,jy=0;
+ const hOff=FX.nz(c.hgt,0)*V*.5+(sh==='wide'&&!S.prop?(S.hy-ay)*.5:0);
+ switch(c.mv){case'push':dist=d*(1-.4*A*e);break;case'pull':dist=d*(1+.6*A*e);break;case'orbL':az-=.75*A*e;break;case'orbR':az+=.75*A*e;break;
+  case'up':vy=V*.7*A*e;break;case'down':vy=-V*.7*A*e;break;case'truckL':lat=-d*.4*A*e;break;case'truckR':lat=d*.4*A*e;break;
+  case'vertigo':{const k=1+1.2*A*e;dist=d*k;fov=2*Math.atan(th/k)/D2R}}
+ const nz=(f,sd)=>FX.noise1(tt*f,sd);
+ switch(c.fxk){
+  case'handheld':jx=nz(.9,1)*.012*d*I;jy=nz(1.1,2)*.012*d*I;roll=nz(.7,3)*.35*I*D2R;lat+=nz(.5,4)*.01*d*I;break;
+  case'shake':jx=nz(11,5)*.04*d*I;jy=nz(13,6)*.04*d*I;roll=nz(9,7)*1.4*I*D2R;break;
+  case'sway':lat+=Math.sin(tt*1.1)*.09*d*I;vy+=Math.sin(tt*.8+1)*.03*V*I;roll=Math.sin(tt*.9)*.6*I*D2R;break;
+  case'pulse':dist*=1-.06*I*Math.pow(Math.max(0,Math.sin(tt*Math.PI*2*1.2)),8);break;
+  case'drift':lat+=nz(.25,8)*.08*d*I;vy+=nz(.2,9)*.04*V*I;roll=nz(.15,10)*.5*I*D2R;break}
+ dist=Math.max(dist,d*.15);
+ const ca=Math.cos(az),sa=Math.sin(az),dx=S.fx*ca+S.fz*sa,dz=-S.fx*sa+S.fz*ca,rx=dz,rz=-dx;   // dx,dz: hướng từ mặt ra camera · rx,rz: phải màn hình
+ o.a.set(S.hx+rx*(lat+jx),ay+jy,S.hz+rz*(lat+jx));
+ o.p.set(S.hx+dx*dist+rx*(lat+jx*.5),ay+hOff+vy+jy*.5,S.hz+dz*dist+rz*(lat+jx*.5));
+ o.fov=fov;o.roll=roll;return true}
+const _cP=[0,1,2].map(()=>({p:new THREE.Vector3(),a:new THREE.Vector3(),fov:35,roll:0})),_cS={p:new THREE.Vector3(),q:new THREE.Quaternion(),f:35,on:false};
+const camMix=(a,b,w)=>{b.p.lerpVectors(a.p,b.p,w);b.a.lerpVectors(a.a,b.a,w);b.fov=a.fov+(b.fov-a.fov)*w;b.roll=a.roll+(b.roll-a.roll)*w};
+const camAll=s=>{const a=[];for(const tr of s.tracks)for(const x of tr.items)if(x.type==='cam'&&x.target&&R[x.target])a.push(x);return a.sort((p,q)=>p.start-q.start)};
+const camActive=(s,tt)=>{let c=null;for(const x of camAll(s))if(tt>=x.start-1e-6&&tt<x.start+x.dur-1e-6)c=x;return c};
+/* Camera ở thời điểm tt: clip đang chạy (clip bắt đầu sau thắng), có chuyển cảnh mượt vào / ra */
+function camState(s,tt,o){
+ const all=camAll(s);let c=null,i=-1;all.forEach((x,j)=>{if(tt>=x.start-1e-6&&tt<x.start+x.dur-1e-6){c=x;i=j}});
+ if(!c||!camPose(c,tt,o))return false;
+ const base=_cP[2];base.p.copy(camera.position);base.a.copy(controls.target);base.fov=camera.fov;base.roll=0;
+ const tin=Math.max(0,FX.nz(c.tin,0)),dt=tt-c.start;
+ if(tin>0&&dt<tin){const pv=all.slice(0,i).reverse().find(x=>x.start+x.dur>=c.start-.02),f=_cP[1];let w=dt/tin;w=w*w*(3-2*w);
+  camMix(pv&&camPose(pv,Math.min(tt,pv.start+pv.dur),f)?f:base,o,w)}
+ const tout=Math.max(0,FX.nz(c.tout,0)),rem=c.start+c.dur-tt;
+ if(tout>0&&rem<tout&&!all.some(x=>x!==c&&x.start>c.start&&x.start<=c.start+c.dur+.02)){let w=rem/tout;w=w*w*(3-2*w);camMix(base,o,w)}
+ return true}
+function camClipBegin(){
+ if(!P||!camera||!controls)return null;const o=_cP[0];if(!camState(sc(),FXT,o))return null;
+ _cS.p.copy(camera.position);_cS.q.copy(camera.quaternion);_cS.f=camera.fov;_cS.on=true;
+ camera.position.copy(o.p);camera.up.set(0,1,0);camera.lookAt(o.a);if(o.roll)camera.rotateZ(o.roll);
+ if(Math.abs(camera.fov-o.fov)>1e-4){camera.fov=o.fov;camera.updateProjectionMatrix()}
+ camera.updateMatrixWorld(true);return o}
+function camClipEnd(){if(!_cS.on)return;_cS.on=false;camera.position.copy(_cS.p);camera.quaternion.copy(_cS.q);if(camera.fov!==_cS.f){camera.fov=_cS.f;camera.updateProjectionMatrix()}camera.updateMatrixWorld(true)}
+const fxCamOn=()=>{const c=camClipBegin(),f=!!(FXE&&FXI.length&&FXE.camBegin(FXI,FXT,c?c.a:controls.target));return c||f?{c:!!c,f}:false},
+ fxCamOff=o=>{if(!o)return;if(o.f)FXE.camEnd();if(o.c)camClipEnd()};
+let CAMON=false;
+function camPeek(c){if(c&&!(t>=c.start&&t<c.start+c.dur-1e-6))seek(snap(c.start+c.dur/2))}
+function addCam(){const s=sc();
+ if(!camObjs(s).length){say('Cảnh chưa có nhân vật / mô hình để camera nhắm tới — thêm ở tab “Nhân vật” hoặc “Bối cảnh”.');setTimeout(()=>say(''),3200);return}
+ if(!camObjs(s).some(x=>x.id===CAMD.target))CAMD.target=camDefTarget();
+ const st=snap(t),dur=3,tr=s.tracks.find(x=>x.items.length&&x.items.every(y=>y.type==='cam')&&!x.items.some(y=>y.start<st+dur-1e-6&&st<y.start+y.dur-1e-6));
+ addItem('cam',{start:st,dur,target:CAMD.target},tr&&tr.id);tab='cam';renderTabs();renderPanel();apply()}
+function camAddFx(id){const c=camCur();if(!FX.FX[id])return;const st=c?c.start:snap(t),dur=c?c.dur:3,keep=c&&c.id;
+ addItem('fx',{...FX.fxDefaults(id),start:st,dur});if(keep)sel={id:keep};tab='cam';renderAll();apply();say('✓ Đã thêm “'+FX.FX[id].name+'” vào timeline'+(c?' cùng khoảng với clip camera.':' tại đường đỏ.'));setTimeout(()=>say(''),2600)}
+function camPanel(s){
+ const c=camCur(),objs=camObjs(s);if(!c&&!objs.some(x=>x.id===CAMD.target))CAMD.target=camDefTarget();
+ const o=c||CAMD,N=(k,d)=>FX.nz(o[k],d),
+  rng=(k,l,mn,mx,st)=>'<label>'+l+' <b data-camv="'+k+'" style="color:var(--text)">'+r2(N(k,0))+'</b></label><input type="range" data-camk="'+k+'" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+N(k,0)+'">',
+  sel_=(k,a)=>'<select data-camk="'+k+'">'+a.map(x=>'<option value="'+x[0]+'"'+(x[0]===o[k]?' selected':'')+'>'+esc(x[1])+'</option>').join('')+'</select>';
+ let h='<div class="hint">Camera là một <b>clip trên track</b> như mọi khối khác. Chọn đối tượng + cỡ cảnh rồi bấm “＋ Thêm clip camera”: camera đặt <b>thẳng trước mặt</b> đối tượng và bám theo khi nó di chuyển. Ngoài các clip camera, khung hình trở về góc nhìn thường.</div>';
+ h+=c?'<div class="r" style="margin-top:8px"><b style="flex:1">🎥 Đang sửa: '+esc(camLabel(c))+'</b><button data-camnew="1">＋ Clip mới</button></div>':'<b style="display:block;margin-top:8px">🎥 Clip camera mới</b>';
+ h+='<label>Đối tượng camera nhắm tới</label>'+(objs.length?objs.map(x=>'<div class="li'+(x.id===o.target?' on':'')+'" data-camt="'+x.id+'"><span>'+x.ic+' '+esc(x.name)+'</span>'+(x.id===o.target?'<span>🎯</span>':'')+'</div>').join(''):'<div class="hint">Chưa có nhân vật / mô hình trong cảnh.</div>');
+ if(c&&!objs.some(x=>x.id===c.target))h+='<div class="hint" style="color:var(--red)">Đối tượng của clip này không còn trong cảnh — hãy chọn lại.</div>';
+ h+='<label>Cỡ cảnh</label><div class="chips">'+CAMSH.map(x=>'<button class="chip'+(o.shot===x[0]?' on':'')+'" data-cams="'+x[0]+'" title="'+x[1]+'">'+x[2]+'<br>'+x[1]+'</button>').join('')+'</div>';
+ h+=rng('yaw','Góc ngang (độ) — 0 = thẳng vào mặt, + = sang phải khung hình',-180,180,1)+rng('hgt','Độ cao camera (− thấp, + cao)',-1,1,.05)+rng('fov','Ống kính — FOV (độ, nhỏ = tele)',15,90,1);
+ h+='<label>Chuyển động camera trong clip</label>'+sel_('mv',CAMMV)+rng('mva','Mức độ chuyển động',0,2,.05);
+ h+='<label>Hiệu ứng rung / nhịp</label>'+sel_('fxk',CAMFX)+rng('fxi','Cường độ hiệu ứng',0,3,.05);
+ h+=rng('tin','Chuyển mượt vào từ góc trước (giây, 0 = cắt thẳng)',0,3,.1)+rng('tout','Chuyển mượt ra về góc thường (giây)',0,3,.1);
+ if(c)h+='<div class="r"><div><label>Bắt đầu (s)</label><input type="number" step="any" data-camk="start" value="'+r2(c.start)+'"></div><div><label>Độ dài (s)</label><input type="number" step="any" min="0.04" data-camk="dur" value="'+r2(c.dur)+'"></div></div>';
+ h+=c?'<div class="r" style="margin-top:12px"><button class="pri" data-camgo="1">👁 Xem khung hình</button><button class="del" data-camdel="'+c.id+'">Xóa clip</button></div>':'<button class="pri" style="width:100%;margin-top:12px" data-camadd="1">＋ Thêm clip camera tại đường đỏ</button>';
+ h+='<label>Hiệu ứng ống kính kèm theo'+(c?' (cùng khoảng thời gian clip)':' (tại đường đỏ)')+'</label><div class="chips c2">'+CAMLENS.map(x=>'<button class="chip" data-camfx="'+x[0]+'">'+x[1]+'</button>').join('')+'</div><div class="hint">Rung, lia, orbit, zoom, nghiêng… còn có ở tab ✨ Hiệu ứng → Camera và <b>cộng dồn</b> lên clip camera (orbit / dolly quay quanh đối tượng đang nhắm).</div>';
+ const all=s.tracks.flatMap(tr=>tr.items).filter(x=>x.type==='cam').sort((a,b)=>a.start-b.start);
+ h+='<label>Clip camera trong cảnh ('+all.length+')</label>'+(all.map(x=>'<div class="li'+(c&&c.id===x.id?' on':'')+'" data-camsel="'+x.id+'"><span>🎥 '+esc(camLabel(x))+' · '+r2(x.start)+'–'+r2(x.start+x.dur)+'s</span><button class="del" data-camdel="'+x.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có clip camera nào.</div>');
+ return h}
+$('panel').addEventListener('click',e=>{const el=e.target.closest('[data-camt],[data-cams],[data-camadd],[data-camnew],[data-camsel],[data-camdel],[data-camfx],[data-camgo]');if(!el||!P)return;const d=el.dataset,c=camCur(),o=c||CAMD;
+ if(d.camt!==undefined||d.cams!==undefined){if(d.camt!==undefined)o.target=d.camt;else o.shot=d.cams;if(c){touch();renderTL();camPeek(c)}renderPanel();return}
+ if(d.camadd!==undefined)return addCam();
+ if(d.camnew!==undefined){sel=null;renderTL();renderPanel();renderOv();return}
+ if(d.camsel)return setSel(d.camsel,'cam');
+ if(d.camdel){sel={id:d.camdel};remove();return}
+ if(d.camgo!==undefined){if(c)seek(snap(c.start+c.dur/2));return}
+ if(d.camfx)camAddFx(d.camfx)});
+$('panel').addEventListener('input',e=>{const el=e.target,k=el.dataset.camk;if(!k||!P)return;if(el.type==='number'&&el.value==='')return;
+ const c=camCur(),o=c||CAMD,s=sc(),v=el.type==='number'||el.type==='range'?+el.value:el.value;if(k==='dur'&&v<1/P.fmt.fps)return;
+ o[k]=v;document.querySelectorAll('#panel [data-camv="'+k+'"]').forEach(b=>b.textContent=r2(v));
+ if(c){if(c.start+c.dur>s.duration)s.duration=Math.ceil(c.start+c.dur);if(k!=='start'&&k!=='dur')camPeek(c);renderTL();touchSoon()}});
 function fxPanel(s){const its=fxItems(s);
  let h='<div class="hint">Bấm một hiệu ứng để thêm vào timeline tại đường đỏ. Hiệu ứng <b>không gian</b> (mưa, tuyết, lửa, nổ…) có khung vùng + gizmo trong khung hình (kéo, xoay, đổi cỡ; 🔒 để khóa); hiệu ứng <b>camera</b> tác động lên góc quay; hiệu ứng <b>màn hình</b> phủ lên toàn khung. Nhóm <b>Không khí &amp; ánh sáng</b> (sương mù, mờ ảo, biến dạng…) dùng được với mọi loại nền. Chỉnh cường độ, tốc độ, màu, vị trí / xoay / scale X Y Z ở tab “Thuộc tính”. Mọi hiệu ứng tính theo thời gian nên tua và xuất video cho kết quả giống hệt.</div>';
  for(const[g,gn]of FX.FX_GROUPS)h+='<label>'+gn+'</label><div class="grid">'+FX.FX_IDS.filter(id=>FX.FX[id].g===g&&!FX.FX[id].hidden).map(id=>'<button class="cd" data-fxadd="'+id+'" title="'+esc(FX.FX[id].note||FX.FX[id].name)+'"><div class="ic">'+FX.FX[id].ic+'</div><b>'+esc(FX.FX[id].name)+'</b></button>').join('')+'</div>';
@@ -695,25 +808,18 @@ function envClick(el,s){
  return false}
 
 /* ---------- Panel ---------- */
-const TABS=[['src','Nguồn'],['audio','Âm thanh'],['chars','Nhân vật'],['env','Bối cảnh'],['light','Ánh sáng'],['fx','✨ Hiệu ứng'],['clip','Clip'],['props','Thuộc tính'],['scene','Cảnh'],['film','Phim']];
+const TABS=[['src','Nguồn'],['audio','Âm thanh'],['chars','Nhân vật'],['env','Bối cảnh'],['light','Ánh sáng'],['fx','✨ Hiệu ứng'],['cam','🎥 Camera'],['clip','Clip'],['props','Thuộc tính'],['scene','Cảnh'],['film','Phim']];
 function customCard(c){const th=String(c.thumbnail||'').replace(/^\.\//,''),ep=th.split('/').map(encodeURIComponent).join('/'),tip=esc(c.name+' · '+(c.items||0)+' món đồ · gốc: '+(c.base||''));
  return '<button class="cd" data-addc="'+esc(c.id)+'" title="'+tip+'">'+(th?'<img alt="" src="./'+esc(ep)+'" onerror="if(!this.dataset.f){this.dataset.f=1;this.src=\''+esc(LRAW()+ep)+'\'}else this.style.visibility=\'hidden\'">':'<div class="ic">✦</div>')+'<b>✦ '+esc(c.name)+'</b></button>'}
 function renderAll(){renderStrip();renderTabs();renderPanel();renderTL();$('pn').textContent=P.name}
-function renderStrip(){$('sc').innerHTML=P.scenes.map((s,i)=>'<button data-i="'+i+'" draggable="true" title="Kéo thả để đổi thứ tự cảnh" class="'+(i===si?'on':'')+'">'+esc(s.name)+'</button>').join('')+'<button data-i="new">+ Cảnh</button><button data-i="dup" title="Nhân đôi cảnh đang chọn (kèm nhân vật, mô hình, ánh sáng, track, keyframe)">⧉ Nhân đôi</button><button data-i="del" class="del" title="Xóa cảnh đang chọn">🗑 Xóa cảnh</button>'}
+function renderStrip(){$('sc').innerHTML=P.scenes.map((s,i)=>'<button data-i="'+i+'" class="'+(i===si?'on':'')+'">'+esc(s.name)+'</button>').join('')+'<button data-i="new">+ Cảnh</button><button data-i="dup" title="Nhân đôi cảnh đang chọn (kèm nhân vật, mô hình, ánh sáng, track, keyframe)">⧉ Nhân đôi</button>'}
 /* Nhân đôi cảnh hiện tại: id mới cho mọi thứ, và trỏ lại khối Biểu cảm / Giọng đọc sang nhân vật bản sao */
 function dupScene(){const s=sc(),q=JSON.parse(JSON.stringify(s)),cm={};q.id=uid();q.name+=' (bản sao)';
  q.chars.forEach(c=>{const n=uid();cm[c.id]=n;c.id=n;(c.clips||[]).forEach(x=>x.id=uid())});
- (q.props||[]).forEach(c=>c.id=uid());(q.lights||[]).forEach(c=>c.id=uid());
- q.tracks.forEach(tr=>{tr.id=uid();tr.items.forEach(x=>{x.id=uid();if(x.ch&&cm[x.ch])x.ch=cm[x.ch]})});
+ (q.props||[]).forEach(c=>{const n=uid();cm[c.id]=n;c.id=n});(q.lights||[]).forEach(c=>c.id=uid());
+ q.tracks.forEach(tr=>{tr.id=uid();tr.items.forEach(x=>{x.id=uid();if(x.ch&&cm[x.ch])x.ch=cm[x.ch];if(x.target&&cm[x.target])x.target=cm[x.target]})});
  kfReidAll(q);P.scenes.splice(si+1,0,q);si++;touch();sel=null;renderAll();loadScene()}
-function delScene(){if(P.scenes.length<2)return alert('Cần ít nhất 1 cảnh.');if(!confirm('Xóa cảnh “'+sc().name+'”?'))return;P.scenes.splice(si,1);si=Math.max(0,Math.min(si,P.scenes.length-1));touch();sel=null;renderAll();loadScene()}
-let scDrag=-1;
-$('sc').ondragstart=e=>{const b=e.target.closest&&e.target.closest('button[data-i]');if(!b||isNaN(+b.dataset.i)){e.preventDefault();return}scDrag=+b.dataset.i;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(scDrag))}catch(_){}b.style.opacity='.5'};
-$('sc').ondragover=e=>{if(scDrag<0)return;const b=e.target.closest&&e.target.closest('button[data-i]');if(!b||isNaN(+b.dataset.i))return;e.preventDefault();e.dataTransfer.dropEffect='move';[...$('sc').children].forEach(x=>x.style.boxShadow='');b.style.boxShadow=(+b.dataset.i>scDrag?'inset -3px 0 0 ':'inset 3px 0 0 ')+'var(--ac)'};
-$('sc').ondragend=()=>{scDrag=-1;[...$('sc').children].forEach(x=>{x.style.opacity='';x.style.boxShadow=''})};
-$('sc').ondrop=e=>{const b=e.target.closest&&e.target.closest('button[data-i]');const from=scDrag;scDrag=-1;if(!b||from<0||isNaN(+b.dataset.i))return;e.preventDefault();const to=+b.dataset.i;if(to===from)return renderStrip();
- const cur=P.scenes[si],[m]=P.scenes.splice(from,1);P.scenes.splice(to,0,m);si=P.scenes.indexOf(cur);touch();renderStrip();cbToast('Đã đổi thứ tự cảnh')};
-$('sc').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(i==='dup')return dupScene();if(i==='del')return delScene();if(i==='new'){P.scenes.push(mkScene(P.scenes.length+1));si=P.scenes.length-1;touch()}else si=+i;sel=null;renderAll();loadScene()};
+$('sc').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(i==='dup')return dupScene();if(i==='new'){P.scenes.push(mkScene(P.scenes.length+1));si=P.scenes.length-1;touch()}else si=+i;sel=null;renderAll();loadScene()};
 function renderTabs(){$('tabs').innerHTML=TABS.map(x=>'<button data-t="'+x[0]+'" class="'+(x[0]===tab?'on':'')+'">'+x[1]+'</button>').join('')}
 $('tabs').onclick=e=>{if(e.target.dataset.t){tab=e.target.dataset.t;if(PVA){PVA.a.pause();PVA=null}renderTabs();renderPanel()}};
 const TM=[['start','Bắt đầu (s)','n'],['dur','Độ dài (s)','n']],XF=[['x','Vị trí X (%)','n'],['y','Vị trí Y (%)','n'],['zi','Z-index (lớp)','n'],['rx','Xoay X (độ)','n'],['ry','Xoay Y (độ)','n'],['rot','Xoay Z (độ)','n'],['lock','Khóa tỉ lệ','b'],['sx','Scale X','n'],['sy','Scale Y','n'],['opacity','Độ mờ','r']];
@@ -740,7 +846,8 @@ function field(k,l,ty,v,X){const a='data-k="'+k+'" ',g=x=>'<label>'+l+'</label>'
  if(ty==='lang')return g('<select '+a+'>'+LANGS.map(([c,n])=>'<option value="'+c+'"'+(c===langOf(cur())?' selected':'')+'>'+n+'</option>').join('')+'</select>');
  if(ty==='voice'){const it=cur(),L=langOf(it),cv=voiceOf(it);return g('<select '+a+'>'+VOICES.map(([gl,ls])=>[gl,ls.filter(([id])=>vlang(id)===L)]).filter(x=>x[1].length).map(([gl,ls])=>'<optgroup label="'+gl+'">'+ls.map(([id,nm])=>'<option value="'+id+'"'+(id===cv?' selected':'')+'>'+nm+'</option>').join('')+'</optgroup>').join('')+'</select>')}
  if(ty==='r'||ty==='r2')l+=' <b data-v="'+k+'" style="color:var(--text)">'+r2(+(v??1))+'</b>';return g('<input '+a+'type="'+({n:'number',c:'color',r:'range',r2:'range',t:'text'}[ty])+'"'+(ty==='n'?' step="any"':ty==='r'?' min="0" max="1" step="0.01"':ty==='r2'?' min="0.5" max="2" step="0.05"':'')+' value="'+esc(v)+'">')}
-function renderPanel(){const s=sc();let h='';
+function renderPanel(){const s=sc();let h='';if(tab==='props'&&stype()==='cam'){tab='cam';renderTabs()}
+ if(tab==='cam')h=camPanel(s);
  if(tab==='light')h=lightPanel(s);
  if(tab==='fx')h=fxPanel(s);
  if(tab==='src'){h='<div class="r"><button data-q="txt">+ Văn bản</button><button data-q="dlg">+ Phụ đề</button><button data-q="tts">+ Giọng đọc</button><button data-q="face">+ Biểu cảm</button><button data-q="bg">+ Nền màu</button></div>'+srcBar()+'<label>Tệp của bạn</label><input type="file" id="fi" multiple accept="image/*,video/*,audio/*" hidden><button id="fib" class="pri" style="width:100%">+ Nhập file từ máy…</button><div class="hint">Kéo file từ máy thả vào đây, hoặc kéo thẻ vào khung video / timeline. Bấm thẻ để thêm tại đường đỏ. Mỗi lần thả sẽ tạo một track mới (thả đúng vào track có sẵn để dùng chung).</div><div class="'+gridCls()+'">'+sortMedia(media.filter(m=>!m.lib)).map(srcCard).join('')+'</div><label>Thư viện GitHub (ảnh, video, nhạc nền, âm thanh hiệu ứng)</label>'+libHtml('src',['img','vid','aud'])}
