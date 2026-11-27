@@ -809,13 +809,38 @@ const LANGS=[['vi','Tiếng Việt'],['en','English'],['zh','中文'],['ja','日
 const vlang=id=>id.split(':')[1].slice(0,2),langOf=it=>it.lang||vlang(vkey(it.voice)),voiceOf=it=>{const L=langOf(it),v=vkey(it.voice);return vlang(v)===L?v:DEFV[L]||DEFV.vi};
 const vkey=v=>v==='2'?'edge:vi-VN-NamMinhNeural':!v?'edge:vi-VN-HoaiMyNeural':v;
 const PIPER='https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm';
-async function edgeTTS(text,voice,rate,pitch){const sg=n=>(n>=0?'+':'')+n;const TK='6A5AA1D4EAFF4E9FB37E23D68491D6F4';let tk=Math.floor(Date.now()/1000)+11644473600;tk-=tk%300;
- const gec=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(BigInt(tk)*10000000n)+TK)))].map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase(),id=crypto.randomUUID().replace(/-/g,''),ts=new Date().toISOString();
- return new Promise((res,rej)=>{const parts=[],ws=new WebSocket('wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken='+TK+'&Sec-MS-GEC='+gec+'&Sec-MS-GEC-Version=1-130.0.2849.68&ConnectionId='+id),tm=setTimeout(()=>{ws.close();rej(Error('hết thời gian chờ'))},10000);ws.binaryType='arraybuffer';
-  ws.onopen=()=>{ws.send('X-Timestamp:'+ts+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}\r\n');
-   ws.send('X-RequestId:'+id+'\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:'+ts+'Z\r\nPath:ssml\r\n\r\n<speak version=\'1.0\' xmlns=\'http://www.w3.org/2001/10/synthesis\' xml:lang=\''+voice.split('-').slice(0,2).join('-')+'\'><voice name=\''+voice+'\'><prosody pitch=\''+sg(Math.round(((+pitch||1)-1)*100))+'Hz\' rate=\''+sg(Math.round(((+rate||1)-1)*100))+'%\' volume=\'+0%\'>'+esc(text)+'</prosody></voice></speak>')};
-  ws.onmessage=e=>{if(typeof e.data==='string'){if(e.data.includes('Path:turn.end')){clearTimeout(tm);ws.close();parts.length?res(new Blob(parts,{type:'audio/mpeg'})):rej(Error('không có âm thanh trả về'))}}else{const hl=new DataView(e.data).getUint16(0);if(new TextDecoder().decode(new Uint8Array(e.data,2,hl)).includes('Path:audio'))parts.push(e.data.slice(2+hl))}};
-  ws.onerror=()=>{clearTimeout(tm);rej(Error('bị từ chối kết nối'))};ws.onclose=()=>{clearTimeout(tm);rej(Error('kết nối đóng sớm'))}})}
+const EDGE_TOKEN='6A5AA1D4EAFF4E9FB37E23D68491D6F4',EDGE_VER='2-143.0.3650.96';
+const G2C='Copyright (C) Microsoft Corporation. All rights reserved.',G2S1=[0xEF0569FB,0x76F50F34,0xC3EFEA97],G2S2=[0xC31713DB,0x1881CE3C,0x35BD1EC9],G2M1=[0xCF98B111,0x87085B9F,0x12CEB96D,0x257E1D83],G2M2=[0xA27416F5,0xD38396FF,0x7C932B89,0xBFA49F69];
+const g2h=v=>((v<<16)|(v>>>16))>>>0,g2hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
+const g2t=(w,k,m)=>{const s=Math.imul(w,k)+Math.imul(g2h(w),m[0]),p=Math.imul(g2h(s),m[1])>>>0;return (Math.imul(g2h(p),m[2])+p)>>>0};
+const g2m=(v,ms)=>{for(const m of ms)v=Math.imul(g2h(v),m)>>>0;return v};
+function g2cs64(msg,dg){
+ const dv=new DataView(dg.buffer,dg.byteOffset,dg.byteLength),k1=(dv.getUint32(0,true)|1)>>>0,k2=(dv.getUint32(4,true)|1)>>>0;
+ const pad=new Uint8Array(Math.ceil(msg.length/8)*8);pad.set(msg);const w=new DataView(pad.buffer);let ss=0,ls=0,mx=0,ms=0;
+ for(let o=0;o<pad.length;o+=8){const a=w.getUint32(o,true),b=w.getUint32(o+4,true),f=g2t(a,k1,G2S1);ls=g2t(b,k2,G2S2);ss=(ss+f+ls)>>>0;mx=g2m(Math.imul(mx+a,k1),G2M1);ms=(ms+mx)>>>0;mx=g2m(Math.imul(mx+b,k2),G2M2);ms=(ms+mx)>>>0}
+ const out=new Uint8Array(8),ov=new DataView(out.buffer);ov.setUint32(0,(ls^mx)>>>0,true);ov.setUint32(4,(ss^ms)>>>0,true);return out;
+}
+// Sec-MS-GEC v2 (bắt buộc từ 10/2026): <CS64>-<SHA256 của dòng bản quyền Edge + ticks + token>
+async function edgeGec(){
+ let t=Math.floor(Date.now()/1000)+11644473600;t-=t%300;
+ const msg=new TextEncoder().encode(G2C+(BigInt(t)*10000000n).toString()+EDGE_TOKEN),dg=new Uint8Array(await crypto.subtle.digest('SHA-256',msg));
+ return g2hex(g2cs64(msg,dg))+'-'+g2hex(dg);
+}
+function edgeDate(){return new Date().toUTCString().replace(/^(\w+), (\d+) (\w+) (\d+)/,'$1 $3 $2 $4').replace('GMT','GMT+0000 (Coordinated Universal Time)')}
+async function edgeTTS(text,voice,rate,pitch){const sg=n=>(n>=0?'+':'')+n;
+ const gec=await edgeGec(),id=crypto.randomUUID().replace(/-/g,'');
+ const url='wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1?Ocp-Apim-Subscription-Key='+EDGE_TOKEN+'&ConnectionId='+id+'&Sec-MS-GEC='+gec+'&Sec-MS-GEC-Version='+EDGE_VER;
+ const x=s=>s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+ return new Promise((res,rej)=>{const parts=[];let done=false,ended=false;const ws=new WebSocket(url);ws.binaryType='arraybuffer';
+  const fin=err=>{if(done)return;done=true;clearTimeout(tm);try{ws.close()}catch(_){}err?rej(err):res(new Blob(parts,{type:'audio/mpeg'}))};
+  const tm=setTimeout(()=>fin(Error('hết thời gian chờ')),15000);
+  ws.onopen=()=>{ws.send('X-Timestamp:'+edgeDate()+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}');
+   ws.send('X-RequestId:'+id+'\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:'+edgeDate()+'Z\r\nPath:ssml\r\n\r\n<speak version=\'1.0\' xmlns=\'http://www.w3.org/2001/10/synthesis\' xml:lang=\''+voice.split('-').slice(0,2).join('-')+'\'><voice name=\''+voice+'\'><prosody pitch=\''+sg(Math.round(((+pitch||1)-1)*100))+'Hz\' rate=\''+sg(Math.round(((+rate||1)-1)*100))+'%\' volume=\'+0%\'>'+x(text)+'</prosody></voice></speak>')};
+  ws.onmessage=e=>{if(typeof e.data==='string'){if(e.data.includes('Path:turn.end')){ended=true;fin(parts.length?null:Error('không có âm thanh trả về'))}return}
+   const b=e.data;if(!(b instanceof ArrayBuffer)||b.byteLength<3)return;const hl=new DataView(b).getUint16(0,false);if(hl<=0||2+hl>b.byteLength)return;
+   if(/Path:audio/i.test(new TextDecoder().decode(new Uint8Array(b,2,hl)))){const p=b.slice(2+hl);if(p.byteLength)parts.push(p)}};
+  ws.onerror=()=>fin(Error('không bắt tay được WebSocket Edge (Brave/Chrome Android có thể chặn — thử Microsoft Edge)'));
+  ws.onclose=()=>fin(ended?null:Error('kết nối đóng sớm'))})}
 async function genVoice(it){if(!it)return;const txt=String(it.text||'').trim();if(!txt)return say('Chưa có nội dung để đọc.');const[eng,vid]=voiceOf(it).split(':');
  const add=async(b,ext,en,bk)=>{const rec=(await importFiles([new File([b],'giong-'+it.id+ext,{type:b.type||'audio/mpeg'})]))[0];it.media=rec.id;it.baked=bk;it.dur=r2(rec.dur/eff(it));touch();renderTL();renderPanel();say('✓ Đã tạo giọng bằng '+en+' ('+rec.dur.toFixed(1)+'s).')};
  if(eng==='edge'){say('Đang tạo giọng bằng Edge…');try{await add(await edgeTTS(txt,vid,it.rate,it.pitch),'.mp3','Edge',{rate:+it.rate||1,pitch:+it.pitch||1,eng:'edge',text:txt,voice:eng+':'+vid});return}catch(e){say('Edge không được ('+e.message+') — chuyển sang Piper…')}}
