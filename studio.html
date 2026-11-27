@@ -530,7 +530,23 @@ function camPose(c,tt,o){
 const _cP=[0,1,2].map(()=>({p:new THREE.Vector3(),a:new THREE.Vector3(),fov:35,roll:0})),_cS={p:new THREE.Vector3(),q:new THREE.Quaternion(),f:35,on:false};
 const camMix=(a,b,w)=>{b.p.lerpVectors(a.p,b.p,w);b.a.lerpVectors(a.a,b.a,w);b.fov=a.fov+(b.fov-a.fov)*w;b.roll=a.roll+(b.roll-a.roll)*w};
 const camAll=s=>{const a=[];for(const tr of s.tracks)for(const x of tr.items)if(x.type==='cam'&&(x.shot==='free'||(x.target&&R[x.target])))a.push(x);return a.sort((p,q)=>p.start-q.start)};
-const camActive=(s,tt)=>{let c=null;for(const x of camAll(s))if(tt>=x.start-1e-6&&tt<x.start+x.dur-1e-6)c=x;return c};
+const camActive=(s,tt)=>{let c=null;const all=camAll(s);for(const x of all)if(tt>=x.start-1e-6&&tt<x.start+x.dur-1e-6)c=x;return c||(camGapSpan(all,tt)?true:null)};
+/* Khoảng hở giữa hai clip camera: trả {pv,nx,e,gp} (clip trước, clip sau, thời điểm kết thúc clip trước, độ dài khoảng hở) hoặc null */
+function camGapSpan(all,tt){let pv=null,nx=null;
+ for(const x of all){const e=x.start+x.dur;if(tt>=x.start-1e-6&&tt<e-1e-6)return null;if(e<=tt+1e-6){if(!pv||e>=pv.start+pv.dur)pv=x}else if(x.start>tt&&!nx)nx=x}
+ if(!pv||!nx)return null;const e=pv.start+pv.dur,gp=nx.start-e;return gp>.02?{pv,nx,e,gp}:null}
+/* Có khoảng hở → camera tự chạy từ góc cuối clip trước sang góc đầu clip sau. Vị trí đi theo cung tròn quanh điểm nhắm (không xuyên qua nhân vật), điểm nhắm / FOV / nghiêng nội suy mượt. */
+const _cG=[0,1].map(()=>({p:new THREE.Vector3(),a:new THREE.Vector3(),fov:35,roll:0}));
+function camGap(all,tt,o){const g=camGapSpan(all,tt);if(!g)return false;const A=_cG[0],B=_cG[1];
+ if(!camPose(g.pv,g.e,A)||!camPose(g.nx,g.nx.start,B))return false;
+ let w=Math.min(1,Math.max(0,(tt-g.e)/g.gp));w=w*w*(3-2*w);
+ o.a.lerpVectors(A.a,B.a,w);
+ const ax=A.p.x-A.a.x,az=A.p.z-A.a.z,bx=B.p.x-B.a.x,bz=B.p.z-B.a.z,ra=Math.hypot(ax,az),rb=Math.hypot(bx,bz);
+ let ta=Math.atan2(ax,az),tb=Math.atan2(bx,bz);if(ra<1e-3)ta=tb;if(rb<1e-3)tb=ta;
+ let d=tb-ta;d-=Math.PI*2*Math.round(d/(Math.PI*2));
+ const th=ta+d*w,r=ra+(rb-ra)*w,ya=A.p.y-A.a.y,yb=B.p.y-B.a.y,y=ya+(yb-ya)*w;
+ o.p.set(o.a.x+Math.sin(th)*r,o.a.y+y,o.a.z+Math.cos(th)*r);
+ o.fov=A.fov+(B.fov-A.fov)*w;o.roll=A.roll+(B.roll-A.roll)*w;return true}
 /* Camera ở thời điểm tt: clip đang chạy (clip bắt đầu sau thắng), có chuyển cảnh mượt vào / ra */
 function camPrev(){if(tab!=='cam'||!P||busy)return null;const c=camCur();if(c)return c.shot==='free'||R[c.target]?c:null;const g={type:'cam',...CAMD,start:FXT,dur:3};if(!R[g.target])g.target=camDefTarget();return g.shot==='free'||R[g.target]?g:null}
 /* Góc tự do: đang sửa tay → dùng thẳng camera của viewport (xoay / kéo / zoom), tự lưu vào clip */
@@ -553,14 +569,14 @@ function camState(s,tt,o){
  if(camFreeEdit())return false;
  if(camEdOn()){const pv=camPrev();if(pv)return camPose(pv,Math.min(Math.max(tt,pv.start),pv.start+pv.dur),o)}
  const all=camAll(s);let c=null,i=-1;all.forEach((x,j)=>{if(tt>=x.start-1e-6&&tt<x.start+x.dur-1e-6){c=x;i=j}});
- if(!c){const pv=camPrev();return !!pv&&camPose(pv,Math.min(Math.max(tt,pv.start),pv.start+pv.dur),o)}   // xem trước: clip đang chọn / cài đặt đang chỉnh
+ if(!c){if(camGap(all,tt,o))return true;const pv=camPrev();return !!pv&&camPose(pv,Math.min(Math.max(tt,pv.start),pv.start+pv.dur),o)}   // xem trước: clip đang chọn / cài đặt đang chỉnh
  if(!camPose(c,tt,o))return false;
  const base=_cP[2];base.p.copy(camera.position);base.a.copy(controls.target);base.fov=camera.fov;base.roll=0;
  const tin=Math.max(0,FX.nz(c.tin,0)),dt=tt-c.start;
- if(tin>0&&dt<tin){const pv=all.slice(0,i).reverse().find(x=>x.start+x.dur>=c.start-.02),f=_cP[1];let w=dt/tin;w=w*w*(3-2*w);
+ if(tin>0&&dt<tin&&!(i>0&&c.start-(all[i-1].start+all[i-1].dur)>.02)){const pv=all.slice(0,i).reverse().find(x=>x.start+x.dur>=c.start-.02),f=_cP[1];let w=dt/tin;w=w*w*(3-2*w);
   camMix(pv&&camPose(pv,Math.min(tt,pv.start+pv.dur),f)?f:base,o,w)}
  const tout=Math.max(0,FX.nz(c.tout,0)),rem=c.start+c.dur-tt;
- if(tout>0&&rem<tout&&!all.some(x=>x!==c&&x.start>c.start&&x.start<=c.start+c.dur+.02)){let w=rem/tout;w=w*w*(3-2*w);camMix(base,o,w)}
+ if(tout>0&&rem<tout&&i>=all.length-1){let w=rem/tout;w=w*w*(3-2*w);camMix(base,o,w)}
  return true}
 function camClipBegin(){
  if(!P||!camera||!controls)return null;const o=_cP[0];if(!camState(sc(),FXT,o))return null;
@@ -585,7 +601,7 @@ function camPanel(s){
  const o=c||CAMD,N=(k,d)=>FX.nz(o[k],d),
   rng=(k,l,mn,mx,st)=>'<label>'+l+' <b data-camv="'+k+'" style="color:var(--text)">'+r2(N(k,0))+'</b></label><input type="range" data-camk="'+k+'" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+N(k,0)+'">',
   sel_=(k,a)=>'<select data-camk="'+k+'">'+a.map(x=>'<option value="'+x[0]+'"'+(x[0]===o[k]?' selected':'')+'>'+esc(x[1])+'</option>').join('')+'</select>';
- let h='<div class="hint">Camera là một <b>clip trên track</b> như mọi khối khác. Chọn đối tượng + cỡ cảnh rồi bấm “＋ Thêm clip camera”: camera đặt <b>thẳng trước mặt</b> đối tượng và bám theo khi nó di chuyển. Ngoài các clip camera, khung hình trở về góc nhìn thường.</div>';
+ let h='<div class="hint">Camera là một <b>clip trên track</b> như mọi khối khác. Chọn đối tượng + cỡ cảnh rồi bấm “＋ Thêm clip camera”: camera đặt <b>thẳng trước mặt</b> đối tượng và bám theo khi nó di chuyển. Giữa hai clip camera nếu có <b>khoảng hở</b> thì camera tự chạy từ góc cũ sang góc mới trong khoảng hở đó. Ngoài các clip camera, khung hình trở về góc nhìn thường.</div>';
  h+=c?'<div class="r" style="margin-top:8px"><b style="flex:1">🎥 Đang sửa: '+esc(camLabel(c))+'</b><button data-camnew="1">＋ Clip mới</button></div>':'<b style="display:block;margin-top:8px">🎥 Clip camera mới</b>';
  const fr_=o.shot==='free';
  if(!fr_)h+='<label>Đối tượng camera nhắm tới</label>'+(objs.length?objs.map(x=>'<div class="li'+(x.id===o.target?' on':'')+'" data-camt="'+x.id+'"><span>'+x.ic+' '+esc(x.name)+'</span>'+(x.id===o.target?'<span>🎯</span>':'')+'</div>').join(''):'<div class="hint">Chưa có nhân vật / mô hình trong cảnh.</div>');
