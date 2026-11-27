@@ -23,22 +23,29 @@ input[type=range]{width:100%;accent-color:var(--ac)}
 #st{grid-column:1/-1;color:var(--mu);font-size:12px}
 </style></head>
 <body>
-<div id="v"><div id="hint">Kéo thả file .glb vào đây<br>hoặc bấm “Mở GLB”</div></div>
+<div id="v"><div id="hint">Kéo thả file GLB, glTF, OBJ, FBX, STL, PLY vào đây<br>OBJ/glTF có texture rời: chọn cùng lúc .mtl và ảnh</div></div>
 <div id="p">
-  <button id="op">Mở GLB</button><input id="fi" type="file" accept=".glb,.gltf" hidden>
-  <label>Thuật toán<select id="md"><option value="sub">Chia nhỏ (tăng mật độ)</option><option value="ada">Chia theo độ dài cạnh</option></select></label>
-  <label id="l1">Số lần chia: <b id="lvv">1</b><input id="lv" type="range" min="1" max="3" value="1"></label>
+  <button id="op">Mở file</button><input id="fi" type="file" accept=".glb,.gltf,.bin,.obj,.mtl,.fbx,.stl,.ply,.png,.jpg,.jpeg,.webp" multiple hidden>
+  <label>Thuật toán<select id="md"><option value="dec">Giảm lưới (decimate)</option><option value="sub">Chia nhỏ (tăng mật độ)</option><option value="ada">Chia theo độ dài cạnh</option></select></label>
+  <label id="l0">Giữ lại: <b id="drv">50</b>% tam giác<input id="dr" type="range" min="5" max="95" value="50"></label><label id="l1" hidden>Số lần chia: <b id="lvv">1</b><input id="lv" type="range" min="1" max="3" value="1"></label>
   <label id="l2" hidden>Cạnh tối đa: <b id="elv">5</b>% kích thước<input id="el" type="range" min="1" max="30" value="5"></label>
   <button id="ap" class="pri">Áp dụng</button>
   <button id="rs">Về bản gốc</button>
   <label class="row"><input id="wf" type="checkbox"> Hiện lưới</label>
-  <button id="ex">Xuất GLB (.zip)</button>
+  <label>Xuất định dạng<select id="fm"><option>GLB</option><option>OBJ</option><option>FBX</option></select></label><button id="ex">Xuất file</button>
   <div id="st">Chưa có mô hình.</div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
 <script>
 const $=id=>document.getElementById(id),v=$('v');
 const R=new THREE.WebGLRenderer({antialias:true});R.outputEncoding=THREE.sRGBEncoding;R.setPixelRatio(Math.min(devicePixelRatio,2));v.appendChild(R.domElement);
@@ -54,14 +61,52 @@ new ResizeObserver(rz).observe(v);rz();
 let root=null,meshes=[],name='model';
 const tris=g=>Math.round((g.index?g.index.count:g.attributes.position.count)/3);
 
-function loadFile(f){
-  name=f.name.replace(/\.\w+$/,'');
-  f.arrayBuffer().then(b=>new THREE.GLTFLoader().parse(b,'',g=>{
-    if(root)S.remove(root);root=g.scene;S.add(root);meshes=[];
-    root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh){o.userData.g0=o.geometry;meshes.push(o);
-      [].concat(o.material).forEach(m=>{m.polygonOffset=true;m.polygonOffsetFactor=1;m.polygonOffsetUnits=1})}});
+function sub(g,gr){
+  const sg=new THREE.BufferGeometry();
+  for(const k in g.attributes){const a=g.attributes[k],s=a.itemSize;sg.setAttribute(k,g.index?a:new THREE.BufferAttribute(a.array.slice(gr.start*s,(gr.start+gr.count)*s),s,a.normalized))}
+  if(g.index)sg.setIndex(new THREE.BufferAttribute(g.index.array.slice(gr.start,gr.start+gr.count),1));
+  return sg
+}
+async function loadFiles(fl){
+  fl=[...fl];const ext=f=>f.name.split('.').pop().toLowerCase();
+  const main=fl.find(f=>/^(glb|gltf|fbx|obj|stl|ply)$/.test(ext(f)));
+  if(!main){alert('Cần chọn file .glb, .gltf, .obj, .fbx, .stl hoặc .ply');return}
+  name=main.name.replace(/\.\w+$/,'');
+  const map={};fl.forEach(f=>map[f.name.toLowerCase()]=URL.createObjectURL(f));
+  const mgr=new THREE.LoadingManager();
+  mgr.setURLModifier(u=>{const k=decodeURIComponent(u.split(/[\\/]/).pop().split('?')[0]).toLowerCase();return map[k]||u});
+  $('st').textContent='Đang đọc file…';
+  try{
+    const e=ext(main),buf=await main.arrayBuffer();let obj;
+    if(e=='glb'||e=='gltf')obj=(await new Promise((ok,no)=>new THREE.GLTFLoader(mgr).parse(buf,'',ok,no))).scene;
+    else if(e=='fbx')obj=new THREE.FBXLoader(mgr).parse(buf,'');
+    else if(e=='obj'){
+      const L=new THREE.OBJLoader(mgr),mf=fl.find(f=>ext(f)=='mtl');
+      if(mf){const mt=new THREE.MTLLoader(mgr).parse(await mf.text(),'');mt.preload();L.setMaterials(mt)}
+      obj=L.parse(new TextDecoder().decode(buf))
+    }else{
+      const g=e=='stl'?new THREE.STLLoader().parse(buf):new THREE.PLYLoader().parse(buf);
+      if(!g.attributes.normal)g.computeVertexNormals();
+      obj=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0xbfbfbf,roughness:.7,metalness:.1,vertexColors:!!g.attributes.color}))
+    }
+    if(root)S.remove(root);root=obj;S.add(root);meshes=[];
+    const all=[];root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh)all.push(o)});
+    const use=m=>{
+      if(!m.geometry.index)m.geometry=THREE.BufferGeometryUtils.mergeVertices(m.geometry);
+      m.userData.g0=m.geometry;meshes.push(m);
+      [].concat(m.material).forEach(x=>{x.polygonOffset=true;x.polygonOffsetFactor=1;x.polygonOffsetUnits=1})
+    };
+    all.forEach(o=>{
+      const ms=[].concat(o.material),gs=o.geometry.groups;
+      if(ms.length>1&&gs.length>1){
+        const p=o.parent;
+        gs.forEach(gr=>{const c=new THREE.Mesh(sub(o.geometry,gr),ms[gr.materialIndex]);c.name=o.name;c.position.copy(o.position);c.quaternion.copy(o.quaternion);c.scale.copy(o.scale);p.add(c);use(c)});
+        p.remove(o)
+      }else use(o)
+    });
+    if(!meshes.length)throw new Error('Không tìm thấy mesh nào trong file');
     $('hint').hidden=true;fit();show(false)
-  },e=>alert('Không đọc được file: '+(e.message||e))))
+  }catch(err){$('st').textContent='Lỗi đọc file.';alert('Không đọc được file: '+(err.message||err))}
 }
 function fit(){
   const b=new THREE.Box3().setFromObject(root),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),d=s.length();
@@ -100,13 +145,53 @@ function remesh(g0,mode,lv,L){
   g.computeBoundingSphere();return g
 }
 
+function decimate(g0,keep){
+  const names=Object.keys(g0.attributes).filter(n=>!/skin/i.test(n)),A=names.map(n=>g0.attributes[n]),pa=g0.attributes.position,n=pa.count;
+  const P=new Float32Array(n*3);for(let i=0;i<n;i++){P[i*3]=pa.getX(i);P[i*3+1]=pa.getY(i);P[i*3+2]=pa.getZ(i)}
+  const ix=g0.index?Array.from(g0.index.array):[...Array(n).keys()],T=ix.length/3,alive=new Uint8Array(T).fill(1);
+  const vt=Array.from({length:n},()=>new Set),lock=new Uint8Array(n),H=new Map,E=new Map;
+  for(let i=0;i<n;i++){const k=Math.round(P[i*3]*1e5)+','+Math.round(P[i*3+1]*1e5)+','+Math.round(P[i*3+2]*1e5),j=H.get(k);if(j===undefined)H.set(k,i);else lock[i]=lock[j]=1}
+  for(let t=0;t<T;t++)for(let i=0;i<3;i++){const a=ix[t*3+i],b=ix[t*3+(i+1)%3],k=a<b?a*4294967296+b:b*4294967296+a;E.set(k,(E.get(k)||0)+1);vt[a].add(t)}
+  for(const[k,c]of E)if(c!=2){lock[Math.floor(k/4294967296)]=1;lock[k%4294967296]=1}
+  const d2=(a,b)=>(P[a*3]-P[b*3])**2+(P[a*3+1]-P[b*3+1])**2+(P[a*3+2]-P[b*3+2])**2;
+  const nr=q=>{const a=q[0]*3,b=q[1]*3,c=q[2]*3,ux=P[b]-P[a],uy=P[b+1]-P[a+1],uz=P[b+2]-P[a+2],vx=P[c]-P[a],vy=P[c+1]-P[a+1],vz=P[c+2]-P[a+2];return[uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx]};
+  const nbr=v=>{const s=new Set;for(const t of vt[v])for(let i=0;i<3;i++)s.add(ix[t*3+i]);s.delete(v);return s};
+  let cnt=T;const goal=Math.max(4,Math.round(T*keep));
+  for(let r=0;r<60&&cnt>goal;r++){
+    const C=[];
+    for(let t=0;t<T;t++)if(alive[t])for(let i=0;i<3;i++){const a=ix[t*3+i],b=ix[t*3+(i+1)%3],d=d2(a,b);if(!lock[a])C.push([d,a,b]);if(!lock[b])C.push([d,b,a])}
+    C.sort((x,y)=>x[0]-y[0]);const used=new Set;let did=0;
+    for(const[,a,b]of C){
+      if(cnt<=goal)break;if(used.has(a)||used.has(b))continue;
+      const na=nbr(a),nb=nbr(b);if(!na.has(b))continue;let com=0;for(const x of na)if(nb.has(x))com++;if(com!=2)continue;
+      let ok=true;const dead=[],mv=[];
+      for(const t of vt[a]){const q=[ix[t*3],ix[t*3+1],ix[t*3+2]];if(q.includes(b)){dead.push(t);continue}
+        const n1=nr(q),n2=nr(q.map(x=>x==a?b:x)),l=Math.hypot(...n1)*Math.hypot(...n2);
+        if(!(l>0)||(n1[0]*n2[0]+n1[1]*n2[1]+n1[2]*n2[2])/l<.3){ok=false;break}mv.push(t)}
+      if(!ok)continue;
+      for(const t of dead){alive[t]=0;cnt--;for(let i=0;i<3;i++)vt[ix[t*3+i]].delete(t)}
+      for(const t of mv){for(let i=0;i<3;i++)if(ix[t*3+i]==a)ix[t*3+i]=b;vt[b].add(t)}
+      vt[a].clear();used.add(a);used.add(b);for(const x of na)used.add(x);did++
+    }
+    if(!did)break
+  }
+  const mp=new Int32Array(n).fill(-1),out=[];let m=0;
+  for(let t=0;t<T;t++)if(alive[t])for(let i=0;i<3;i++){const v=ix[t*3+i];if(mp[v]<0)mp[v]=m++;out.push(mp[v])}
+  const g=new THREE.BufferGeometry();
+  names.forEach((nm,k)=>{const at=A[k],s=at.itemSize,arr=new at.array.constructor(m*s);
+    for(let v=0;v<n;v++)if(mp[v]>=0)for(let c=0;c<s;c++)arr[mp[v]*s+c]=at.array[v*s+c];
+    g.setAttribute(nm,new THREE.BufferAttribute(arr,s,at.normalized))});
+  g.setIndex(new THREE.BufferAttribute(m>65535?new Uint32Array(out):new Uint16Array(out),1));
+  g.computeBoundingSphere();return g
+}
+
 function show(doRemesh){
   if(!root)return;let a=0,b=0;
   const mode=$('md').value,lv=+$('lv').value,pct=+$('el').value/100;
   meshes.forEach(m=>{
     const g0=m.userData.g0;g0.computeBoundingBox();
     const L=g0.boundingBox.getSize(new THREE.Vector3()).length()*pct;
-    const g=doRemesh?remesh(g0,mode,lv,L):g0;
+    const g=doRemesh?(mode=='dec'?decimate(g0,+$('dr').value/100):remesh(g0,mode,lv,L)):g0;
     if(m.geometry!==g0&&m.geometry!==g)m.geometry.dispose();
     m.geometry=g;a+=tris(g0);b+=tris(g)
   });
@@ -120,21 +205,110 @@ function wire(){
   })
 }
 
-function zip(nm,u8){
-  const enc=new TextEncoder().encode(nm),t=[];
-  for(let n=0,c;n<256;n++){c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}
-  let crc=-1;for(const x of u8)crc=t[(crc^x)&255]^(crc>>>8);crc=(crc^-1)>>>0;
-  const L=30+enc.length,sz=u8.length,cd=46+enc.length,out=new Uint8Array(L+sz+cd+22),dv=new DataView(out.buffer);
-  dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint32(14,crc,true);dv.setUint32(18,sz,true);dv.setUint32(22,sz,true);dv.setUint16(26,enc.length,true);out.set(enc,30);out.set(u8,L);
-  let o=L+sz;
-  dv.setUint32(o,0x02014b50,true);dv.setUint16(o+4,20,true);dv.setUint16(o+6,20,true);dv.setUint32(o+16,crc,true);dv.setUint32(o+20,sz,true);dv.setUint32(o+24,sz,true);dv.setUint16(o+28,enc.length,true);out.set(enc,o+46);
-  o+=cd;dv.setUint32(o,0x06054b50,true);dv.setUint16(o+8,1,true);dv.setUint16(o+10,1,true);dv.setUint32(o+12,cd,true);dv.setUint32(o+16,L+sz,true);
-  return out
+const te=new TextEncoder();
+function zip(F){
+  const T=[];for(let n=0,c;n<256;n++){c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;T[n]=c>>>0}
+  const P=[],Cd=[];let off=0;
+  for(const[nm,u]of Object.entries(F)){
+    const e=te.encode(nm);let c=-1;for(const x of u)c=T[(c^x)&255]^(c>>>8);c=(c^-1)>>>0;
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint32(14,c,true);h.setUint32(18,u.length,true);h.setUint32(22,u.length,true);h.setUint16(26,e.length,true);
+    const d=new DataView(new ArrayBuffer(46));d.setUint32(0,0x02014b50,true);d.setUint16(4,20,true);d.setUint16(6,20,true);d.setUint32(16,c,true);d.setUint32(20,u.length,true);d.setUint32(24,u.length,true);d.setUint16(28,e.length,true);d.setUint32(42,off,true);
+    P.push(new Uint8Array(h.buffer),e,u);Cd.push(new Uint8Array(d.buffer),e);off+=30+e.length+u.length}
+  let cs=0;for(const x of Cd)cs+=x.length;
+  const E=new DataView(new ArrayBuffer(22));E.setUint32(0,0x06054b50,true);E.setUint16(8,Cd.length/2,true);E.setUint16(10,Cd.length/2,true);E.setUint32(12,cs,true);E.setUint32(16,off,true);
+  return new Blob([...P,...Cd,new Uint8Array(E.buffer)])
+}
+async function save(F,zn){
+  let dn=null;try{dn=window.claude&&await claude.use('downloads')}catch(e){}
+  const ks=Object.keys(F);
+  if(dn)await dn.save({filename:zn+'.zip',data:zip(F)});
+  else{const one=ks.length==1,a=document.createElement('a');a.href=URL.createObjectURL(one?new Blob([F[ks[0]]]):zip(F));a.download=one?ks[0]:zn+'.zip';document.body.appendChild(a);a.click();a.remove()}
+}
+async function png(mt){
+  const im=mt&&mt.map&&mt.map.image;if(!im)return null;
+  const c=document.createElement('canvas');c.width=im.width;c.height=im.height;c.getContext('2d').drawImage(im,0,0);
+  const b=await new Promise(r=>c.toBlob(r,'image/png'));return new Uint8Array(await b.arrayBuffer())
+}
+async function geo(){
+  const L=[];
+  for(const me of meshes){
+    me.updateWorldMatrix(true,false);
+    const g=me.geometry,P=g.attributes.position,U=g.attributes.uv,N=g.attributes.normal,n=P.count,t=new THREE.Vector3(),nm=new THREE.Matrix3().getNormalMatrix(me.matrixWorld);
+    const p=new Float64Array(n*3),u=U?new Float64Array(n*2):null,q=N?new Float64Array(n*3):null;
+    for(let i=0;i<n;i++){
+      t.fromBufferAttribute(P,i).applyMatrix4(me.matrixWorld);p.set([t.x,t.y,t.z],i*3);
+      if(U)u.set([U.getX(i),1-U.getY(i)],i*2);
+      if(N){t.fromBufferAttribute(N,i).applyMatrix3(nm).normalize();q.set([t.x,t.y,t.z],i*3)}
+    }
+    const I=g.index,m=I?I.count:n,f=new Int32Array(m);for(let j=0;j<m;j++)f[j]=I?I.getX(j):j;
+    L.push({p,u,q,f,png:await png([].concat(me.material)[0])})
+  }
+  return L
+}
+function objF(L){
+  const o=['mtllib '+name+'.mtl'],mt=[],F={};let off=1;
+  L.forEach((m,k)=>{
+    const n=m.p.length/3;o.push('o m'+k,'usemtl m'+k);
+    for(let i=0;i<n;i++)o.push('v '+m.p[i*3]+' '+m.p[i*3+1]+' '+m.p[i*3+2]);
+    if(m.u)for(let i=0;i<n;i++)o.push('vt '+m.u[i*2]+' '+m.u[i*2+1]);
+    if(m.q)for(let i=0;i<n;i++)o.push('vn '+m.q[i*3]+' '+m.q[i*3+1]+' '+m.q[i*3+2]);
+    for(let j=0;j<m.f.length;j+=3)o.push('f '+[0,1,2].map(c=>{const a=m.f[j+c]+off;return m.u&&m.q?a+'/'+a+'/'+a:m.u?a+'/'+a:m.q?a+'//'+a:a}).join(' '));
+    off+=n;mt.push('newmtl m'+k,'Kd 1 1 1');
+    if(m.png){F[name+'_'+k+'.png']=m.png;mt.push('map_Kd '+name+'_'+k+'.png')}
+  });
+  F[name+'.obj']=te.encode(o.join('\n'));F[name+'.mtl']=te.encode(mt.join('\n'));return F
+}
+class W{
+  constructor(){this.b=new Uint8Array(1<<20);this.d=new DataView(this.b.buffer);this.n=0}
+  g(k){if(this.n+k>this.b.length){const nb=new Uint8Array(Math.max(this.b.length*2,this.n+k));nb.set(this.b);this.b=nb;this.d=new DataView(nb.buffer)}}
+  u8(v){this.g(1);this.b[this.n++]=v}
+  u32(v){this.g(4);this.d.setUint32(this.n,v,true);this.n+=4}
+  raw(a){this.g(a.length);this.b.set(a,this.n);this.n+=a.length}
+}
+function wn(w,x){
+  const s=w.n;w.u32(0);w.u32(x.p.length);w.u32(0);const nm=te.encode(x.n);w.u8(nm.length);w.raw(nm);const ps=w.n;
+  for(const[t,v]of x.p){
+    w.u8(t.charCodeAt(0));
+    if(t=='I'){w.g(4);w.d.setInt32(w.n,v,true);w.n+=4}
+    else if(t=='L'){w.g(8);w.d.setBigInt64(w.n,BigInt(v),true);w.n+=8}
+    else if(t=='S'){const e=te.encode(v);w.u32(e.length);w.raw(e)}
+    else{w.u32(v.length);w.u32(0);w.u32(v.byteLength);w.raw(new Uint8Array(v.buffer))}
+  }
+  w.d.setUint32(s+8,w.n-ps,true);
+  if(x.c){for(const c of x.c)wn(w,c);w.raw(new Uint8Array(13))}
+  w.d.setUint32(s,w.n,true)
+}
+function fbxF(L){
+  const w=new W,F={},ob=[],cn=[];let id=1000;
+  const I=v=>['I',v],S=v=>['S',v],G=v=>['L',v],nd=(n,p,c)=>({n,p:p||[],c});
+  w.raw(te.encode('Kaydara FBX Binary  \0'));w.u8(26);w.u8(0);w.u32(7400);
+  L.forEach((m,k)=>{
+    const g=id++,mo=id++,ma=id++,tx=id++,idx=new Int32Array(m.f.length);
+    for(let j=0;j<idx.length;j++)idx[j]=j%3==2?-m.f[j]-1:m.f[j];
+    const ge=[nd('Vertices',[['d',m.p]]),nd('PolygonVertexIndex',[['i',idx]])],ly=[nd('Version',[I(100)])];
+    const le=(nn,nm,an,arr)=>{ge.push(nd(nn,[I(0)],[nd('Version',[I(101)]),nd('Name',[S(nm)]),nd('MappingInformationType',[S('ByVertice')]),nd('ReferenceInformationType',[S('Direct')]),nd(an,[['d',arr]])]));ly.push(nd('LayerElement',[],[nd('Type',[S(nn)]),nd('TypedIndex',[I(0)])]))};
+    if(m.q)le('LayerElementNormal','','Normals',m.q);
+    if(m.u)le('LayerElementUV','UVMap','UV',m.u);
+    ge.push(nd('Layer',[I(0)],ly));
+    ob.push(nd('Geometry',[G(g),S('m'+k+'\x00\x01Geometry'),S('Mesh')],ge));
+    ob.push(nd('Model',[G(mo),S('m'+k+'\x00\x01Model'),S('Mesh')],[nd('Version',[I(232)])]));
+    ob.push(nd('Material',[G(ma),S('m'+k+'\x00\x01Material'),S('')],[nd('Version',[I(102)]),nd('ShadingModel',[S('phong')])]));
+    cn.push(nd('C',[S('OO'),G(mo),G(0)]),nd('C',[S('OO'),G(g),G(mo)]),nd('C',[S('OO'),G(ma),G(mo)]));
+    if(m.png){
+      const fn=name+'_'+k+'.png';F[fn]=m.png;
+      ob.push(nd('Texture',[G(tx),S('t'+k+'\x00\x01Texture'),S('')],[nd('Type',[S('TextureVideoClip')]),nd('Version',[I(202)]),nd('TextureName',[S('t'+k+'\x00\x01Texture')]),nd('FileName',[S(fn)]),nd('RelativeFilename',[S(fn)])]));
+      cn.push(nd('C',[S('OP'),G(tx),G(ma),S('DiffuseColor')]))
+    }
+  });
+  [nd('FBXHeaderExtension',[],[nd('FBXHeaderVersion',[I(1003)]),nd('FBXVersion',[I(7400)])]),nd('Objects',[],ob),nd('Connections',[],cn)].forEach(x=>wn(w,x));
+  w.raw(new Uint8Array(13));
+  F[name+'.fbx']=w.b.slice(0,w.n);return F
 }
 
 $('op').onclick=()=>$('fi').click();
-$('fi').onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0])};
-$('md').onchange=()=>{const s=$('md').value=='sub';$('l1').hidden=!s;$('l2').hidden=s};
+$('fi').onchange=e=>{if(e.target.files.length)loadFiles(e.target.files)};
+$('md').onchange=()=>{const m=$('md').value;$('l0').hidden=m!='dec';$('l1').hidden=m!='sub';$('l2').hidden=m!='ada'};
+$('dr').oninput=()=>$('drv').textContent=$('dr').value;
 $('lv').oninput=()=>$('lvv').textContent=$('lv').value;
 $('el').oninput=()=>$('elv').textContent=$('el').value;
 $('ap').onclick=()=>{$('st').textContent='Đang xử lý…';setTimeout(()=>show(true),30)};
@@ -142,16 +316,18 @@ $('rs').onclick=()=>show(false);
 $('wf').onchange=wire;
 ['dragover','dragenter'].forEach(t=>v.addEventListener(t,e=>{e.preventDefault();v.classList.add('drag')}));
 ['dragleave','drop'].forEach(t=>v.addEventListener(t,e=>{e.preventDefault();v.classList.remove('drag')}));
-v.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
+v.addEventListener('drop',e=>{if(e.dataTransfer.files.length)loadFiles(e.dataTransfer.files)});
 $('ex').onclick=async()=>{
-  if(!root)return;
-  const dn=await claude.use('downloads');
-  if(!dn){alert('Môi trường này không hỗ trợ lưu file.');return}
-  const ws=[];root.traverse(o=>{if(o.userData.isWire){o.visible=false;ws.push(o)}});
-  new THREE.GLTFExporter().parse(root,async r=>{
-    ws.forEach(o=>o.visible=true);
-    try{await dn.save({filename:name+'_remesh.zip',data:zip(name+'_remesh.glb',new Uint8Array(r))})}catch(e){if(e&&e.code!=='declined')alert('Không lưu được: '+(e.message||e.code))}
-  },{binary:true})
+  if(!root)return;const f=$('fm').value,ws=[];$('st').textContent='Đang xuất '+f+'…';
+  try{
+    if(f=='GLB'){
+      root.traverse(o=>{if(o.userData.isWire){o.visible=false;ws.push(o)}});
+      const r=await new Promise(ok=>new THREE.GLTFExporter().parse(root,ok,{binary:true}));
+      ws.forEach(o=>o.visible=true);
+      await save({[name+'_remesh.glb']:new Uint8Array(r)},name+'_remesh_glb')
+    }else{const L=await geo();await save(f=='OBJ'?objF(L):fbxF(L),name+'_remesh_'+f.toLowerCase())}
+    $('st').textContent='Đã xuất '+f+'.'
+  }catch(e){ws.forEach(o=>o.visible=true);if(!e||e.code!=='declined')alert('Không xuất được: '+((e&&(e.message||e.code))||e))}
 };
 </script>
 </body></html>
