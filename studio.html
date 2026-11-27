@@ -308,7 +308,7 @@ async function nextScene(){playing=false;si++;renderAll();await loadScene(true)}
 function seek(v){t=Math.min(Math.max(0,v),sc().duration);for(const k in AU)AU[k].pause();for(const k in spoken)delete spoken[k];window.speechSynthesis&&speechSynthesis.cancel();apply();renderOv();syncTp()}
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.06);syncPlayBtn();
  if(P&&playing&&!busy){t+=dt;const s=sc();if(t>=s.duration){t=s.duration;if(allMode&&si<P.scenes.length-1){nextScene();return}pause()}apply();renderOv();syncTp();audioSync()}
- K.stepPhysics(P&&playing&&!busy&&!EXP?dt:0);
+ {const sim=P&&playing&&!busy&&!EXP;if(!sim)K.snapPhysics();K.stepPhysics(sim?dt:0)}   /* đang dừng: tóc / váy / đồ vật lý bám đúng nhân vật khi kéo, xoay, tua */
  if(EXP)return;vgStep(dt);{const fe=P?camFreeTick():null,ca=!!(P&&!fe&&(camActive(sc(),FXT)||camPrev()));controls.enabled=!ca;if(ca!==CAMON){CAMON=ca;$('flab').textContent=flabTxt()}}controls.update();const co=fxCamOn();updSel3D();drawVG();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
 $('bPlay').onclick=()=>togglePlay();$('bAll').onclick=()=>{if(playing){pause();return}if(si){si=0;renderAll();loadScene().then(()=>play(true))}else play(true)};
 /* Phát / tạm dừng: một nút + phím Space (tiếp tục đúng chế độ Cảnh / Phim đang chạy) */
