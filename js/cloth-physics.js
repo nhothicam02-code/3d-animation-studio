@@ -529,6 +529,8 @@ export function physInfo(group) {
 }
 /** Thả lại vải (đặt về dáng gốc) cho mọi mảnh của bộ. */
 export function resetPhysics(group) { for (const p of group.pieces || []) if (p._rt && p._rt.phys) p._rt.phys.reset(); }
+/** Đặt mọi vật lý (tóc, váy, đuôi…) về đúng dáng gốc theo tư thế / vị trí hiện tại của nhân vật — gọi mỗi khung khi studio đang dừng, để khi kéo nhân vật thì tóc, váy đi theo ngay (không bị bỏ lại chỗ cũ). */
+export function snapPhysics() { for (const s of ACTIVE) s.reset(); }
 /** Mỗi khung hình: dt = giây trôi qua (0 khi tạm dừng — vẫn cập nhật hiển thị theo tư thế hiện tại). */
 export function stepPhysics(dt = 0) {
   dt = clamp(dt || 0, 0, 0.1);

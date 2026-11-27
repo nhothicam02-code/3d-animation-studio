@@ -4,7 +4,7 @@ import {CHAR_EXTS, extRegex} from './model-loader.js';
 import {PACK_RE, bindSkinnedItem} from './character-pack.js';
 import {splitPair} from './pair-split.js';
 import {syncPhysics, disposePhysics} from './cloth-physics.js';
-export {stepPhysics, physInfo, resetPhysics, PHYS_DEFAULT, PHYS_STRAND_DEFAULT, physDefaults, resolveMode} from './cloth-physics.js';
+export {stepPhysics, snapPhysics, physInfo, resetPhysics, PHYS_DEFAULT, PHYS_STRAND_DEFAULT, physDefaults, resolveMode} from './cloth-physics.js';
 export {splitPair};
 export {CHAR_EXTS, CHAR_EXTS as CHARACTER_EXTS, extOf, stripExt, loadModelUrl, parseModel, acceptOf, listText} from './model-loader.js';
 export const CHAR_RE = extRegex(CHAR_EXTS);
