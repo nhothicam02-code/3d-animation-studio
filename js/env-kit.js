@@ -49,7 +49,7 @@ export const ENV_PRESETS = [
   ['lake', '🏞 Mặt hồ sương sớm'], ['river', '🛶 Dòng sông'], ['stream', '💦 Con suối'], ['sea', '🏖 Biển gợn sóng']
 ];
 const BASE = {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sc: '#fff4e0', light: 1, hk: 1, lk: 1, hc: '#ffffff', hg: '#666070', lc: '#ffffff', speed: 1,
-  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, rc: '#bff5ff', canopy: 0, dunes: 0, sea: 0, rot: 0, exp: 1, ibl: false, pgh: 0, room: '', gnd: 0, gc2: '#c9a86a', hills: 0, bld: 0, gdens: 1, gsize: 1, fdens: .035, pw: 1.15, pcurve: 1, gfar: 90, gh: 1.3, bdens: 22, wdist: 24, water: 1, bergs: 0, aurora: 0, anchor: false,
+  sun: 0, az: 120, el: 24, sl: false, stars: 0, clouds: 0, rays: 0, rc: '#bff5ff', canopy: 0, dunes: 0, sea: 0, rot: 0, exp: 1, ibl: false, plock: true, pzoom: 1, pgh: 0, room: '', gnd: 0, gc2: '#c9a86a', hills: 0, bld: 0, gdens: 1, gsize: 1, fdens: .035, pw: 1.15, pcurve: 1, gfar: 90, gh: 1.3, bdens: 22, wdist: 24, water: 1, bergs: 0, aurora: 0, anchor: false,
   wk: 0, wfar: 70, wcx: 6, wamp: 1, wflow: 1, wclear: .6, mist: 0, beam: 0};
 const PRE = {
   sky: {c1: '#2f7fe0', c2: '#cfe6ff', c3: '#7d8f6a', sun: .7, clouds: .5, lc: '#fff4e0', lk: 1.05, hc: '#bcd8ff', hg: '#6a6a58'},
@@ -135,7 +135,7 @@ export const envParams = s => { const e = s && s.env, k = e && PRE[e.preset] ? e
 /** Danh sách trường chỉnh: [khoá, nhãn, kiểu('r' thanh trượt | 'c' màu | 'b' bật tắt), min, max, step].
  *  kind: 'env' (môi trường 3D) | 'pano' (ảnh 360°). Mờ ảo / biến dạng / sương mù KHÔNG còn ở đây — chúng là hiệu ứng. */
 export function envFields(P, kind) {
-  if (kind === 'pano') return [['rot', 'Xoay ảnh 360° (độ)', 'r', -180, 180, 1], ['exp', 'Độ sáng ảnh', 'r', 0, 3, .01], ['ibl', 'Dùng ảnh làm ánh sáng phản chiếu cho nhân vật', 'b'], ['pgh', 'Gắn sàn ảnh vào sàn nhân vật — độ cao máy chụp (m), 0 = tắt. Khoảng 1.5: nhân vật khớp tỉ lệ khi quay toàn cảnh', 'r', 0, 4, .05]];
+  if (kind === 'pano') return [['rot', 'Xoay ảnh 360° (độ)', 'r', -180, 180, 1], ['exp', 'Độ sáng ảnh', 'r', 0, 3, .01], ['ibl', 'Dùng ảnh làm ánh sáng phản chiếu cho nhân vật', 'b'], ['plock', 'Khoá nền 360° — kích thước nền không đổi khi camera tiến / lùi (tắt thì mới dùng “gắn sàn” bên dưới)', 'b'], ['pzoom', 'Thu phóng nền 360° (1 = gốc, >1 phóng to, <1 thu nhỏ) — chỉ đổi nền, không đổi nhân vật', 'r', .5, 3, .01], ['pgh', 'Gắn sàn ảnh vào sàn nhân vật — độ cao máy chụp (m), 0 = tắt. Khoảng 1.5: nhân vật khớp tỉ lệ khi quay toàn cảnh', 'r', 0, 4, .05]];
   const f = P.room ? [['c1', 'Màu trần', 'c'], ['c2', 'Màu tường', 'c'], ['c3', 'Màu sàn', 'c']] : [['c1', 'Màu đỉnh trời', 'c'], ['c2', 'Màu chân trời', 'c'], ['c3', 'Màu mặt đất', 'c']];
   f.push(['light', 'Cường độ ánh sáng', 'r', 0, 3, .01]);
   if (!P.room && P.gnd) {
@@ -571,7 +571,7 @@ export function createEnvEngine(scene, camera, renderer) {
   dome.renderOrder = -1001; dome.frustumCulled = false; dome.visible = false; dome.name = 'env_dome';
 
   /* --- ảnh 360° --- */
-  const PA = {tMap: {value: null}, uFogC: {value: new THREE.Color(1, 1, 1)}, uExp: {value: 1}, uFogK: {value: 0}};
+  const PA = {uZoom: {value: 1}, tMap: {value: null}, uFogC: {value: new THREE.Color(1, 1, 1)}, uExp: {value: 1}, uFogK: {value: 0}};
   const pg = new THREE.SphereGeometry(100, 64, 40); pg.scale(-1, 1, 1);
   /* Ảnh 360° "gắn sàn" (kiểu GroundedSkybox): nửa dưới ảnh được chiếu xuống mặt phẳng y=0 → sàn trong ảnh trùng sàn nhân vật, tỉ lệ + thị sai đúng khi camera đứng xa / dịch chuyển. */
   let panoH = 0;
@@ -583,7 +583,7 @@ export function createEnvEngine(scene, camera, renderer) {
     }
     pos.needsUpdate = true; g.scale(-1, 1, 1); return g;
   };
-  const panoM = new THREE.Mesh(pg, new THREE.ShaderMaterial({uniforms: PA, vertexShader: 'varying vec2 vUv; varying float vH; void main(){ vUv=uv; vH=normalize(position).y; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }', fragmentShader: PANO_FS, depthTest: false, depthWrite: false, fog: false}));
+  const panoM = new THREE.Mesh(pg, new THREE.ShaderMaterial({uniforms: PA, vertexShader: 'uniform float uZoom; varying vec2 vUv; varying float vH; void main(){ vUv=uv; vH=normalize(position).y; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); gl_Position.xy*=uZoom; }', fragmentShader: PANO_FS, depthTest: false, depthWrite: false, fog: false}));
   panoM.renderOrder = -1001; panoM.frustumCulled = false; panoM.visible = false; panoM.name = 'env_pano';
 
   /* --- nền phẳng --- */
@@ -652,9 +652,9 @@ export function createEnvEngine(scene, camera, renderer) {
 
       let env = null;
       if (pano) {
-        PA.tMap.value = panoTex; PA.uExp.value = P.exp; PA.uFogK.value = K; PA.uFogC.value.copy(fogC);
+        PA.tMap.value = panoTex; PA.uZoom.value = Math.min(4, Math.max(.2, +P.pzoom || 1)); PA.uExp.value = P.exp; PA.uFogK.value = K; PA.uFogC.value.copy(fogC);
         panoM.rotation.y = -Math.PI / 2 + P.rot * DEG;
-        const gh = Math.max(0, +P.pgh || 0);
+        const gh = P.plock === false ? Math.max(0, +P.pgh || 0) : 0;   // khoá nền (mặc định): luôn là bầu trời vô cực đặt tại camera → không to/bé theo khoảng cách
         if (gh !== panoH) { if (panoH > 0) panoM.geometry.dispose(); panoM.geometry = gh > 0 ? groundedPano(gh) : pg; panoH = gh; }
         if (P.ibl) {
           if (ibl.url !== ctx.url) { if (!ibl.pm) ibl.pm = new THREE.PMREMGenerator(renderer); if (ibl.rt) ibl.rt.dispose(); ibl.rt = ibl.pm.fromEquirectangular(panoTex); ibl.url = ctx.url; }
