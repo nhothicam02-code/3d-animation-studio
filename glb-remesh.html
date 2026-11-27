@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GLB Remesh</title>
+<style>
+:root{--bg:#f4f4f2;--pn:#fff;--tx:#1b1b1a;--mu:#6b6b66;--ac:#0f766e;--bd:#d9d9d4;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161615;--pn:#1f1f1e;--tx:#ececea;--mu:#9a9a94;--ac:#2dd4bf;--bd:#34342f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161615;--pn:#1f1f1e;--tx:#ececea;--mu:#9a9a94;--ac:#2dd4bf;--bd:#34342f;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--tx);font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
+#v{flex:1;min-height:0;position:relative;background:#222221}
+#v canvas{display:block}
+#hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#bbb;padding:24px;pointer-events:none}
+#v.drag{outline:2px dashed var(--ac);outline-offset:-6px}
+#p{background:var(--pn);border-top:1px solid var(--bd);padding:10px 12px;display:grid;gap:8px 12px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));align-items:end}
+label{display:grid;gap:3px;color:var(--mu);font-size:12px}
+select,button{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px}
+button.pri{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:600}
+:root:not([data-theme="light"]) button.pri{color:#04201c}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.row{display:flex;gap:8px;align-items:center}
+#st{grid-column:1/-1;color:var(--mu);font-size:12px}
+</style></head>
+<body>
+<div id="v"><div id="hint">Kéo thả file .glb vào đây<br>hoặc bấm “Mở GLB”</div></div>
+<div id="p">
+  <button id="op">Mở GLB</button><input id="fi" type="file" accept=".glb,.gltf" hidden>
+  <label>Thuật toán<select id="md"><option value="sub">Chia nhỏ (tăng mật độ)</option><option value="ada">Chia theo độ dài cạnh</option></select></label>
+  <label id="l1">Số lần chia: <b id="lvv">1</b><input id="lv" type="range" min="1" max="3" value="1"></label>
+  <label id="l2" hidden>Cạnh tối đa: <b id="elv">5</b>% kích thước<input id="el" type="range" min="1" max="30" value="5"></label>
+  <button id="ap" class="pri">Áp dụng</button>
+  <button id="rs">Về bản gốc</button>
+  <label class="row"><input id="wf" type="checkbox"> Hiện lưới</label>
+  <button id="ex">Xuất GLB (.zip)</button>
+  <div id="st">Chưa có mô hình.</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js"></script>
+<script>
+const $=id=>document.getElementById(id),v=$('v');
+const R=new THREE.WebGLRenderer({antialias:true});R.outputEncoding=THREE.sRGBEncoding;R.setPixelRatio(Math.min(devicePixelRatio,2));v.appendChild(R.domElement);
+const S=new THREE.Scene();S.background=new THREE.Color(0x222221);
+const C=new THREE.PerspectiveCamera(45,1,.01,1e4);
+S.add(new THREE.HemisphereLight(0xffffff,0x555555,1.1));
+const dl=new THREE.DirectionalLight(0xffffff,1.2);dl.position.set(3,5,4);S.add(dl);
+const OC=new THREE.OrbitControls(C,R.domElement);OC.enableDamping=true;
+function rz(){const w=v.clientWidth,h=v.clientHeight;if(!w||!h)return;R.setSize(w,h);C.aspect=w/h;C.updateProjectionMatrix()}
+new ResizeObserver(rz).observe(v);rz();
+(function a(){requestAnimationFrame(a);OC.update();R.render(S,C)})();
+
+let root=null,meshes=[],name='model';
+const tris=g=>Math.round((g.index?g.index.count:g.attributes.position.count)/3);
+
+function loadFile(f){
+  name=f.name.replace(/\.\w+$/,'');
+  f.arrayBuffer().then(b=>new THREE.GLTFLoader().parse(b,'',g=>{
+    if(root)S.remove(root);root=g.scene;S.add(root);meshes=[];
+    root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh){o.userData.g0=o.geometry;meshes.push(o);
+      [].concat(o.material).forEach(m=>{m.polygonOffset=true;m.polygonOffsetFactor=1;m.polygonOffsetUnits=1})}});
+    $('hint').hidden=true;fit();show(false)
+  },e=>alert('Không đọc được file: '+(e.message||e))))
+}
+function fit(){
+  const b=new THREE.Box3().setFromObject(root),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),d=s.length();
+  C.position.copy(c).add(new THREE.Vector3(d*.5,d*.35,d*.9));C.near=d/1000;C.far=d*100;C.updateProjectionMatrix();OC.target.copy(c);OC.update()
+}
+
+function remesh(g0,mode,lv,L){
+  const names=Object.keys(g0.attributes).filter(n=>!/skin/i.test(n));
+  const D=names.map(n=>{const at=g0.attributes[n];return{n,s:at.itemSize,a:Array.from(at.array),N:at.normalized,T:at.array.constructor}});
+  const pd=D.find(d=>d.n==='position');let n=pd.a.length/3;
+  let ix=g0.index?Array.from(g0.index.array):[...Array(n).keys()];
+  const dist=(i,j)=>Math.hypot(pd.a[i*3]-pd.a[j*3],pd.a[i*3+1]-pd.a[j*3+1],pd.a[i*3+2]-pd.a[j*3+2]);
+  const pass=f=>{
+    const M=new Map,o=[];let ch=0;
+    const mid=(a,b)=>{const k=a<b?a*4294967296+b:b*4294967296+a;let m=M.get(k);
+      if(m===undefined){for(const d of D)for(let i=0;i<d.s;i++)d.a.push((d.a[a*d.s+i]+d.a[b*d.s+i])/2);m=n++;M.set(k,m)}return m};
+    for(let t=0;t<ix.length;t+=3){
+      const v=[ix[t],ix[t+1],ix[t+2]],p=[];let c=0;
+      for(let i=0;i<3;i++){const a=v[i],b=v[(i+1)%3];p.push(a);if(f(a,b)){p.push(mid(a,b));c++}}
+      if(!c){o.push(v[0],v[1],v[2]);continue}
+      ch+=c;
+      if(c==3){const[a,x,b,y,cc,z]=p;o.push(a,x,z,x,b,y,z,y,cc,x,y,z);continue}
+      let best=1e99,bs=0;
+      for(let s=0;s<p.length;s++){let cost=0;for(let j=2;j<p.length-1;j++)cost+=dist(p[s],p[(s+j)%p.length]);if(cost<best){best=cost;bs=s}}
+      for(let j=1;j<p.length-1;j++)o.push(p[bs],p[(bs+j)%p.length],p[(bs+j+1)%p.length])
+    }
+    ix=o;return ch
+  };
+  if(mode=='sub'){for(let i=0;i<lv&&ix.length<3e6;i++)pass(()=>true)}
+  else for(let i=0;i<8&&ix.length<3e6;i++)if(!pass((a,b)=>dist(a,b)>L))break;
+  const g=new THREE.BufferGeometry();
+  for(const d of D)g.setAttribute(d.n,new THREE.BufferAttribute(new d.T(d.a),d.s,d.N));
+  const nm=g.attributes.normal;
+  if(nm){const t=new THREE.Vector3();for(let i=0;i<nm.count;i++){t.fromBufferAttribute(nm,i).normalize();nm.setXYZ(i,t.x,t.y,t.z)}}
+  g.setIndex(new THREE.BufferAttribute(n>65535?new Uint32Array(ix):new Uint16Array(ix),1));
+  g.computeBoundingSphere();return g
+}
+
+function show(doRemesh){
+  if(!root)return;let a=0,b=0;
+  const mode=$('md').value,lv=+$('lv').value,pct=+$('el').value/100;
+  meshes.forEach(m=>{
+    const g0=m.userData.g0;g0.computeBoundingBox();
+    const L=g0.boundingBox.getSize(new THREE.Vector3()).length()*pct;
+    const g=doRemesh?remesh(g0,mode,lv,L):g0;
+    if(m.geometry!==g0&&m.geometry!==g)m.geometry.dispose();
+    m.geometry=g;a+=tris(g0);b+=tris(g)
+  });
+  wire();$('st').textContent='Tam giác: '+a.toLocaleString()+' → '+b.toLocaleString()+' · texture/UV được nội suy và giữ nguyên'
+}
+function wire(){
+  meshes.forEach(m=>{
+    if(m.userData.w){m.remove(m.userData.w);m.userData.w.material.dispose();m.userData.w=null}
+    if($('wf').checked){const w=new THREE.Mesh(m.geometry,new THREE.MeshBasicMaterial({color:0x2dd4bf,wireframe:true,transparent:true,opacity:.5}));
+      w.userData.isWire=true;m.add(w);m.userData.w=w}
+  })
+}
+
+function zip(nm,u8){
+  const enc=new TextEncoder().encode(nm),t=[];
+  for(let n=0,c;n<256;n++){c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}
+  let crc=-1;for(const x of u8)crc=t[(crc^x)&255]^(crc>>>8);crc=(crc^-1)>>>0;
+  const L=30+enc.length,sz=u8.length,cd=46+enc.length,out=new Uint8Array(L+sz+cd+22),dv=new DataView(out.buffer);
+  dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint32(14,crc,true);dv.setUint32(18,sz,true);dv.setUint32(22,sz,true);dv.setUint16(26,enc.length,true);out.set(enc,30);out.set(u8,L);
+  let o=L+sz;
+  dv.setUint32(o,0x02014b50,true);dv.setUint16(o+4,20,true);dv.setUint16(o+6,20,true);dv.setUint32(o+16,crc,true);dv.setUint32(o+20,sz,true);dv.setUint32(o+24,sz,true);dv.setUint16(o+28,enc.length,true);out.set(enc,o+46);
+  o+=cd;dv.setUint32(o,0x06054b50,true);dv.setUint16(o+8,1,true);dv.setUint16(o+10,1,true);dv.setUint32(o+12,cd,true);dv.setUint32(o+16,L+sz,true);
+  return out
+}
+
+$('op').onclick=()=>$('fi').click();
+$('fi').onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0])};
+$('md').onchange=()=>{const s=$('md').value=='sub';$('l1').hidden=!s;$('l2').hidden=s};
+$('lv').oninput=()=>$('lvv').textContent=$('lv').value;
+$('el').oninput=()=>$('elv').textContent=$('el').value;
+$('ap').onclick=()=>{$('st').textContent='Đang xử lý…';setTimeout(()=>show(true),30)};
+$('rs').onclick=()=>show(false);
+$('wf').onchange=wire;
+['dragover','dragenter'].forEach(t=>v.addEventListener(t,e=>{e.preventDefault();v.classList.add('drag')}));
+['dragleave','drop'].forEach(t=>v.addEventListener(t,e=>{e.preventDefault();v.classList.remove('drag')}));
+v.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
+$('ex').onclick=async()=>{
+  if(!root)return;
+  const dn=await claude.use('downloads');
+  if(!dn){alert('Môi trường này không hỗ trợ lưu file.');return}
+  const ws=[];root.traverse(o=>{if(o.userData.isWire){o.visible=false;ws.push(o)}});
+  new THREE.GLTFExporter().parse(root,async r=>{
+    ws.forEach(o=>o.visible=true);
+    try{await dn.save({filename:name+'_remesh.zip',data:zip(name+'_remesh.glb',new Uint8Array(r))})}catch(e){if(e&&e.code!=='declined')alert('Không lưu được: '+(e.message||e.code))}
+  },{binary:true})
+};
+</script>
+</body></html>
