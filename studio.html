@@ -938,7 +938,7 @@ function renderPanel(){const s=sc();let h='';if(tab==='props'&&stype()==='cam'){
  if(tab==='env')h=envPanel(s);
  if(tab==='clip'){const ch=chOf();if(!ch)h='<div class="hint">Chọn một nhân vật (bấm tên ở timeline hoặc click vào nhân vật trong khung) để thêm clip.</div>';else{const k=cq.toLowerCase();h='<b>Clip cho '+esc(ch.name)+'</b><div class="hint">Bấm clip để thêm vào timeline tại đường đỏ.</div><input id="cq" type="text" placeholder="Tìm clip…" value="'+esc(cq)+'" style="margin-top:6px"><div class="grid">'+manifest.animations.filter(a=>!k||a.name.toLowerCase().includes(k)).map(a=>'<button class="cd" data-clip="'+esc(a.id)+'"><img alt="" src="'+esc(a.thumbnail||'')+'" onerror="this.style.visibility=\'hidden\'"><b>'+esc(a.name)+' · '+(+a.duration).toFixed(1)+'s</b></button>').join('')+'</div>'}}
  if(tab==='props'){const it=cur(),ty=stype();h=it?(ty==='light'?lightFields(it):ty==='fx'?FX.fxFields(it):SCH[ty].filter(f=>!f.vis||f.vis(it))).map(f=>field(f[0],f[1],f[2],it[f[0]],f)).join('')+(ty==='fx'&&FX.FX[it.fx]&&FX.FX[it.fx].note?'<div class="hint">'+esc(FX.FX[it.fx].note)+'</div>':'')+(ty==='txt'||ty==='dlg'?'<div class="r" style="margin-top:12px"><button class="pri" data-act="t2a">🔊 Chuyển thành audio</button><button data-act="test">▶ Nghe thử</button></div>':'')+(ty==='tts'?'<div class="hint">'+(srcOf(it)?'✓ Đã có file giọng (wav/mp3)'+(it.baked&&(it.baked.eng==='edge'?(it.baked.rate!==(+it.rate||1)||it.baked.pitch!==(+it.pitch||1)):it.baked.pitch!==(+it.pitch||1))?(it.baked.eng==='edge'?' — đã đổi tốc độ/cao độ: bấm ⚡ Tạo lại giọng':' — Piper không chỉnh được cao độ'):''):'Chưa có file giọng')+'</div><div class="r" style="margin-top:8px"><button class="pri" data-act="vgen">⚡ Tự tạo giọng (Edge → Piper)</button><button data-act="vup">⬆ Tải wav/mp3</button><button data-act="test">▶ Nghe thử</button></div><button data-act="msync" style="width:100%;margin-top:8px" title="Chép mọi thuộc tính của giọng này (trừ nội dung nói, thời điểm, độ dài và file âm thanh) sang các giọng khác của cùng nhân vật">🔗 Sao chép thuộc tính cho các giọng khác</button>':'')+'<button class="del" style="margin-top:12px;width:100%" data-act="del">Xóa mục này (Delete)</button>':'<div class="hint">Bấm một đối tượng trong khung video hoặc một khối trên timeline. Kéo đối tượng để dời, kéo chấm tím để xoay (giữ Shift để xoay theo bước 15°), kéo ô vuông góc dưới phải để phóng to/thu nhỏ. Giá trị chỉnh ở đây cập nhật ngay.</div>'}
- if(tab==='scene'){h='<label>Tên cảnh</label><input type="text" data-sc="name" value="'+esc(s.name)+'"><div class="r"><div><label>Thời lượng (s)</label><input type="number" min="1" data-sc="duration" value="'+s.duration+'"></div></div>'+bgUI(s)+'<label>Camera của cảnh này</label><div class="r"><button id="camS" class="pri">Lưu góc nhìn</button><button id="camA">Tự động</button></div><div class="hint">'+(s.cam?'Đã lưu góc camera riêng.':'Đang dùng camera tự động.')+' Kéo vào vùng trống trong khung để xoay camera, cuộn để zoom, rồi bấm “Lưu góc nhìn”.</div><label>Quản lý cảnh</label><div class="r"><button data-m="up">‹ Lên</button><button data-m="down">Xuống ›</button><button data-m="dup">Nhân bản</button><button class="del" data-m="del">Xóa</button></div>'}
+ if(tab==='scene'){h='<label>Tên cảnh</label><input type="text" data-sc="name" value="'+esc(s.name)+'"><div class="r"><div><label>Thời lượng (s)</label><input type="number" min="1" data-sc="duration" value="'+s.duration+'"></div></div><button data-act="splitsc" style="width:100%;margin-top:8px" title="Chia cảnh này làm hai tại đường đỏ: phần trước giữ ở cảnh hiện tại, phần sau thành cảnh mới ngay kế bên">✂ Cắt cảnh tại vị trí hiện tại</button>'+bgUI(s)+'<label>Camera của cảnh này</label><div class="r"><button id="camS" class="pri">Lưu góc nhìn</button><button id="camA">Tự động</button></div><div class="hint">'+(s.cam?'Đã lưu góc camera riêng.':'Đang dùng camera tự động.')+' Kéo vào vùng trống trong khung để xoay camera, cuộn để zoom, rồi bấm “Lưu góc nhìn”.</div><label>Quản lý cảnh</label><div class="r"><button data-m="up">‹ Lên</button><button data-m="down">Xuống ›</button><button data-m="dup">Nhân bản</button><button class="del" data-m="del">Xóa</button></div>'}
  if(tab==='film'){const f=P.fmt;h='<label>Tên dự án</label><input type="text" data-pj="name" value="'+esc(P.name)+'"><label>Tỉ lệ khung hình</label><select data-f="aspect">'+opts(Object.keys(ASP),f.aspect)+'</select><label>Độ phân giải (cạnh ngắn, px)</label><select data-f="res">'+opts([480,720,1080,1440,2160].map(String),String(f.res))+'</select><label>FPS</label><select data-f="fps">'+opts([12,24,25,30,60].map(String),String(f.fps))+'</select><div class="hint">Khung tím là giới hạn hình ảnh khi xuất: '+f.w+'×'+f.h+'.</div><label>Bề mặt mô hình</label><label style="display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" data-pj="smooth"'+(P.smooth?' checked':'')+'> Làm mượt (Smooth shading)</label><div class="r"><div><label>Góc làm mượt (độ)</label><input type="number" min="1" max="180" step="1" data-pj="smoothA" value="'+(P.smoothA||80)+'"></div></div><div class="hint">Bật để xoá các mặt phẳng / cạnh gãy của mô hình low-poly. Tăng góc = mượt hơn (cạnh cứng cũng bị làm tròn); giảm góc = giữ lại các cạnh gập rõ.</div><div class="r" style="margin-top:12px"><button id="snap" class="pri">📷 Chụp khung 3D (PNG)</button><button id="exp">Xuất JSON</button></div><div class="hint">File nguồn lưu trong trình duyệt này (IndexedDB), không nằm trong file JSON và không đồng bộ lên GitHub.</div>'}
  $('panel').innerHTML=h}
 $('panel').addEventListener('dragstart',e=>{const c=e.target.closest('[data-mid]');if(c)e.dataTransfer.setData('text/mid',c.dataset.mid);const pc=e.target.closest('[data-addp]');if(pc)e.dataTransfer.setData('text/prop',pc.dataset.addp)});
@@ -971,6 +971,7 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
  if(d.act==='msync')openMouthSync();if(d.act==='test')speak(cur());if(d.act==='vgen')genVoice(cur());if(d.act==='vup')$('fVoice').click();
  if(d.act==='est'){const it=cur();it.dur=estDur(it.text,it.rate);touch();renderTL();sync()}
  if(d.act==='t2a'){const it=cur();addItem('tts',{text:it.text,ch:((sc().chars.find(c=>c.name&&c.name===it.who)||{}).id)||'',lang:langOf(it),voice:it.voice||'',rate:it.rate??1,pitch:it.pitch??1,vol:it.vol??1,start:it.start,dur:estDur(it.text,1)});say('Đã tạo track giọng đọc — đang tạo file giọng…');{const n=cur();if(n&&n.type==='tts')genVoice(n)}setTimeout(()=>say(''),2500)}
+ if(d.act==='splitsc')return splitScene();
  if(el.id==='camS'){s.cam={p:camera.position.toArray(),t:controls.target.toArray()};touch();renderPanel()}
  if(el.id==='camA'){s.cam=null;autoCam();touch();renderPanel()}
  if(d.m){const m=d.m;if(m==='del'){if(P.scenes.length<2)return alert('Cần ít nhất 1 cảnh.');if(!confirm('Xóa cảnh này?'))return;P.scenes.splice(si,1);si=Math.max(0,si-1)}
@@ -1073,6 +1074,33 @@ $('msGo').onclick=()=>{const src=cur();if(!src||src.id!==MSI){$('dMs').close();r
  for(const o of msList(src))if(ids.has(o.it.id)){for(const k of Object.keys(o.it))if(!MSX.has(k)&&!(k in src))delete o.it[k];for(const k of Object.keys(src))if(!MSX.has(k))o.it[k]=JSON.parse(JSON.stringify(src[k]));n++}
  $('dMs').close();if(!n)return;touch();renderTL();apply();cbToast('✓ Đã sao chép thuộc tính cho '+n+' giọng đọc (Ctrl+Z để hoàn tác).')};
 
+
+/* ---------- Cắt cảnh tại vị trí hiện tại: [0, t] giữ ở cảnh này, [t, hết] thành cảnh mới ngay sau ---------- */
+function splitScene(){
+ if(!P)return;const s=sc(),tt=snap(t),D=s.duration,E=1e-6;
+ if(!(tt>=.2&&tt<=D-.2))return cbToast('Đưa đường đỏ vào giữa cảnh (cách hai đầu ít nhất 0,2s) rồi bấm cắt.');
+ pause();
+ const q=JSON.parse(JSON.stringify(s)),cm={};q.id=uid();q.name=s.name+' (phần 2)';
+ q.chars.forEach(c=>{const n=uid();cm[c.id]=n;c.id=n;(c.clips||[]).forEach(x=>x.id=uid())});
+ (q.props||[]).forEach(c=>{const n=uid();cm[c.id]=n;c.id=n});(q.lights||[]).forEach(c=>c.id=uid());
+ q.tracks.forEach(tr=>{tr.id=uid();tr.items.forEach(x=>{x.id=uid();if(x.ch&&cm[x.ch])x.ch=cm[x.ch];if(x.target&&cm[x.target])x.target=cm[x.target]})});
+ /* Keyframe: phần sau bắt đầu bằng đúng trạng thái tại t (một key ở 0), key sau t dời về trước; phần đầu bỏ key sau t */
+ for(const ob of kfObjs(q)){const it=ob.it;if(!it.kf)continue;for(const g of KGO){const a=it.kf[g];if(!a||!a.length)continue;
+  const v=kfEval(a,tt).map(x=>Math.round(x*1e4)/1e4);KGF[ob.k][g].forEach((f,j)=>it[f]=v[j]);
+  let pk=null;for(const k of a)if(k.t<=tt+E)pk=k;
+  it.kf[g]=[{id:uid(),t:0,v,e:(pk&&pk.e)||'ease'},...a.filter(k=>k.t>tt+E).map(k=>({...k,t:r5(k.t-tt)}))]}}
+ for(const ob of kfObjs(s)){const it=ob.it;if(!it.kf)continue;for(const g of KGO){const a=(it.kf[g]||[]).filter(k=>k.t<=tt+E);if(a.length)it.kf[g]=a;else delete it.kf[g]}if(!Object.keys(it.kf).length)delete it.kf}
+ /* Khối thời gian: cắt / bỏ / dời. Khối nằm vắt qua điểm cắt được chia đôi (âm thanh, video giữ đúng đoạn đang phát nhờ off) */
+ const cut=(list,second)=>{const out=[];for(const x of list){const a=x.start||0,e=a+(x.dur||0);
+  if(second){if(e<=tt+E)continue;if(a>=tt-E)x.start=r5(a-tt);else{const sh=tt-a;if(x.type==='aud'||x.type==='tts')x.off=r5((+x.off||0)+sh*eff(x));else if(x.type==='vid')x.off=r5((+x.off||0)+sh);x.start=0;x.dur=r5(e-tt)}}
+  else{if(a>=tt-E)continue;if(e>tt+E)x.dur=r5(tt-a)}
+  out.push(x)}return out};
+ for(const [sn,sec] of [[s,false],[q,true]]){
+  for(const c of [...sn.chars,...(sn.props||[])])if(c.clips)c.clips=cut(c.clips,sec);
+  sn.tracks=sn.tracks.filter(tr=>{const n=tr.items.length;tr.items=cut(tr.items,sec);return tr.items.length||!n})}
+ s.duration=r5(tt);q.duration=r5(D-tt);
+ P.scenes.splice(si+1,0,q);sel=null;touch();renderAll();seek(Math.min(t,s.duration));
+ cbToast('✓ Đã cắt thành 2 cảnh: '+r2(s.duration)+'s + '+r2(q.duration)+'s (Ctrl+Z để hoàn tác).')}
 
 /* ---------- Tạo giọng hàng loạt + căn lại timeline theo thoại ---------- */
 const AGAP=.25;let AUTO=false;
