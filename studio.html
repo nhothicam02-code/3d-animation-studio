@@ -10,7 +10,11 @@ button,select,input,textarea{padding:7px 9px;border-radius:8px;border:1px solid 
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}input[type=color]{padding:2px;height:32px;width:56px}input[type=checkbox]{width:auto}input[type=range]{padding:0;width:100%}textarea{width:100%;min-height:54px}input[type=number],select,input[type=text]{width:100%}
 label{display:block;color:var(--muted);font-size:11px;margin:10px 0 4px}.r{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.r>*{flex:1}.r>button{flex:none}
 #vList{max-width:960px;margin:0 auto;padding:22px 16px}.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}h1{font-size:21px;margin:0}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}.card:hover{border-color:var(--ac)}.card h3{margin:0 0 6px}.meta{color:var(--muted);font-size:11px;margin-bottom:10px}.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:44px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer}.card:hover{border-color:var(--ac)}.card h3{margin:0 0 6px}
+#ldr{position:fixed;left:0;right:0;top:0;z-index:80;pointer-events:none}#ldr[hidden]{display:none}
+#ldr .bar{height:4px;background:rgba(255,255,255,.1)}#ldr .bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .25s ease}
+#ldr .tx{margin:10px auto 0;width:max-content;max-width:90vw;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 14px;font-size:12px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.gt{font-size:10px;font-weight:600;border:1px solid;border-radius:9px;padding:0 7px;margin-left:8px;vertical-align:middle;white-space:nowrap}.meta{color:var(--muted);font-size:11px;margin-bottom:10px}.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:44px 0}
 #ed{height:calc(100vh - 56px);min-height:600px;display:grid;grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:minmax(0,1fr) 290px}
 #stage{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0b0c10}
 #frame{position:relative;outline:2px solid var(--ac);box-shadow:0 0 0 100vmax #000b;overflow:hidden}#vp{position:absolute;inset:0}canvas{display:block;width:100%;height:100%}#ovl{position:absolute;inset:0;pointer-events:none}
@@ -39,7 +43,7 @@ dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);bo
 #vg{position:absolute;right:8px;top:48px;z-index:5;width:110px}#vgc{width:110px;height:110px;display:block;cursor:pointer}#vgb{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:2px}#vgb button{padding:3px 0;font-size:11px}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script></head><body>
-<header><div class="brand"><span>3DiS</span> / FILM STUDIO</div><nav><a href="./index.html">Thư viện</a><a href="./library.html">Kho tài nguyên</a><button id="bRefresh" title="Tải lại danh sách nhân vật, nhân vật Custom, clip và nguồn media từ GitHub mà không cần mở lại trang">↻ Làm mới thư viện</button><button id="bGh" class="pri" title="Lưu dự án (JSON) vào thư mục projects/ trên GitHub — dùng token trong Cài đặt của trang Thư viện">☁ Lưu lên GitHub</button></nav></header>
+<header><div class="brand"><span>3DiS</span> / FILM STUDIO</div><nav><a href="./index.html">Thư viện</a><a href="./library.html">Kho tài nguyên</a><button id="bRefresh" title="Tải lại danh sách nhân vật, nhân vật Custom, clip và nguồn media từ GitHub mà không cần mở lại trang">↻ Làm mới thư viện</button><button id="bGh" class="pri" title="Lưu dự án (JSON) vào thư mục projects/ trên GitHub — dùng token trong Cài đặt của trang Thư viện">☁ Lưu lên GitHub</button><button id="bRest" title="Bỏ chỉnh sửa chưa lưu, quay về bản đang lưu trên GitHub">↩ Bản git</button></nav></header>
 <section id="vList"><div class="bar"><h1>Dự án phim 3D</h1><div class="r"><button id="bLoad" title="Tải lại danh sách dự án từ GitHub">↻ Tải từ GitHub</button><button id="bNew">+ Dự án mới</button><button id="bImp">Nhập JSON</button><input type="file" id="fImp" accept=".json" hidden></div></div><div class="meta" id="syncSt" style="margin:-6px 0 12px;white-space:pre-wrap"></div><div class="cards" id="list"></div></section>
 <section id="vEd" hidden><div id="ed">
 <div id="stage"><div id="gt"><button data-g="move" title="Di chuyển (G)">✥</button><button data-g="rot" title="Xoay (R)">⟳</button><button data-g="scl" title="Scale (S)">⤢</button></div><div id="vg"><canvas id="vgc" width="220" height="220" title="Bấm vào trục để nhìn từ hướng đó"></canvas><div id="vgb"><button data-vv="+z" title="Nhìn từ phía trước (Numpad 1)">Front</button><button data-vv="+x" title="Nhìn từ bên phải (Numpad 3)">Side</button><button data-vv="+y" title="Nhìn từ trên xuống (Numpad 7)">Top</button><button data-vv="reset" title="Về góc camera của cảnh (đã lưu hoặc tự động)">↺ Reset</button></div></div><div id="frame"><div id="bgl"></div><div id="vp"></div><div id="ovl"></div><div id="cbox" hidden><i class="rh"></i></div><div id="flab"></div></div><div id="say"></div></div>
@@ -48,6 +52,7 @@ dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);bo
 </div></section>
 <input type="file" id="fVoice" accept=".wav,.mp3,audio/wav,audio/mpeg" hidden>
 <dialog id="dExp"><h3>Xuất video</h3><div class="hint">Dựng từng khung hình ngoài thời gian thực → không lag, khựng hay rớt/nhảy frame (có thể lâu hơn thời lượng phim). Lưới, gizmo và khung chọn tự tắt khi xuất.</div><label>Định dạng</label><select id="xf"><option value="mp4">MP4 (H.264 + AAC)</option><option value="webm">WebM (VP9 + Opus)</option></select><progress id="xp" max="1" value="0" style="width:100%;margin-top:12px"></progress><div class="hint" id="xs"></div><div class="r" style="margin-top:10px"><button id="xGo" class="pri">Bắt đầu xuất</button><button id="xX">Đóng / Huỷ</button></div></dialog>
+<div id="ldr" hidden><div class="bar"><i id="ldrb"></i></div><div class="tx" id="ldrt"></div></div>
 <dialog id="dMs"><h3>Sao chép thuộc tính giọng</h3><div class="hint" id="msH"></div><label class="chk" style="margin-top:10px"><input type="checkbox" id="msAll" checked> Chọn tất cả</label><div id="msL" style="max-height:260px;overflow:auto;margin-top:6px;display:grid;gap:6px"></div><div class="r" style="margin-top:12px"><button id="msGo" class="pri">Áp dụng</button><button id="msX">Đóng</button></div></dialog>
 <script type="module">
 import * as THREE from 'three';
@@ -134,14 +139,20 @@ function libHtml(ctx,types,selId){
  return '<div class="r"><input type="text" data-lq="'+ctx+'" placeholder="Tìm trong thư viện…" value="'+esc(st.q)+'" autocomplete="off">'+cats+'</div><div class="'+(SCTX(ctx)?gridCls():'grid')+'">'+l.slice(st.p*PG,(st.p+1)*PG).map(m=>SCTX(ctx)?srcCard(m):lcard(m,ctx==='bg'&&m.id===selId,false)).join('')+'</div>'+(l.length?'':'<div class="hint">Chưa có item nào khớp. Thêm file ở trang Kho tài nguyên.</div>')+'<div class="r"><button data-lpg="'+ctx+':-1"'+(st.p<=0?' disabled':'')+'>‹</button><span style="flex:1;text-align:center">'+(st.p+1)+' / '+n+' · '+l.length+' item</span><button data-lpg="'+ctx+':1"'+(st.p>=n-1?' disabled':'')+'>›</button></div>'}
 
 /* ---------- Danh sách ---------- */
-function renderList(){const l=projects.slice().sort((a,b)=>b.updated-a.updated);$('list').innerHTML=l.length?l.map(p=>'<div class="card" data-id="'+p.id+'"><h3>'+esc(p.name)+'</h3><div class="meta">'+p.scenes.length+' cảnh · '+(p.fmt?p.fmt.aspect+' · '+p.fmt.fps+'fps · ':'')+new Date(p.updated).toLocaleDateString('vi-VN')+'</div><div class="r"><button class="pri" data-a="open">Mở</button><button data-a="dup">Nhân bản</button><button data-a="exp">Xuất</button><button class="del" data-a="del">Xóa</button></div></div>').join(''):'<div class="empty">Chưa có dự án. Bấm “+ Dự án mới”.</div>'}
-$('list').onclick=e=>{const c=e.target.closest('.card');if(!c)return;const p=projects.find(x=>x.id===c.dataset.id),a=e.target.dataset.a;if(!a||a==='open')return void(location.hash='#p='+p.id);if(a==='exp')return dl(p.name+'.film.json',p);if(a==='dup'){const q=JSON.parse(JSON.stringify(p));q.id=uid();q.name+=' (bản sao)';q.updated=Date.now();projects.push(q)}if(a==='del'&&confirm('Xóa “'+p.name+'”? (bản trên GitHub cũng bị xóa)')){projects=projects.filter(x=>x!==p);delFromGit(p.id)}persist();renderList()};
+function renderList(){const l=projects.slice().sort((a,b)=>b.updated-a.updated);$('list').innerHTML=l.length?l.map(p=>'<div class="card" data-id="'+p.id+'"><h3>'+esc(p.name)+gitTag(p)+'</h3><div class="meta">'+p.scenes.length+' cảnh · '+(p.fmt?p.fmt.aspect+' · '+p.fmt.fps+'fps · ':'')+new Date(p.updated).toLocaleDateString('vi-VN')+'</div><div class="r"><button class="pri" data-a="open">Mở</button><button data-a="dup">Nhân bản</button><button data-a="exp">Xuất</button>'+(gitSt(p)==='draft'?'':'<button data-a="rest" title="Bỏ chỉnh sửa chưa lưu, quay về bản trên GitHub">↩ Bản git</button>')+'<button class="del" data-a="del">Xóa</button></div></div>').join(''):'<div class="empty">Chưa có dự án. Bấm “+ Dự án mới”.</div>'}
+$('list').onclick=e=>{const c=e.target.closest('.card');if(!c)return;const p=projects.find(x=>x.id===c.dataset.id),a=e.target.dataset.a;if(!a||a==='open')return void(location.hash='#p='+p.id);if(a==='exp')return dl(p.name+'.film.json',p);if(a==='rest')return restoreFromGit(p.id);if(a==='dup'){const q=JSON.parse(JSON.stringify(p));q.id=uid();q.name+=' (bản sao)';q.updated=Date.now();projects.push(q)}if(a==='del'&&confirm('Xóa “'+p.name+'”? (bản trên GitHub cũng bị xóa)')){projects=projects.filter(x=>x!==p);delFromGit(p.id)}persist();renderList()};
 $('bNew').onclick=async()=>{const n=prompt('Tên phim mới:');if(!n)return;await resetRes();const p=ensure({id:uid(),name:n.trim(),created:Date.now(),updated:Date.now(),scenes:[mkScene(1)]});projects.push(p);persist();location.hash='#p='+p.id};
 $('bImp').onclick=()=>$('fImp').click();$('fImp').onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!Array.isArray(p.scenes))throw Error('Sai định dạng');p.id=uid();p.updated=Date.now();projects.push(ensure(p));persist();renderList()}catch(x){alert(x.message)}e.target.value=''};
 /* ---------- Lưu dự án lên GitHub: mỗi dự án = projects/<id>.json ---------- */
 const PDIR='projects',SHAK='3dis.proj.sha';
 let SHA={};try{SHA=JSON.parse(localStorage.getItem(SHAK))||{}}catch{}
 const shaSave=()=>{try{localStorage.setItem(SHAK,JSON.stringify(SHA))}catch{}};
+/* UPD[id] = thời điểm “updated” của bản đã đồng bộ với GitHub lần cuối → so với updated hiện tại để biết có sửa chưa lưu */
+const UPK='3dis.proj.upd';let UPD={};try{UPD=JSON.parse(localStorage.getItem(UPK))||{}}catch{}
+const updSave=()=>{try{localStorage.setItem(UPK,JSON.stringify(UPD))}catch{}};
+const gitSt=p=>!SHA[p.id]?'draft':UPD[p.id]==null?'git':(p.updated||0)>UPD[p.id]?'mod':'ok',
+ GT={draft:['Nháp','#f59e0b','Chưa lưu lên GitHub — chỉ nằm trong trình duyệt này'],mod:['Đã sửa','#eab308','Có thay đổi chưa lưu lên GitHub'],ok:['Đã lưu git','#22c55e','Giống bản trên GitHub'],git:['Trên git','#22c55e','Có trên GitHub (chưa rõ đã sửa sau lần lưu cuối chưa)']},
+ gitTag=p=>{const g=GT[gitSt(p)];return '<span class="gt" style="color:'+g[1]+'" title="'+g[2]+'">'+g[0]+'</span>'};
 const gcfg=()=>({token:localStorage.getItem('3dis.github.token')||'',repo:localStorage.getItem('3dis.github.repo')||'nhothicam02-code/3d-animation-studio'});
 const b64=t=>{const b=new TextEncoder().encode(t);let o='';for(let i=0;i<b.length;i+=8192)o+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(o)};
 const gmsg=(m,bad)=>{const e=$('syncSt');if(e){e.textContent=m;e.style.color=bad?'var(--red)':''}if(P)say(m)};
@@ -154,10 +165,10 @@ async function saveToGit(list){
  const b=$('bGh');b.disabled=true;let n=0;
  try{for(const p of list){
    gmsg('Đang lưu “'+p.name+'” lên GitHub…');
-   const path=PDIR+'/'+p.id+'.json',cur=await ghApi(path,{ok404:true});
+   const path=PDIR+'/'+p.id+'.json',cur=await ghApi(path,{ok404:true}),up=p.updated||0;
    const res=await ghApi(path,{method:'PUT',body:{message:'Lưu dự án: '+p.name,content:b64(JSON.stringify(p,null,1)),branch:'main',...(cur&&cur.sha?{sha:cur.sha}:{})}});
-   SHA[p.id]=res.content.sha;n++}
-  shaSave();gmsg('✓ Đã lưu '+n+' dự án vào thư mục '+PDIR+'/ trên GitHub ('+new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})+').')}
+   SHA[p.id]=res.content.sha;UPD[p.id]=up;n++}
+  shaSave();updSave();if(!P)renderList();gmsg('✓ Đã lưu '+n+' dự án vào thư mục '+PDIR+'/ trên GitHub ('+new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})+').')}
  catch(e){gmsg('Lưu chưa xong ('+n+'/'+list.length+'): '+e.message,1)}
  finally{b.disabled=false}}
 /* Mở trang danh sách: đọc projects/*.json trên GitHub và hiện lên danh sách (bản mới hơn thắng) */
@@ -170,18 +181,34 @@ async function loadFromGit(quiet){
    if(i>=0&&SHA[id]===f.sha)return;                       // đã có đúng bản này
    if(P&&P.id===id)return;                                // đang mở: không ghi đè
    const rp=JSON.parse(await ghApi(PDIR+'/'+f.name,{raw:true}));if(!rp||!Array.isArray(rp.scenes))return;
-   rp.id=id;SHA[id]=f.sha;
+   rp.id=id;SHA[id]=f.sha;UPD[id]=rp.updated||0;
    if(i>=0&&(projects[i].updated||0)>(rp.updated||0))return;  // máy này mới hơn → giữ
    ensure(rp);if(i>=0)projects[i]=rp;else projects.push(rp);n++}));
-  shaSave();try{localStorage.setItem(KEY,JSON.stringify(projects))}catch{}
+  shaSave();updSave();try{localStorage.setItem(KEY,JSON.stringify(projects))}catch{}
   if(!P)renderList();
   gmsg('Danh sách GitHub: '+files.length+' dự án'+(n?' · đã tải '+n+' mới/cập nhật':'')+'.')}
  catch(e){gmsg('Không tải được từ GitHub: '+e.message,1)}
  finally{if(b)b.disabled=false}}
-async function delFromGit(id){try{if(!gcfg().token)return;const path=PDIR+'/'+id+'.json',cur=await ghApi(path,{ok404:true});if(cur&&cur.sha)await ghApi(path,{method:'DELETE',body:{message:'Xóa dự án '+id,sha:cur.sha,branch:'main'}});delete SHA[id];shaSave();gmsg('Đã xóa dự án cả trên GitHub.')}catch(e){gmsg('Đã xóa ở máy này, nhưng chưa xóa được trên GitHub: '+e.message,1)}}
+async function delFromGit(id){try{if(!gcfg().token)return;const path=PDIR+'/'+id+'.json',cur=await ghApi(path,{ok404:true});if(cur&&cur.sha)await ghApi(path,{method:'DELETE',body:{message:'Xóa dự án '+id,sha:cur.sha,branch:'main'}});delete SHA[id];delete UPD[id];shaSave();updSave();gmsg('Đã xóa dự án cả trên GitHub.')}catch(e){gmsg('Đã xóa ở máy này, nhưng chưa xóa được trên GitHub: '+e.message,1)}}
+/* Khôi phục: thay bản trong máy bằng bản đang lưu trên GitHub (bỏ mọi chỉnh sửa chưa lưu) */
+async function restoreFromGit(id){
+ const p=projects.find(x=>x.id===id);if(!p)return;
+ if(!gcfg().token)return gmsg('Chưa có GitHub token — nhập ở trang Thư viện → ⚙ Cài đặt.',1);
+ try{gmsg('Đang kiểm tra bản trên GitHub…');
+  const f=await ghApi(PDIR+'/'+id+'.json',{ok404:true});
+  if(!f||!f.sha)return gmsg('“'+p.name+'” chưa có trên GitHub (đang là nháp) — không có bản để khôi phục.',1);
+  if(!confirm('Khôi phục “'+p.name+'” về bản đang lưu trên GitHub?\nMọi chỉnh sửa chưa lưu lên GitHub sẽ bị thay bằng bản git.'+(P&&P.id===id?' (đang mở nên vẫn Ctrl+Z để quay lại được)':'')))return gmsg('');
+  const rp=JSON.parse(await ghApi(PDIR+'/'+id+'.json',{raw:true}));
+  if(!rp||!Array.isArray(rp.scenes))throw Error('File trên GitHub không đúng định dạng');
+  rp.id=id;ensure(rp);SHA[id]=f.sha;UPD[id]=rp.updated||0;shaSave();updSave();
+  if(P&&P.id===id){pause();const s0=si;for(const k in P)delete P[k];Object.assign(P,rp);si=Math.min(s0,P.scenes.length-1);sel=null;persist();commit();layout();renderAll();await loadScene()}
+  else{projects[projects.indexOf(p)]=rp;persist();if(!P)renderList()}
+  gmsg('✓ Đã khôi phục “'+rp.name+'” về bản trên GitHub.')}
+ catch(e){gmsg('Không khôi phục được: '+e.message,1)}}
 $('bGh').onclick=()=>saveToGit(P?[P]:projects.slice());
+$('bRest').onclick=()=>{if(P)restoreFromGit(P.id)};
 $('bLoad').onclick=()=>loadFromGit(false);
-function route(){const m=location.hash.match(/#p=(\w+)/),p=m&&projects.find(x=>x.id===m[1]);if(!p){pause();P=null;$('vEd').hidden=true;$('vList').hidden=false;renderList();return}P=ensure(p);H=[hj()];hi=0;si=0;sel=null;tab='src';$('vList').hidden=true;$('vEd').hidden=false;initThree();layout();renderAll();loadScene()}
+function route(){const m=location.hash.match(/#p=(\w+)/),p=m&&projects.find(x=>x.id===m[1]);if(!p){pause();P=null;$('vEd').hidden=true;$('vList').hidden=false;renderList();return}P=ensure(p);H=[hj()];hi=0;si=0;sel=null;tab='src';$('vList').hidden=true;$('vEd').hidden=false;initThree();layout();renderAll();LDL='Đang tải dự án “'+P.name+'”';loadScene()}
 addEventListener('hashchange',route);$('back').onclick=e=>{e.preventDefault();location.hash=''};
 
 /* ---------- Khung + 3D ---------- */
@@ -230,8 +257,15 @@ async function addRt(ch,my){const o=skClone(await getF(ch.file));if(my!==tok)ret
  if(w){g.add(w);fit=1.7/1.8}
  else{o.position.set(0,0,0);const bx=bodyBox(o),sz=bx.getSize(new THREE.Vector3()),c=bx.getCenter(new THREE.Vector3());o.position.set(-c.x,-bx.min.y,-c.z);g.add(o);fit=1.7/Math.max(sz.y,.001);bodyBox(g)}
  tscene.add(g);R[ch.id]={g,o,w,ver,mats,fit,fx,exs,mx:new THREE.AnimationMixer(o),cur:'~',clips:{}};smoothObj(g);place(ch);faceInit(R[ch.id])}
-async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){if(R[k].fx)R[k].fx.dispose();tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;say(s.chars.length||s.props.length?'Đang tải cảnh…':'Thêm nhân vật ở tab “Nhân vật”, mô hình ở tab “Bối cảnh”.');
- await Promise.all([...s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')})),...s.props.map(pr=>addProp(pr,my).catch(e=>{err=1;say('Lỗi mô hình “'+pr.name+'”: '+e.message)}))]);if(my!==tok)return;busy=false;if(DFOV===null)DFOV=camera.fov;else if(camera.fov!==DFOV){camera.fov=DFOV;camera.updateProjectionMatrix()}for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx)rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&(s.chars.length||s.props.length))say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
+/* Thanh tiến độ khi tải cảnh / mở dự án: mỗi nhân vật + mô hình xong là nhích một bước, giữa các bước chạy chậm dần để không đứng yên */
+let LDL='';const LD={tm:0,n:1,d:0,v:0,id:0,lab:''};
+function ldDraw(){$('ldrb').style.width=(LD.v*100)+'%';$('ldrt').textContent=LD.lab+'… '+Math.round(LD.v*100)+'%'+(LD.n>0?' ('+LD.d+'/'+LD.n+')':'')}
+function ldShow(n,lab){clearInterval(LD.tm);LD.id++;LD.n=n;LD.d=0;LD.v=0;LD.lab=lab;$('ldr').hidden=false;ldDraw();
+ LD.tm=setInterval(()=>{const lim=Math.min(.97,(LD.d+.85)/(LD.n+1));if(LD.v<lim)LD.v+=(lim-LD.v)*.08;ldDraw()},120)}
+function ldStep(){LD.d++;LD.v=Math.max(LD.v,LD.d/(LD.n+1));ldDraw()}
+function ldEnd(){clearInterval(LD.tm);const e=$('ldr');if(e.hidden)return;LD.v=1;LD.d=LD.n;ldDraw();const id=++LD.id;setTimeout(()=>{if(LD.id===id)e.hidden=true},450)}
+async function loadScene(resume){const s=sc(),my=++tok;if(!resume)pause();for(const k in R){if(R[k].fx)R[k].fx.dispose();tscene.remove(R[k].g);delete R[k]}for(const k in OV){OV[k].remove();delete OV[k]}for(const k in spoken)delete spoken[k];busy=true;t=0;syncTp();renderTL();let err=0;const lab=LDL||'Đang tải cảnh';LDL='';const nIt=s.chars.length+s.props.length,stp=()=>{if(my===tok)ldStep()};if(nIt)ldShow(nIt,lab);else ldEnd();say(s.chars.length||s.props.length?'Đang tải cảnh…':'Thêm nhân vật ở tab “Nhân vật”, mô hình ở tab “Bối cảnh”.');
+ await Promise.all([...s.chars.map(ch=>addRt(ch,my).catch(e=>{err=1;say('Lỗi '+ch.file+': '+e.message+' (cần chạy qua web server)')}).finally(stp)),...s.props.map(pr=>addProp(pr,my).catch(e=>{err=1;say('Lỗi mô hình “'+pr.name+'”: '+e.message)}).finally(stp))]);if(my!==tok)return;ldEnd();busy=false;if(DFOV===null)DFOV=camera.fov;else if(camera.fov!==DFOV){camera.fov=DFOV;camera.updateProjectionMatrix()}for(const tr of s.tracks)for(const it of tr.items)if(it.type==='face'&&FR.isCx(it.expr)){const rr=R[it.ch];if(rr&&rr.fx)rr.fx.preload(FR.cxId(it.expr)).catch(()=>{})}if(s.cam){camera.position.fromArray(s.cam.p);controls.target.fromArray(s.cam.t);controls.update()}else autoCam();if(!err&&(s.chars.length||s.props.length))say('');apply();renderOv();if(resume){playing=true;clock.getDelta()}}
 async function getClip(r,id){if(id in r.clips)return r.clips[id];const e=manifest.animations.find(x=>x.id===id);r.clips[id]=null;if(!e)return null;try{const d=jc[id]||(jc[id]=await(await fetch('./'+e.dataPath)).json()),s0=r.g.scale.clone(),q0=r.g.quaternion.clone(),w0=r.w&&{p:r.w.position.clone(),q:r.w.quaternion.clone(),s:r.w.scale.clone()};r.g.scale.setScalar(1);r.g.quaternion.identity();if(r.w){r.w.position.set(0,0,0);r.w.quaternion.identity();r.w.scale.setScalar(1)}r.g.updateMatrixWorld(true);let m;try{m=mapClip(THREE.AnimationClip.parse(d.clip),r.o)}finally{r.g.scale.copy(s0);r.g.quaternion.copy(q0);if(w0){r.w.position.copy(w0.p);r.w.quaternion.copy(w0.q);r.w.scale.copy(w0.s)}r.g.updateMatrixWorld(true)}r.clips[id]=m.clip.tracks.length?m.clip:null}catch{}return r.clips[id]}
 /* ---------- Sàn bằng ảnh tùy chỉnh (s.floor = {mid, size, rep, rot}) ---------- */
 let FLU='',FLP=null,FLV=null,FLL='';
