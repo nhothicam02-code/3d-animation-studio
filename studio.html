@@ -313,7 +313,7 @@ function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.
  if(P&&camera&&controls){if(LTAB==='cam'&&tab!=='cam'&&LASTP){camera.position.copy(LASTP.p);controls.target.copy(LASTP.a);if(Math.abs(camera.fov-LASTP.fov)>1e-4){camera.fov=LASTP.fov;camera.updateProjectionMatrix()}controls.update();LASTP=null}if(LTAB==='cam'&&tab!=='cam')VHOLD=FXT;if(tab==='cam'){VHOLD=null;const fc=camCur();FREEID=fc?fc.id:'__d'}if(tab==='cam')LASTP=null;LTAB=tab}
  if(P&&playing&&!busy){t+=dt;const s=sc();if(t>=s.duration){t=s.duration;if(allMode&&si<P.scenes.length-1){nextScene();return}pause()}apply();renderOv();syncTp();audioSync()}
  {const sim=P&&playing&&!busy&&!EXP;if(!sim)K.snapPhysics();K.stepPhysics(sim?dt:0)}   /* đang dừng: tóc / váy / đồ vật lý bám đúng nhân vật khi kéo, xoay, tua */
- if(EXP)return;vgStep(dt);{const fe=P?camFreeTick():null,ca=!!(P&&!fe&&!(tab!=='cam'&&holdOn())&&(camActive(sc(),FXT)||camPrev()));controls.enabled=!ca;if(ca!==CAMON){CAMON=ca;$('flab').textContent=flabTxt()}}controls.update();const co=fxCamOn();updSel3D();drawVG();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
+ if(EXP)return;vgStep(dt);{const fe=P?camFreeTick():null,ca=!!(P&&!fe&&!(tab!=='cam'&&holdOn())&&(camActive(sc(),FXT)||camPrev()));controls.enabled=!ca||(!playing&&!EXP);if(ca!==CAMON){CAMON=ca;$('flab').textContent=flabTxt()}}controls.update();const co=fxCamOn();updSel3D();drawVG();updGiz();ENVE.render(renderer,tscene,camera,FXE);fxCamOff(co)}
 $('bPlay').onclick=()=>togglePlay();$('bAll').onclick=()=>{if(playing){pause();return}if(si){si=0;renderAll();loadScene().then(()=>play(true))}else play(true)};
 /* Phát / tạm dừng: một nút + phím Space (tiếp tục đúng chế độ Cảnh / Phim đang chạy) */
 function togglePlay(){if(!P)return;if(playing)pause();else play(allMode)}
@@ -554,23 +554,24 @@ function camGap(all,tt,o){const g=camGapSpan(all,tt);if(!g)return false;const A=
 /* Camera ở thời điểm tt: clip đang chạy (clip bắt đầu sau thắng), có chuyển cảnh mượt vào / ra */
 function camPrev(){if(tab!=='cam'||!P||busy)return null;const c=camCur();if(c)return c.shot==='free'||R[c.target]?c:null;const g={type:'cam',...CAMD,start:FXT,dur:3};if(!R[g.target])g.target=camDefTarget();return g.shot==='free'||R[g.target]?g:null}
 /* Góc tự do: đang sửa tay → dùng thẳng camera của viewport (xoay / kéo / zoom), tự lưu vào clip */
-const camFreeEdit=()=>{const pv=camPrev();return pv&&pv.shot==='free'&&!playing?pv:null};
-let CAMFB=null,CAMH=0,CAMDRAG=false;
+const camFreeEdit=()=>{const pv=camPrev();return pv&&pv.shot==='free'&&!playing&&!camCur()?pv:null};
+/* Xem thử góc khác: kéo / zoom chuột trong lúc đang có clip camera → chỉ đổi cái đang thấy ở đúng thời điểm đó, KHÔNG ghi vào clip. Tua / phát / xuất vẫn dùng góc của clip. */
+let CAMFB=null,CAMH=0,CAMDRAG=false,PEEK=null;const peekOn=()=>PEEK!==null&&!playing&&!EXP&&Math.abs(FXT-PEEK)<1e-6;
 /* Vừa chỉnh cỡ cảnh / thông số camera → ưu tiên xem trước đúng thứ đang chỉnh (clip đang chọn hoặc clip mới) kể cả khi đường đỏ nằm trong một clip camera khác.
    Hết ưu tiên khi di chuyển đường đỏ, phát, hoặc đổi clip đang chọn. */
 let CAMED=null;
-const camEdit=()=>{const c=camCur();CAMED={t,id:c?c.id:''}},camEdOn=()=>!!CAMED&&CAMED.t===t&&!playing&&CAMED.id===((camCur()||{}).id||'');
+const camEdit=()=>{PEEK=null;const c=camCur();CAMED={t,id:c?c.id:''}},camEdOn=()=>!!CAMED&&CAMED.t===t&&!playing&&CAMED.id===((camCur()||{}).id||'');
 const camCap=()=>{const o=camCur()||CAMD;o.fp=camera.position.toArray().map(r5);o.fa=controls.target.toArray().map(r5);o.ffov=r5(camera.fov)};
 function camFreeze(o){const ov=_cP[0],b=o.id?o:{...o,start:FXT,dur:3},ok=o.shot!=='free'&&camPose(b,Math.min(Math.max(FXT,b.start),b.start+b.dur),ov);
  if(ok){o.fp=ov.p.toArray().map(r5);o.fa=ov.a.toArray().map(r5);o.ffov=r5(ov.fov)}else if(!o.fp){o.fp=camera.position.toArray().map(r5);o.fa=controls.target.toArray().map(r5);o.ffov=r5(camera.fov)}
  o.shot='free'}
-function camFreeTick(){if(!CAMH){CAMH=1;controls.addEventListener('start',()=>{CAMDRAG=true});controls.addEventListener('end',()=>{CAMDRAG=false;if(camFreeEdit()){camCap();if(camCur())touchSoon();renderPanel()}else{const ft=freeTrack();if(ft){freeCap(ft);if(ft!==CAMD)renderTL();touchSoon()}}});controls.addEventListener('change',()=>{if(!CAMDRAG)return;if(camFreeEdit())camCap();else{const ft=freeTrack();if(ft)freeCap(ft)}})}
+function camFreeTick(){if(!CAMH){CAMH=1;controls.addEventListener('start',()=>{CAMDRAG=true;if(P&&!playing&&!EXP&&!camFreeEdit()&&!peekOn()){const o=_cP[0];if(camState(sc(),FXT,o)){camera.position.copy(o.p);controls.target.copy(o.a);if(o.fov>1&&o.fov<170&&Math.abs(camera.fov-o.fov)>1e-4){camera.fov=o.fov;camera.updateProjectionMatrix()}controls.update();PEEK=FXT}}});controls.addEventListener('end',()=>{CAMDRAG=false;if(camFreeEdit()){camCap();if(camCur())touchSoon();renderPanel()}else{const ft=freeTrack();if(ft){freeCap(ft);if(ft!==CAMD)renderTL();touchSoon()}}});controls.addEventListener('change',()=>{if(!CAMDRAG)return;if(camFreeEdit())camCap();else{const ft=freeTrack();if(ft)freeCap(ft)}})}
  const fe=camFreeEdit();
  if(fe&&!CAMFB){CAMFB={p:camera.position.clone(),t:controls.target.clone(),f:camera.fov};if(Array.isArray(fe.fp)&&Array.isArray(fe.fa)){camera.position.fromArray(fe.fp);controls.target.fromArray(fe.fa);camera.fov=FX.nz(fe.ffov,35);camera.updateProjectionMatrix();controls.update()}}
  else if(!fe&&CAMFB){CAMFB=null}   /* viewport của tab Camera là chuẩn: không nhảy về góc cũ */
  return fe}
 function camState(s,tt,o){
- if(camFreeEdit())return false;
+ if(camFreeEdit()||peekOn())return false;
  if(tab!=='cam'&&holdOn())return false;   /* vừa rời tab Camera: giữ viewport đang thấy, không để clip camera đè lên */
  if(camEdOn()){const pv=camPrev();if(pv)return camPose(pv,Math.min(Math.max(tt,pv.start),pv.start+pv.dur),o)}
  const all=camAll(s);let c=null,i=-1;all.forEach((x,j)=>{if(tt>=x.start-1e-6&&tt<x.start+x.dur-1e-6){c=x;i=j}});
@@ -592,9 +593,9 @@ function camClipBegin(){
 function camClipEnd(){if(!_cS.on)return;_cS.on=false;camera.position.copy(_cS.p);camera.quaternion.copy(_cS.q);if(camera.fov!==_cS.f){camera.fov=_cS.f;camera.updateProjectionMatrix()}camera.updateMatrixWorld(true)}
 const fxCamOn=()=>{const c=camClipBegin(),f=!!(FXE&&FXI.length&&FXE.camBegin(FXI,FXT,c?c.a:controls.target));return c||f?{c:!!c,f}:false},
  fxCamOff=o=>{if(!o)return;if(o.f)FXE.camEnd();if(o.c)camClipEnd()};
-let CAMON=false,LASTP=null,LTAB='',VHOLD=null,FREEID=null;const freeTrack=()=>{if(!FREEID||tab==='cam'||!holdOn()||!P)return null;if(FREEID==='__d')return CAMD;for(const tr of sc().tracks)for(const x of tr.items)if(x.id===FREEID)return x.type==='cam'?x:null;return null},freeCap=c=>{c.shot='free';c.fp=camera.position.toArray().map(r5);c.fa=controls.target.toArray().map(r5);c.ffov=r5(camera.fov)};const holdOn=()=>VHOLD!==null&&!playing&&!EXP&&Math.abs(FXT-VHOLD)<1e-6;
+let CAMON=false,LASTP=null,LTAB='',VHOLD=null,FREEID=null;const freeTrack=()=>{if(!FREEID||tab==='cam'||!holdOn()||!P)return null;if(FREEID==='__d')return CAMD;return null},freeCap=c=>{c.shot='free';c.fp=camera.position.toArray().map(r5);c.fa=controls.target.toArray().map(r5);c.ffov=r5(camera.fov)};const holdOn=()=>VHOLD!==null&&!playing&&!EXP&&Math.abs(FXT-VHOLD)<1e-6;
 function camPeek(c){}
-function addCam(){const s=sc();
+function addCam(){PEEK=null;const s=sc();
  if(!camObjs(s).length){say('Cảnh chưa có nhân vật / mô hình để camera nhắm tới — thêm ở tab “Nhân vật” hoặc “Bối cảnh”.');setTimeout(()=>say(''),3200);return}
  if(!camObjs(s).some(x=>x.id===CAMD.target))CAMD.target=camDefTarget();
  const st=snap(t),dur=3,tr=s.tracks.find(x=>x.items.length&&x.items.every(y=>y.type==='cam')&&!x.items.some(y=>y.start<st+dur-1e-6&&st<y.start+y.dur-1e-6));
@@ -612,23 +613,24 @@ function camPanel(s){
  if(!fr_)h+='<label>Đối tượng camera nhắm tới</label>'+(objs.length?objs.map(x=>'<div class="li'+(x.id===o.target?' on':'')+'" data-camt="'+x.id+'"><span>'+x.ic+' '+esc(x.name)+'</span>'+(x.id===o.target?'<span>🎯</span>':'')+'</div>').join(''):'<div class="hint">Chưa có nhân vật / mô hình trong cảnh.</div>');
  if(c&&!fr_&&!objs.some(x=>x.id===c.target))h+='<div class="hint" style="color:var(--red)">Đối tượng của clip này không còn trong cảnh — hãy chọn lại.</div>';
  h+='<label>Cỡ cảnh</label><div class="chips" style="grid-template-columns:repeat(5,1fr)">'+CAMSH.map(x=>'<button class="chip'+(o.shot===x[0]?' on':'')+'" data-cams="'+x[0]+'" title="'+x[1]+'">'+x[2]+'<br>'+x[1]+'</button>').join('')+'</div>';
- h+=fr_?'<div class="hint">🖐 <b>Góc tự do</b>: kéo chuột trong khung để xoay, giữ chuột phải để dời, cuộn để zoom — góc nhìn tự lưu vào clip, bắt đầu từ khung bạn đang thấy. Chuyển động và rung bên dưới vẫn cộng thêm khi tua / phát.</div>'+rng('ffov','Ống kính — FOV (độ, nhỏ = tele)',15,90,1):rng('yaw','Góc ngang (độ) — 0 = thẳng vào mặt, + = sang phải khung hình',-180,180,1)+rng('hgt','Độ cao camera (− thấp, + cao)',-1,1,.05)+rng('fov','Ống kính — FOV (độ, nhỏ = tele)',15,90,1);
+ h+=fr_?'<div class="hint">🖐 <b>Góc tự do</b>: kéo chuột trong khung để xoay, giữ chuột phải để dời, cuộn để zoom — góc nhìn bắt đầu từ khung bạn đang thấy; với clip đã đặt thì bấm “💾 Lưu góc đang xem” để ghi lại. Chuyển động và rung bên dưới vẫn cộng thêm khi tua / phát.</div>'+rng('ffov','Ống kính — FOV (độ, nhỏ = tele)',15,90,1):rng('yaw','Góc ngang (độ) — 0 = thẳng vào mặt, + = sang phải khung hình',-180,180,1)+rng('hgt','Độ cao camera (− thấp, + cao)',-1,1,.05)+rng('fov','Ống kính — FOV (độ, nhỏ = tele)',15,90,1);
  h+='<label>Chuyển động camera trong clip</label>'+sel_('mv',CAMMV)+rng('mva','Mức độ chuyển động',0,2,.05);
  h+='<label>Hiệu ứng rung / nhịp</label>'+sel_('fxk',CAMFX)+rng('fxi','Cường độ hiệu ứng',0,3,.05);
  h+=rng('tin','Chuyển mượt vào từ góc trước (giây, 0 = cắt thẳng)',0,3,.1)+rng('tout','Chuyển mượt ra về góc thường (giây)',0,3,.1);
  if(c)h+='<div class="r"><div><label>Bắt đầu (s)</label><input type="number" step="any" data-camk="start" value="'+r2(c.start)+'"></div><div><label>Độ dài (s)</label><input type="number" step="any" min="0.04" data-camk="dur" value="'+r2(c.dur)+'"></div></div>';
- h+=c?'<div class="r" style="margin-top:12px"><button class="pri" data-camgo="1">👁 Xem khung hình</button><button class="del" data-camdel="'+c.id+'">Xóa clip</button></div>':'<button class="pri" style="width:100%;margin-top:12px" data-camadd="1">＋ Thêm clip camera tại đường đỏ</button>';
+ h+=c?'<div class="hint" style="margin-top:10px">Kéo / cuộn chuột trong khung để <b>xem thử</b> góc khác tại thời điểm này — clip, lúc phát và lúc xuất không bị đổi. Tua hoặc phát là về lại góc của clip.</div><button style="width:100%" data-camsave="1" title="Ghi góc đang xem vào clip này (thành góc tự do)">💾 Lưu góc đang xem vào clip</button><div class="r" style="margin-top:8px"><button class="pri" data-camgo="1">👁 Xem khung hình</button><button class="del" data-camdel="'+c.id+'">Xóa clip</button></div>':'<button class="pri" style="width:100%;margin-top:12px" data-camadd="1">＋ Thêm clip camera tại đường đỏ</button>';
  h+='<label>Hiệu ứng ống kính kèm theo'+(c?' (cùng khoảng thời gian clip)':' (tại đường đỏ)')+'</label><div class="chips c2">'+CAMLENS.map(x=>'<button class="chip" data-camfx="'+x[0]+'">'+x[1]+'</button>').join('')+'</div><div class="hint">Rung, lia, orbit, zoom, nghiêng… còn có ở tab ✨ Hiệu ứng → Camera và <b>cộng dồn</b> lên clip camera (orbit / dolly quay quanh đối tượng đang nhắm).</div>';
  const all=s.tracks.flatMap(tr=>tr.items).filter(x=>x.type==='cam').sort((a,b)=>a.start-b.start);
  h+='<label>Clip camera trong cảnh ('+all.length+')</label>'+(all.map(x=>'<div class="li'+(c&&c.id===x.id?' on':'')+'" data-camsel="'+x.id+'"><span>🎥 '+esc(camLabel(x))+' · '+r2(x.start)+'–'+r2(x.start+x.dur)+'s</span><button class="del" data-camdel="'+x.id+'">✕</button></div>').join('')||'<div class="hint">Chưa có clip camera nào.</div>');
  return h}
-$('panel').addEventListener('click',e=>{const el=e.target.closest('[data-camt],[data-cams],[data-camadd],[data-camnew],[data-camsel],[data-camdel],[data-camfx],[data-camgo]');if(!el||!P)return;const d=el.dataset,c=camCur(),o=c||CAMD;
+$('panel').addEventListener('click',e=>{const el=e.target.closest('[data-camt],[data-cams],[data-camadd],[data-camnew],[data-camsel],[data-camdel],[data-camfx],[data-camgo],[data-camsave]');if(!el||!P)return;const d=el.dataset,c=camCur(),o=c||CAMD;
  if(d.camt!==undefined||d.cams!==undefined){if(d.camt!==undefined)o.target=d.camt;else if(d.cams==='free'){if(o.shot!=='free')camFreeze(o)}else o.shot=d.cams;camEdit();if(c){touch();renderTL();camPeek(c)}renderPanel();return}
  if(d.camadd!==undefined)return addCam();
  if(d.camnew!==undefined){sel=null;renderTL();renderPanel();renderOv();return}
  if(d.camsel)return setSel(d.camsel,'cam');
  if(d.camdel){sel={id:d.camdel};remove();return}
  if(d.camgo!==undefined){if(c)seek(snap(c.start+c.dur/2));return}
+ if(d.camsave!==undefined){if(!c)return;if(!peekOn()){say('Kéo / cuộn chuột trong khung để chọn góc trước, rồi bấm lưu.');setTimeout(()=>say(''),2800);return}camCap();c.shot='free';PEEK=null;camEdit();touch();renderTL();renderPanel();apply();say('✓ Đã lưu góc đang xem vào clip.');setTimeout(()=>say(''),2200);return}
  if(d.camfx)camAddFx(d.camfx)});
 $('panel').addEventListener('input',e=>{const el=e.target,k=el.dataset.camk;if(!k||!P)return;if(el.type==='number'&&el.value==='')return;
  const c=camCur(),o=c||CAMD,s=sc(),v=el.type==='number'||el.type==='range'?+el.value:el.value;if(k==='dur'&&v<1/P.fmt.fps)return;
