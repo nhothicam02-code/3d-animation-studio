@@ -1002,7 +1002,7 @@ $('panel').onclick=async e=>{const el=e.target,d=el.dataset,s=sc();
  if(b&&(b.dataset.add||b.dataset.addc)){const cc=b.dataset.addc?custom.find(x=>x.id===b.dataset.addc):null;if(b.dataset.addc&&!cc)return;const f=cc?cc.base:b.dataset.add,n=s.chars.length,ch={id:uid(),file:f,name:cc?cc.name:M.stripExt(f),...(cc?{custom:{id:cc.id,dataPath:cc.dataPath,name:cc.name}}:{}),x:n?(n%2?1:-1)*Math.ceil(n/2)*1.2:0,z:0,rot:0,scale:1,opacity:1,y:0,rx:0,rz:0,sx:1,sy:1,sz:1,lock:true,fixed:true,ablink:true,clips:[]};s.chars.push(ch);sel={id:ch.id};touch();renderPanel();renderTL();addRt(ch,tok).then(()=>{if(!s.cam)autoCam();apply()}).catch(x=>say('Lỗi '+f+': '+x.message))}
  if(b&&b.dataset.clip){const ch=chOf(),a=manifest.animations.find(x=>x.id===b.dataset.clip),c={id:uid(),clip:a.id,start:snap(t),dur:r2(a.duration||2),loop:a.loop!==false};ch.clips.push(c);sel={id:c.id};if(c.start+c.dur>s.duration)s.duration=Math.ceil(c.start+c.dur);touch();renderTL();renderPanel();apply()}
  if(d.act==='del')remove();
- if(d.act==='msync')openMouthSync();if(d.act==='test')speak(cur());if(d.act==='vgen')genVoice(cur());if(d.act==='vup')$('fVoice').click();
+ if(d.act==='msync')openMouthSync();if(d.act==='test')speak(cur());if(d.act==='vgen'){const it=cur();VOLD.clear();genVoice(it).then(()=>alignAfterVoice(it)).catch(()=>VOLD.clear())}if(d.act==='vup')$('fVoice').click();
  if(d.act==='est'){const it=cur();it.dur=estDur(it.text,it.rate);touch();renderTL();sync()}
  if(d.act==='t2a'){const it=cur();addItem('tts',{text:it.text,ch:((sc().chars.find(c=>c.name&&c.name===it.who)||{}).id)||'',lang:langOf(it),voice:it.voice||'',rate:it.rate??1,pitch:it.pitch??1,vol:it.vol??1,start:it.start,dur:estDur(it.text,1)});say('Đã tạo track giọng đọc — đang tạo file giọng…');{const n=cur();if(n&&n.type==='tts')genVoice(n)}setTimeout(()=>say(''),2500)}
  if(d.act==='splitsc')return splitScene();
@@ -1077,14 +1077,16 @@ async function edgeTTS(text,voice,rate,pitch){const sg=n=>(n>=0?'+':'')+n;
    if(/Path:audio/i.test(new TextDecoder().decode(new Uint8Array(b,2,hl)))){const p=b.slice(2+hl);if(p.byteLength)parts.push(p)}};
   ws.onerror=()=>fin(Error('không bắt tay được WebSocket Edge (Brave/Chrome Android có thể chặn — thử Microsoft Edge)'));
   ws.onclose=()=>fin(ended?null:Error('kết nối đóng sớm'))})}
-async function genVoice(it){if(!it)return;const txt=String(it.text||'').trim();if(!txt)return say('Chưa có nội dung để đọc.');const[eng,vid]=voiceOf(it).split(':');
+/* Khoảng (start, dur) CŨ của từng giọng trước khi bị tạo lại / thay file — để căn lại biết đã dài ra hay ngắn đi bao nhiêu */
+const VOLD=new Map(),noteOld=it=>{if(it&&!VOLD.has(it.id))VOLD.set(it.id,{s:+it.start||0,d:+it.dur||0})};
+async function genVoice(it){if(!it)return;noteOld(it);const txt=String(it.text||'').trim();if(!txt)return say('Chưa có nội dung để đọc.');const[eng,vid]=voiceOf(it).split(':');
  const add=async(b,ext,en,bk)=>{const rec=(await importFiles([new File([b],'giong-'+it.id+ext,{type:b.type||'audio/mpeg'})]))[0];it.media=rec.id;it.baked=bk;it.dur=r2(rec.dur/eff(it));touch();renderTL();renderPanel();say('✓ Đã tạo giọng bằng '+en+' ('+rec.dur.toFixed(1)+'s).')};
  if(eng==='edge'){say('Đang tạo giọng bằng Edge…');try{await add(await edgeTTS(txt,vid,it.rate,it.pitch),'.mp3','Edge',{rate:+it.rate||1,pitch:+it.pitch||1,eng:'edge',text:txt,voice:eng+':'+vid});return}catch(e){say('Edge không được ('+e.message+') — chuyển sang Piper…')}}
  const pid=eng==='piper'?vid:vid.startsWith('vi')?(/NamMinh/.test(vid)?'vi_VN-25hours_single-low':'vi_VN-vais1000-medium'):vid.startsWith('en')?'en_US-hfc_female-medium':null;
  if(!pid)return say('Edge lỗi và Piper chưa có giọng cho ngôn ngữ này. Chọn giọng Piper hoặc dùng “Tải wav/mp3”.');
  try{const T=await import(PIPER),w=await T.predict({text:txt,voiceId:pid},p=>{if(p&&p.total)say('Tải model Piper… '+Math.round(p.loaded*100/p.total)+'%')});await add(w,'.wav','Piper',{rate:1,pitch:1,eng:'piper',text:txt,voice:eng+':'+vid})}
  catch(e){say('Piper lỗi: '+e.message+'. Dùng “Tải wav/mp3”.')}}
-$('fVoice').onchange=async e=>{const it=cur(),r=(await importFiles([...e.target.files]))[0];e.target.value='';if(it&&r&&r.type==='aud'){it.media=r.id;delete it.baked;it.dur=r2(r.dur/eff(it));touch();renderTL();renderPanel()}};
+$('fVoice').onchange=async e=>{const it=cur(),r=(await importFiles([...e.target.files]))[0];e.target.value='';if(it&&r&&r.type==='aud'){VOLD.clear();noteOld(it);it.media=r.id;delete it.baked;it.dur=r2(r.dur/eff(it));touch();alignAfterVoice(it);renderTL();renderPanel()}};
 
 /* ---------- Sao chép thuộc tính giọng: chép mọi thuộc tính (trừ nội dung nói / thời điểm / file âm thanh) từ giọng đang chọn sang các giọng khác của cùng nhân vật ---------- */
 const MSX=new Set(['id','type','text','start','dur','off','media','baked','url','ch']);let MSI=null;
@@ -1144,38 +1146,46 @@ function needsVoice(it){const tx=String(it.text||'').trim();if(!tx)return false;
 /* Dời mọi thứ trong cảnh theo độ dài thật của từng giọng: các thoại xếp nối tiếp, mọi khối / clip / keyframe khác co giãn theo bằng ánh xạ thời gian tuyến tính từng đoạn */
 function realignScene(s){
  const fps=P.fmt.fps,fr=1/fps,sn=v=>Math.round(v*fps)/fps,up=v=>Math.ceil(v*fps-1e-6)/fps,rd=v=>Math.round(v*1e4)/1e4,T=[];
- for(const tr of s.tracks)for(const it of tr.items){if(it.type!=='tts'||!srcOf(it))continue;const m=it.media&&media.find(x=>x.id===it.media),d=m&&m.dur>0?m.dur/eff(it):+it.dur;if(d>0)T.push({it,os:+it.start||0,od:+it.dur||0,nd:up(d)})}
+ for(const tr of s.tracks)for(const it of tr.items){if(it.type!=='tts'||!srcOf(it))continue;const m=it.media&&media.find(x=>x.id===it.media),d=m&&m.dur>0?m.dur/eff(it):+it.dur;if(d>0){const o=VOLD.get(it.id);T.push({it,os:o?o.s:(+it.start||0),od:o?o.d:(+it.dur||0),nd:up(d)})}}
  if(!T.length)return 0;
- T.sort((a,b)=>a.os-b.os);let pNe=null,pOe=0;
- for(const x of T){x.ns=pNe===null?sn(x.os):sn(pNe+Math.max(AGAP,x.os-pOe));x.ne=rd(x.ns+x.nd);pNe=x.ne;pOe=x.os+x.od}
+ T.sort((a,b)=>a.os-b.os);let pNe=null,pOe=0,pP=null;
+ /* nối tiếp (chừa khoảng nghỉ tối thiểu); thoại vốn chồng lên thoại trước thì giữ nguyên vị trí tương đối bên trong thoại trước */
+ for(const x of T){const g=x.os-pOe;x.ns=pNe===null?sn(x.os):g<0&&pP&&pP.od>0?sn(Math.max(pP.ns,pP.ns+(x.os-pP.os)*pP.nd/pP.od)):sn(pNe+Math.max(AGAP,g));x.ne=rd(x.ns+x.nd);pNe=x.ne;pOe=x.os+x.od;pP=x}
  const A=[],add=(o,n)=>{if(!A.length||o>A[A.length-1][0]+1e-6)A.push([o,n])};
  T.forEach((x,i)=>{add(x.os,x.ns);const nx=T[i+1];if(x.os+x.od<=(nx?nx.os:1e9)+1e-6)add(x.os+x.od,x.ne)});
  const f=v=>{const a=A[0],z=A[A.length-1];if(v<=a[0])return v+a[1]-a[0];if(v>=z[0])return v+z[1]-z[0];let i=1;while(A[i][0]<v)i++;const p=A[i-1],q=A[i];return p[1]+(v-p[0])*(q[1]-p[1])/(q[0]-p[0])};
  const direct=new Set(T.map(x=>x.it.id)),oldDur=s.duration;
- const mv=it=>{const a=+it.start||0,b=a+(+it.dur||0),ns=sn(f(a));it.start=ns;it.dur=Math.max(fr,rd(sn(f(b))-ns))};
+ const mv=it=>{const a=+it.start||0,b=a+(+it.dur||0),ns=sn(f(a));it.start=ns;
+  if((it.type==='aud'||it.type==='vid')&&b<oldDur-1e-6)it.dur=Math.max(fr,rd(+it.dur||0));   /* hiệu ứng âm thanh / video: giữ độ dài, chỉ dời mốc bắt đầu (nhạc nền chạy tới hết cảnh thì vẫn giãn) */
+  else it.dur=Math.max(fr,rd(sn(f(b))-ns))};
  for(const x of T){x.it.start=x.ns;x.it.dur=x.nd}
  for(const ch of s.chars)for(const c of ch.clips)mv(c);
  for(const tr of s.tracks)for(const it of tr.items)if(!direct.has(it.id))mv(it);
  const mk=x=>{if(!x||!x.kf)return;for(const g in x.kf){x.kf[g].forEach(k=>k.t=r5(f(k.t)));x.kf[g].sort((p,q)=>p.t-q.t)}};
  [...s.chars,...(s.props||[]),...s.tracks.flatMap(tr=>tr.items),s.camk].forEach(mk);
  let end=0;for(const ch of s.chars)for(const c of ch.clips)end=Math.max(end,c.start+c.dur);for(const tr of s.tracks)for(const it of tr.items)end=Math.max(end,it.start+it.dur);
- s.duration=Math.max(1,Math.ceil(Math.max(f(oldDur),end)-1e-6));
+ s.duration=Math.max(1,up(Math.max(f(oldDur),end)));
  return T.length}
 async function autoVoiceAlign(){
  if(!P||AUTO||EXP||xRun)return;AUTO=true;pause();const b=$('bAuto'),lb=b.textContent;b.disabled=true;
- try{const todo=[];let total=0;P.scenes.forEach((s,k)=>{for(const tr of s.tracks)for(const it of tr.items)if(it.type==='tts'){total++;if(needsVoice(it))todo.push({it,k})}});
+ VOLD.clear();try{const todo=[];let total=0;P.scenes.forEach((s,k)=>{for(const tr of s.tracks)for(const it of tr.items)if(it.type==='tts'){total++;if(needsVoice(it))todo.push({it,k})}});
   if(!total){say('Chưa có khối Giọng đọc nào — thêm “+ Giọng đọc” ở tab Nguồn, hoặc bấm “Chuyển thành audio” ở khối chữ / phụ đề.');return}
   let ok=0,bad=0;
   for(let i=0;i<todo.length;i++){const{it,k}=todo[i],old=it.media;b.textContent='🎙 Giọng '+(i+1)+'/'+todo.length+'…';say('Đang tạo giọng '+(i+1)+' / '+todo.length+' (cảnh '+(k+1)+')…');
    try{await genVoice(it)}catch(e){}
    if(srcOf(it)&&!needsVoice(it)){ok++;if(old&&old!==it.media){const o=media.find(m=>m.id===old);if(o&&/^giong-/.test(o.name)){await idb('readwrite',st=>st.delete(old));media=media.filter(m=>m.id!==old);try{URL.revokeObjectURL(murl[old])}catch{}delete murl[old]}}}else bad++}
   b.textContent='🎙 Đang căn timeline…';let moved=0,scn=0;
-  P.scenes.forEach(s=>{const n=realignScene(s);if(n){moved+=n;scn++}});
+  P.scenes.forEach(s=>{const n=realignScene(s);if(n){moved+=n;scn++}});VOLD.clear();
   touch();renderAll();apply();renderOv();seek(t);
   say('✓ '+(ok?'Đã tạo '+ok+' giọng · ':'')+'Đã căn '+moved+' thoại ở '+scn+' cảnh theo độ dài âm thanh (Ctrl+Z để hoàn tác).'+(bad?' ⚠ '+bad+' thoại chưa tạo được giọng (kiểm tra mạng / chọn giọng khác rồi bấm lại).':''))}
  catch(e){say('Lỗi: '+e.message)}
  finally{AUTO=false;b.disabled=false;b.textContent=lb}}
 $('bAuto').onclick=autoVoiceAlign;
+/* Tạo lại / thay file của MỘT giọng → căn lại cả cảnh theo độ dài mới: thoại sau, clip, hiệu ứng, âm thanh, keyframe và thời lượng cảnh dời / giãn theo */
+function alignAfterVoice(it){
+ if(!P||!it||!srcOf(it)||needsVoice(it)){VOLD.clear();return}
+ const n=realignScene(sc());VOLD.clear();
+ if(n){touch();renderAll();apply();renderOv();seek(t);say('✓ Đã căn lại cảnh theo độ dài giọng mới: thoại, clip, hiệu ứng, âm thanh, keyframe và thời lượng cảnh đều dời / giãn theo (Ctrl+Z để hoàn tác).')}}
 
 /* ---------- Xuất video: dựng offline từng khung (không phụ thuộc tốc độ máy → không lag/khựng/rớt frame) ---------- */
 let EXP=false,XC=false;const IMGC={},VPL={},DEC={},MP4U='https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.mjs',WEBMU='https://cdn.jsdelivr.net/npm/webm-muxer@5.0.3/build/webm-muxer.mjs';
